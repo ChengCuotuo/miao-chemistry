@@ -35,7 +35,9 @@ const config = reactive([
   [0, 0, 0, 1, 3, 1, 0, 0],
   [0, 0, 0, 1, 1, 1, 0, 0],
 ]);
+
 const userPosition = ref([0, 0]);
+const entryCount = ref(0);
 
 const widthCount = config.length * META_SIZE;
 const heightCount = config[0].length * META_SIZE;
@@ -43,8 +45,15 @@ const heightCount = config[0].length * META_SIZE;
 const getUserPosition = () => {
   for (let i = 0; i < config.length; i++) {
     for (let j = 0; j < config[i].length; j++) {
-      if ([4, 7].includes(config[i][j])) {
+      if ([BOX_TYPE.USER, BOX_TYPE.USER_ENTRY].includes(config[i][j])) {
         userPosition.value = [i, j];
+      }
+      if (
+        [BOX_TYPE.ENTRY, BOX_TYPE.BOX_ENTRY, BOX_TYPE.USER_ENTRY].includes(
+          config[i][j],
+        )
+      ) {
+        entryCount.value += 1;
       }
     }
   }
@@ -76,22 +85,36 @@ const handleMove = (event: KeyboardEvent) => {
   // 第一是盒子，但第二个是墙壁 - false
   const firsetBoxType = config[firstBox[0]][firstBox[1]];
   const secondBoxType = config[secondBox[0]][secondBox[1]];
+
   if (
     firsetBoxType === BOX_TYPE.WALL ||
-    (firsetBoxType === BOX_TYPE.BOX && secondBoxType === BOX_TYPE.WALL)
+    ([BOX_TYPE.BOX, BOX_TYPE.BOX_ENTRY].includes(firsetBoxType) &&
+      [BOX_TYPE.WALL, BOX_TYPE.BOX, BOX_TYPE.BOX_ENTRY].includes(secondBoxType))
   ) {
     updateSuccess = false;
   }
 
+  // 更新数据
+  // TODO 需要处理 BOX_TYPE.ENTRY 相关的内容，比如：User 进入和退出 Entry，箱子进入和退出 Entry
   if (updateSuccess) {
     userPosition.value = firstBox;
-    const [userRow, userCol] = firstBox;
-    if (config[firstBox[0]][firstBox[1]] === BOX_TYPE.BOX) {
-      config[secondBox[0]][secondBox[1]] = config[firstBox[0]][firstBox[1]];
+
+    // 处理 secondBox
+    if (firsetBoxType === BOX_TYPE.BOX) {
+      if (secondBoxType === BOX_TYPE.ENTRY) {
+        config[secondBox[0]][secondBox[1]] = BOX_TYPE.BOX_ENTRY;
+      } else {
+        config[secondBox[0]][secondBox[1]] = BOX_TYPE.BOX;
+      }
     }
-    config[userRow][userCol] = BOX_TYPE.USER;
-    const curCount = config[row][col] - BOX_TYPE.USER;
-    config[row][col] = curCount;
+
+    if (firsetBoxType === BOX_TYPE.BOX_ENTRY) {
+      config[firstBox[0]][firstBox[1]] = BOX_TYPE.USER_ENTRY;
+    } else {
+      config[firstBox[0]][firstBox[1]] = BOX_TYPE.USER;
+    }
+
+    config[row][col] = config[row][col] - BOX_TYPE.USER;
   }
 };
 

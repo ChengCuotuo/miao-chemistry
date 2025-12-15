@@ -37,6 +37,12 @@ onMounted(() => {
       background.value = '#ffeea3';
       innder.value = '人';
       break;
+    case 5:
+      background.value = '#4a311e';
+      innder.value = '箱';
+    case 7:
+      background.value = '#4a311e';
+      innder.value = '箱';
     default:
       break;
   }
