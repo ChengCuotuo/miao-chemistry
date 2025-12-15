@@ -36,7 +36,7 @@
 
 <script lang="ts" setup>
 import { ref, watchEffect, type HTMLAttributes } from 'vue';
-import { cn } from '../utils/index.js';
+import { cn } from '../../utils/index.js';
 
 interface RippleButtonProps {
   class?: HTMLAttributes['class'];
