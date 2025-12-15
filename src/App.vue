@@ -1,6 +1,6 @@
 <template>
-  <MainBack />
-  <!-- <BoxMain /> -->
+  <!-- <MainBack /> -->
+  <BoxMain />
 </template>
 
 <script setup>
