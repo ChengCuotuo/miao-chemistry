@@ -1,52 +1,67 @@
 <template>
-  <div
-    class="box"
-    :style="{ width: `${META_SIZE}px`, height: `${META_SIZE}px`, background }"
-  >
-    {{ innder }}
-  </div>
+  <img
+    v-if="props.type === BOX_TYPE.EMPTY"
+    src="./static/empty.png"
+    :style="{
+      width: `${META_SIZE}px`,
+      height: `${META_SIZE}px`,
+    }"
+  />
+  <img
+    v-else-if="props.type === BOX_TYPE.WALL"
+    src="./static/wall.png"
+    :style="{
+      width: `${META_SIZE}px`,
+      height: `${META_SIZE}px`,
+    }"
+  />
+  <img
+    v-else-if="props.type === BOX_TYPE.BOX"
+    src="./static/box.png"
+    :style="{
+      width: `${META_SIZE}px`,
+      height: `${META_SIZE}px`,
+    }"
+  />
+  <img
+    v-else-if="props.type === BOX_TYPE.USER"
+    src="./static/user.png"
+    :style="{
+      width: `${META_SIZE}px`,
+      height: `${META_SIZE}px`,
+    }"
+  />
+  <img
+    v-else-if="props.type === BOX_TYPE.ENTRY"
+    src="./static/entry.png"
+    :style="{
+      width: `${META_SIZE}px`,
+      height: `${META_SIZE}px`,
+    }"
+  />
+  <img
+    v-else-if="props.type === BOX_TYPE.BOX_ENTRY"
+    src="./static/box_entry.png"
+    :style="{
+      width: `${META_SIZE}px`,
+      height: `${META_SIZE}px`,
+    }"
+  />
+
+  <img
+    v-else-if="props.type === BOX_TYPE.USER_ENTRY"
+    src="./static/user.png"
+    :style="{
+      width: `${META_SIZE}px`,
+      height: `${META_SIZE}px`,
+    }"
+  />
 </template>
 
 <script setup>
-import { onMounted, ref } from 'vue';
 import { BOX_TYPE, META_SIZE } from './const';
 const props = defineProps({
   type: Number,
-});
-
-let background = ref('#4a311e');
-const innder = ref('');
-onMounted(() => {
-  switch (props.type) {
-    case BOX_TYPE.EMPTY:
-      background.value = '#fff';
-      break;
-    case BOX_TYPE.WALL:
-      background.value = '#798b9c';
-      innder.value = '墙';
-      break;
-    case BOX_TYPE.BOX:
-      background.value = '#4a311e';
-      innder.value = '箱';
-      break;
-    case BOX_TYPE.ENTRY:
-      background.value = '#8c8e00';
-      innder.value = '口';
-      break;
-    case BOX_TYPE.USER:
-      background.value = '#ffeea3';
-      innder.value = '人';
-      break;
-    case BOX_TYPE.BOX_ENTRY:
-      background.value = '#4a311e';
-      innder.value = '箱口';
-      break;
-    case BOX_TYPE.USER_ENTRY:
-      background.value = '#4a311e';
-      innder.value = '人口';
-    default:
-      break;
-  }
 });
 </script>
 

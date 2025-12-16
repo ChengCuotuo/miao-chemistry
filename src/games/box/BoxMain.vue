@@ -144,6 +144,6 @@ onUnmounted(() => {
 
 <style scoped>
 .container {
-  border: 1px solid #eee;
+  user-select: none;
 }
 </style>
