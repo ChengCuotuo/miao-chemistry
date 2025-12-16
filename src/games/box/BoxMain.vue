@@ -95,11 +95,6 @@ const handleMove = (event: KeyboardEvent) => {
   if (updateSuccess) {
     userPosition.value = firstBox;
 
-    /**
-     * 第一个位置：空白、箱子、箱子+入口、入口
-     * 第二个位置：空白、箱子、箱子+入口、入口
-     */
-
     // 箱子移动
     // 当 firstBox 是 Box 需要移动到 secondBox 位置
     if ([BOX_TYPE.BOX, BOX_TYPE.BOX_ENTRY].includes(firsetBoxType)) {
