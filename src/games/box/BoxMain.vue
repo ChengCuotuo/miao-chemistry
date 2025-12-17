@@ -1,6 +1,5 @@
 <template>
-  <BackMusic />
-  <br />
+  <!-- <BackMusic /> -->
   <div
     :style="{ height: `${widthCount}px`, width: `${heightCount}px` }"
     class="container"
