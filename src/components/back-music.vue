@@ -5,7 +5,7 @@
       您的浏览器不支持音频播放。
     </audio>
 
-    <el-space>
+    <el-space size="large">
       <span>背景音乐</span>
       <el-switch
         v-model="isPlaying"
@@ -19,7 +19,7 @@
         :disabled="!isPlaying"
         :show-tooltip="false"
         @change="changeVolume"
-        style="width: 100px"
+        style="width: 300px"
       />
     </el-space>
   </div>

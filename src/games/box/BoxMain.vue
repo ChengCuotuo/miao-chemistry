@@ -1,5 +1,4 @@
 <template>
-  <!-- <BackMusic /> -->
   <div
     :style="{ height: `${widthCount}px`, width: `${heightCount}px` }"
     class="container"
@@ -20,11 +19,10 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, onUnmounted, reactive, ref, toRaw } from 'vue';
+import { onMounted, onUnmounted, reactive, ref } from 'vue';
 import Box from './Box.vue';
 import { BOX_TYPE, META_SIZE } from './const';
 import { gameInfo } from './config';
-import BackMusic from '../../components/BackMusic.vue';
 
 // 0 空白，1 城墙，2 箱子，3 入口，4 小人
 // 叠加状态：5 箱子+入口，7 小人+入口
