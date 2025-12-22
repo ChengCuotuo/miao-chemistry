@@ -564,7 +564,6 @@ onUnmounted(() => {
   display: flex;
   flex-direction: column;
   align-items: center;
-  max-width: 800px;
   width: 100%;
   gap: 25px;
 }
@@ -577,7 +576,7 @@ onUnmounted(() => {
   /* box-shadow: 0 15px 35px rgba(0, 0, 0, 0.5); */
   border: 1px solid rgba(255, 255, 255, 0.1);
   width: 100%;
-  height: 500px;
+  height: 400px;
   overflow: hidden;
 }
 

@@ -51,14 +51,16 @@ const handleReset = () => {
 
 <style scoped>
 .title {
-  padding: 24px 0;
+  padding: 12px 0;
   font-size: 24px;
   font-weight: bold;
   text-align: center;
 }
 .container {
+  position: relative;
+  width: 100%;
   display: flex;
   align-items: center;
-  justify-content: center;
+  justify-content: space-around;
 }
 </style>
