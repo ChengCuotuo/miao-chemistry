@@ -3,17 +3,17 @@
 </template>
 
 <script setup>
-import * as echarts from 'echarts/core'
-import { GridComponent } from 'echarts/components'
-import { LineChart } from 'echarts/charts'
-import { UniversalTransition } from 'echarts/features'
-import { CanvasRenderer } from 'echarts/renderers'
-import { onMounted, ref } from 'vue'
+import * as echarts from 'echarts/core';
+import { GridComponent } from 'echarts/components';
+import { LineChart } from 'echarts/charts';
+import { UniversalTransition } from 'echarts/features';
+import { CanvasRenderer } from 'echarts/renderers';
+import { onMounted, ref } from 'vue';
 
-echarts.use([GridComponent, LineChart, CanvasRenderer, UniversalTransition])
+echarts.use([GridComponent, LineChart, CanvasRenderer, UniversalTransition]);
 
-const chartDom = ref(null)
-const myChart = ref(null)
+const chartDom = ref(null);
+const myChart = ref(null);
 const option = ref({
   xAxis: {
     name: 'V/ml',
@@ -24,8 +24,9 @@ const option = ref({
       fontSize: 20,
     },
     data: [
-      1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26,
-      27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 38, 40,
+      1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21,
+      22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 38,
+      40,
     ],
   },
   yAxis: {
@@ -48,26 +49,26 @@ const option = ref({
       color: '#f94241',
     },
   ],
-})
+});
 
 const updatePHData = (data) => {
-  option.value.series[0].data = [...data]
-  myChart.value.setOption(option.value)
-}
+  option.value.series[0].data = [...data];
+  myChart.value.setOption(option.value);
+};
 
 const reset = () => {
-  option.value.series[0].data = []
-  myChart.value.setOption(option.value)
-}
+  option.value.series[0].data = [];
+  myChart.value.setOption(option.value);
+};
 
-defineExpose({ updatePHData, reset })
+defineExpose({ updatePHData, reset });
 
 onMounted(() => {
   if (chartDom.value) {
-    myChart.value = echarts.init(chartDom.value)
-    myChart.value.setOption(option.value)
+    myChart.value = echarts.init(chartDom.value);
+    myChart.value.setOption(option.value);
   }
-})
+});
 </script>
 
 <style scoped>

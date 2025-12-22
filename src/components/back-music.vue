@@ -25,7 +25,7 @@
   </div>
 </template>
 <script setup lang="ts">
-import { ref } from 'vue';
+import {  ref } from 'vue';
 import { VideoPlay, VideoPause } from '@element-plus/icons-vue';
 
 const backgMusicRef = ref();
