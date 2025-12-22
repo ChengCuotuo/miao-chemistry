@@ -55,12 +55,13 @@ const handleReset = () => {
   font-size: 24px;
   font-weight: bold;
   text-align: center;
+  border-bottom: 1px solid #ccc;
 }
 .container {
-  position: relative;
-  width: 100%;
   display: flex;
   align-items: center;
-  justify-content: space-around;
+  justify-content: center;
+  padding-bottom: 10px;
+  border-bottom: 1px solid #ccc;
 }
 </style>

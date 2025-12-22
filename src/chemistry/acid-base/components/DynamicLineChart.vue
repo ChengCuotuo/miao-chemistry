@@ -16,12 +16,15 @@ const chartDom = ref(null);
 const myChart = ref(null);
 const option = ref({
   xAxis: {
-    name: 'V/ml',
+    name: '酸溶液（V/ml）',
+    nameLocation: 'middle',
     nameTextStyle: {
       fontSize: 20,
     },
+    nameGap: 30,
     axisLabel: {
       fontSize: 20,
+      align: 'center',
     },
     data: [
       1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21,
@@ -75,6 +78,6 @@ onMounted(() => {
 .chart-container {
   width: 100%;
   height: 500px;
-  border: 1px solid #eee;
+  border-left: 1px solid #ccc;
 }
 </style>

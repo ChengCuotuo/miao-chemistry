@@ -1,5 +1,5 @@
 <template>
-  <div class="container">
+  <div class="dynaminc-container">
     <div class="canvas-container">
       <canvas ref="experimentCanvas" width="750" height="470"></canvas>
     </div>
@@ -560,7 +560,7 @@ onUnmounted(() => {
 </script>
 
 <style scoped>
-.container {
+.dynaminc-container {
   display: flex;
   flex-direction: column;
   align-items: center;
