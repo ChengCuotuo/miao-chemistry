@@ -1,5 +1,5 @@
 <template>
-  <div class="title">中和反应与pH曲线模拟实验</div>
+  <div class="title">酸碱中和反应过程中溶液pH的变化</div>
   <div class="container">
     <div style="width: 40%">
       <Dynamic @callback="handleCallback" @reset="handleReset" />
