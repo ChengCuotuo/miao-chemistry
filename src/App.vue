@@ -7,7 +7,8 @@
   <!-- <SystemConfig /> -->
 
   <!-- 中和反应与pH曲线模拟实验 -->
-  <AcidBase />
+  <!-- <AcidBase /> -->
+   <group-points />
 </template>
 
 <script setup>
@@ -16,6 +17,8 @@ import MainBack from './components/main-back/MainBack.vue';
 import SystemConfig from './components/system-config.vue';
 import BoxMain from './games/box/BoxMain.vue';
 import AcidBase from './chemistry/acid-base/index.vue';
+import GroupPoints from './group-points/index.vue';
+
 
 console.log('👋 This message is being logged by "App.vue", included via Vite');
 </script>
