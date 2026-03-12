@@ -8,7 +8,7 @@
       <AcidBase v-if="activeKey === 'ph'" />
       <!-- 推箱子 -->
       <BoxGame v-if="activeKey === 'box'" />
-      <!-- <group-points /> -->
+      <GroupPoints v-if="activeKey === 'points'"/>
     </div>
   </div>
 </template>
@@ -28,6 +28,7 @@ const activeKey = ref('lock');
 const menuItems = ref([
   { key: 'ph', title: '中和反应与pH曲线模拟实验', desc: '中和反应与pH曲线模拟实验', icon: 'TrendCharts' },
   { key: 'box', title: '推箱子', desc: '推箱子游戏', icon: 'Box' },
+  { key: 'points', title: '积分管理', desc: '积分管理', icon: 'Money' },
 ])
 
 const handleMenuClick = (key: string) => {

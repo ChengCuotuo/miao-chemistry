@@ -1,6 +1,7 @@
-import { app, BrowserWindow } from 'electron';
+import { app, BrowserWindow, ipcMain, dialog } from 'electron';
 import path from 'node:path';
 import started from 'electron-squirrel-startup';
+const fs = require('fs').promises; // 使用 promise 版本的 fs 更方便
 
 // Handle creating/removing shortcuts on Windows when installing/uninstalling.
 if (started) {
@@ -54,5 +55,67 @@ app.on('window-all-closed', () => {
   }
 });
 
-// In this file you can include the rest of your app's specific main process
-// code. You can also put them in separate files and import them here.
+// 监听渲染进程发来的 'file-open-dialog' 事件
+ipcMain.handle('file-open-dialog', async (event) => {
+  const result = await dialog.showOpenDialog({
+    properties: ['openFile'],
+  });
+  if (result.canceled) {
+    return null;
+  } else {
+    return result.filePaths[0];
+  }
+});
+
+// 监听渲染进程发来的 'read-file' 事件
+ipcMain.handle('read-file', async (event, filePath) => {
+  try {
+    const content = await fs.readFile(filePath, 'utf-8');
+    return content;
+  } catch (error) {
+    console.error('读取文件失败:', error);
+    throw error; // 将错误抛回给渲染进程
+  }
+});
+
+async function ensureFileExists(filePath, defaultContent = '') {
+  try {
+    // 尝试访问文件
+    await fs.access(filePath, fs.constants.F_OK);
+    console.log('文件已存在');
+    return true;
+  } catch (error) {
+    // 文件不存在，创建它
+    if (error.code === 'ENOENT') {
+      try {
+        // 确保目录存在
+        const dirPath = path.dirname(filePath);
+        await fs.mkdir(dirPath, { recursive: true });
+
+        // 创建文件并写入默认内容
+        await fs.writeFile(filePath, defaultContent, 'utf8');
+        console.log('文件创建成功');
+        return true;
+      } catch (createError) {
+        console.error('创建文件失败:', createError);
+        return false;
+      }
+    } else {
+      // 其他错误（如权限问题）
+      console.error('检查文件时出错:', error);
+      return false;
+    }
+  }
+}
+
+ipcMain.handle('read-group-points-config', async (event) => {
+  const filePath = path.join(__dirname, './group-points.json');
+  try {
+    await ensureFileExists(filePath, '{}');
+    const content = await fs.readFile(filePath, 'utf-8');
+    return content;
+  } catch (error) {
+    console.error('读取文件失败:', error);
+    throw error; // 将错误抛回给渲染进程
+  }
+});
