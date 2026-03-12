@@ -19,6 +19,10 @@ const props = defineProps({
     type: Function,
     default: () => { },
   },
+  onMove: {
+    type: Function,
+    default: (moveCount: number) => { },
+  },
   updateWidth: {
     type: Function,
     default: (width: number) => { },
@@ -35,8 +39,12 @@ const entryCount = ref(0);
 // 统计箱子在出口的个数
 const entrySuccessCount = ref(0);
 
+// 统计游戏宽度和高度
 const widthCount = ref(0);
 const heightCount = ref(0);
+
+// 统计移动次数
+const moveCount = ref(0);
 
 const getUserPosition = () => {
   for (let i = 0; i < config.length; i++) {
@@ -57,6 +65,9 @@ const getUserPosition = () => {
 
 const handleMove = (event: KeyboardEvent) => {
   if (!moveFlag.value) return;
+  moveCount.value += 1;
+  props.onMove(moveCount.value);
+
   const code = event?.code || '';
   const [row, col] = userPosition.value;
 
@@ -131,6 +142,9 @@ const handleMove = (event: KeyboardEvent) => {
 };
 
 const startGame = (index: number) => {
+  moveCount.value = 0;
+  props.onMove(moveCount.value);
+  
   const newConfig = gameInfo[index];
   if (newConfig) {
     widthCount.value = newConfig.length * META_SIZE;
