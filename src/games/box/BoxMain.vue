@@ -143,6 +143,18 @@ const handleMove = (event: KeyboardEvent) => {
   }
 };
 
+const initEntrySuccessCount = (newConfig=[[]]) => {
+  let count = 0;
+  for (let i = 0; i < newConfig.length; i++) {
+    for (let j = 0; j < newConfig[i].length; j++) {
+      if (newConfig[i][j] === BOX_TYPE.BOX_ENTRY) {
+        count += 1;
+      }
+    }
+  }
+  entrySuccessCount.value = count;
+}
+
 const startGame = (index: number) => {
   moveCount.value = 0;
   props.onMove(moveCount.value);
@@ -154,6 +166,7 @@ const startGame = (index: number) => {
   
   if (index < gameInfo.length) {
     const newConfig = JSON.parse(JSON.stringify(gameInfo[index]));
+    initEntrySuccessCount(newConfig);
     widthCount.value = newConfig.length * META_SIZE;
     heightCount.value = newConfig[0].length * META_SIZE;
 
