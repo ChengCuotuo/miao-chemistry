@@ -1,9 +1,7 @@
 <template>
   <div :style="{ height: `${widthCount}px`, width: `${heightCount}px` }" class="container">
-    <div v-for="(row, rowIndex) in config" :key="rowIndex" style="display: flex">
-      <template v-for="(column, colIndex) in row" :key="`${colIndex}_${column}`">
-        <Box :type="column" />
-      </template>
+    <div v-for="(row, rowIndex) in config" :key="`${rowIndex}`" style="display: flex">
+      <Box v-for="(column, colIndex) in row" :key="`${colIndex}_${column}`" :type="column" />
     </div>
   </div>
 </template>
@@ -148,18 +146,22 @@ const handleMove = (event: KeyboardEvent) => {
 const startGame = (index: number) => {
   moveCount.value = 0;
   props.onMove(moveCount.value);
-
-  const newConfig = gameInfo[index];
-  if (newConfig) {
+  // 重置游戏数据
+  moveFlag.value = true;
+  userPosition.value = [0, 0];
+  entryCount.value = 0;
+  entrySuccessCount.value = 0;
+  
+  if (index < gameInfo.length) {
+    const newConfig = JSON.parse(JSON.stringify(gameInfo[index]));
     widthCount.value = newConfig.length * META_SIZE;
     heightCount.value = newConfig[0].length * META_SIZE;
 
-    config.splice(0, newConfig.length, ...newConfig);
+    config.splice(0, config.length, ...newConfig);
     props.updateWidth(widthCount.value);
     setTimeout(() => {
       getUserPosition();
     }, 0);
-    moveFlag.value = true;
   }
 }
 
