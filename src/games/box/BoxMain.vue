@@ -65,10 +65,14 @@ const getUserPosition = () => {
 
 const handleMove = (event: KeyboardEvent) => {
   if (!moveFlag.value) return;
+
+  const code = event?.code || '';
+
+  if (!['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(code)) return;
+
   moveCount.value += 1;
   props.onMove(moveCount.value);
 
-  const code = event?.code || '';
   const [row, col] = userPosition.value;
 
   let updateSuccess = true;
@@ -144,7 +148,7 @@ const handleMove = (event: KeyboardEvent) => {
 const startGame = (index: number) => {
   moveCount.value = 0;
   props.onMove(moveCount.value);
-  
+
   const newConfig = gameInfo[index];
   if (newConfig) {
     widthCount.value = newConfig.length * META_SIZE;
