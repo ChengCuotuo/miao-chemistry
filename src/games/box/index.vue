@@ -17,7 +17,7 @@
 				<el-button type="default" style="background-color: #72dcf6; color: #fff;" :icon="Right" circle @click="handleNext" />
 			</el-space>
 		</div>
-		<div style="border: 1px solid #72dcf6; ">
+		<div style="border: 1px solid #72dcf6; margin-top: 10px;">
 			<BoxMain ref="boxMainRef" :gameIndex="gameIndex" :onMove="onMove" :onSuccess="onSuccess"
 				:updateWidth="updateWidth" />
 		</div>
