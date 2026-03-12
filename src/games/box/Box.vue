@@ -64,10 +64,3 @@ const props = defineProps({
   type: Number,
 });
 </script>
-
-<style lang="scss" scoped>
-.box {
-  line-height: 60px;
-  text-align: center;
-}
-</style>

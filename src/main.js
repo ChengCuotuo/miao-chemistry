@@ -26,7 +26,7 @@ const createWindow = () => {
     );
   }
 
-  // Open the DevTools.
+  // 打开开发者工具
   mainWindow.webContents.openDevTools();
 };
 

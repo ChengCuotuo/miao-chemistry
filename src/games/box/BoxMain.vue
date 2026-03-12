@@ -1,17 +1,7 @@
 <template>
-  <div
-    :style="{ height: `${widthCount}px`, width: `${heightCount}px` }"
-    class="container"
-  >
-    <div
-      v-for="(row, rowIndex) in config"
-      :key="rowIndex"
-      style="display: flex"
-    >
-      <template
-        v-for="(column, colIndex) in row"
-        :key="`${colIndex}_${column}`"
-      >
+  <div :style="{ height: `${widthCount}px`, width: `${heightCount}px` }" class="container">
+    <div v-for="(row, rowIndex) in config" :key="rowIndex" style="display: flex">
+      <template v-for="(column, colIndex) in row" :key="`${colIndex}_${column}`">
         <Box :type="column" />
       </template>
     </div>
@@ -19,14 +9,25 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, onUnmounted, reactive, ref } from 'vue';
+import { onMounted, onUnmounted, reactive, ref, watch } from 'vue';
 import Box from './Box.vue';
 import { BOX_TYPE, META_SIZE } from './const';
 import { gameInfo } from './config';
 
+const props = defineProps({
+  onSuccess: {
+    type: Function,
+    default: () => { },
+  },
+  updateWidth: {
+    type: Function,
+    default: (width: number) => { },
+  },
+});
+
 // 0 空白，1 城墙，2 箱子，3 入口，4 小人
 // 叠加状态：5 箱子+入口，7 小人+入口
-const config = reactive(gameInfo[1]);
+const config = reactive([[0]]);
 
 const moveFlag = ref(true);
 const userPosition = ref([0, 0]);
@@ -34,8 +35,8 @@ const entryCount = ref(0);
 // 统计箱子在出口的个数
 const entrySuccessCount = ref(0);
 
-const widthCount = config.length * META_SIZE;
-const heightCount = config[0].length * META_SIZE;
+const widthCount = ref(0);
+const heightCount = ref(0);
 
 const getUserPosition = () => {
   for (let i = 0; i < config.length; i++) {
@@ -124,14 +125,36 @@ const handleMove = (event: KeyboardEvent) => {
 
     if (entryCount.value === entrySuccessCount.value) {
       moveFlag.value = false;
+      props.onSuccess();
     }
   }
 };
 
+const startGame = (index: number) => {
+  const newConfig = gameInfo[index];
+  if (newConfig) {
+    widthCount.value = newConfig.length * META_SIZE;
+    heightCount.value = newConfig[0].length * META_SIZE;
+
+    config.splice(0, newConfig.length, ...newConfig);
+    props.updateWidth(widthCount.value);
+    setTimeout(() => {
+      getUserPosition();
+    }, 0);
+    moveFlag.value = true;
+  }
+}
+
+defineExpose({
+  startGame,
+});
+
 onMounted(() => {
   getUserPosition();
+  props.updateWidth(widthCount);
   window.addEventListener('keydown', handleMove);
 });
+
 onUnmounted(() => {
   window.removeEventListener('keydown', handleMove);
 });
