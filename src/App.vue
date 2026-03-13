@@ -22,7 +22,7 @@ import AcidBase from './chemistry/acid-base/index.vue';
 import GroupPoints from './group-points/index.vue';
 import StickyNav from './components/StickyNav.vue';
 
-const activeKey = ref('lock');
+const activeKey = ref('points');
 
 // 菜单项数据
 const menuItems = ref([
