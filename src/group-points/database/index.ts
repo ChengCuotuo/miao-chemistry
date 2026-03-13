@@ -21,10 +21,6 @@ export const GroupPointsConfig = {
 	suffix: '.json',
 };
 
-export const getTablePath = (table: string) => {
-	return [GroupPointsConfig.database, `${table}${GroupPointsConfig.suffix}`].join('/');
-}
-
 export async function loadGroupPointsConfig() {
 	try {
 		const mainConfig = await curWindow.electronAPI.loadConfigFromFile({
@@ -60,16 +56,5 @@ export async function loadGroupPointsConfig() {
 		}
 	} catch (error) {
 		console.error('读取文件出错:', error);
-	}
-}
-
-export async function writeIntoTable(table: string, content: string) {
-	try {
-		await curWindow.electronAPI.writeFile({
-			filePath: getTablePath(table),
-			content,
-		});
-	} catch (error) {
-		console.error('写入文件出错:', error);
 	}
 }

@@ -1,10 +1,10 @@
 export class StudentGroup {
-	id: number;
-	student_id: number;
-	group_id: number;
-	grade_id: number;
+	id: string;
+	student_id: string;
+	group_id: string;
+	grade_id: string;
 
-	constructor(params: { id: number, student_id: number, group_id: number, grade_id: number }) {
+	constructor(params: { id: string, student_id: string, group_id: string, grade_id: string }) {
 		this.id = params.id;
 		this.student_id = params.student_id;
 		this.group_id = params.group_id;

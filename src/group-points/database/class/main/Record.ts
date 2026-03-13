@@ -6,17 +6,17 @@
 //   - 记录时间 - time
 
 export class Record {
-	id: number;
-	grade_id: number;
+	id: string;
+	grade_id: string;
 	grade_name: string;
-	student_id: number;
+	student_id: string;
 	student_name: string;
-	rule_id: number;
+	rule_id: string;
 	rule_name: string;
 	points: number;
 	time: Date;
 
-	constructor(params: { id: number, grade_id: number, grade_name: string, student_id: number, student_name: string, rule_id: number, rule_name: string, points: number, time: Date }) {
+	constructor(params: { id: string, grade_id: string, grade_name: string, student_id: string, student_name: string, rule_id: string, rule_name: string, points: number, time: Date }) {
 		this.id = params.id;
 		this.grade_id = params.grade_id;
 		this.grade_name = params.grade_name;

@@ -3,7 +3,7 @@ import { Student } from './Student';
 import { StudentGroup } from './StudentGroup';
 
 export class Grade {
-	id: number;
+	id: string;
 	name: string;
 	gradeInfo: {
 		groupList: Group[];
@@ -12,7 +12,7 @@ export class Grade {
 	};
 
 	constructor(grade: {
-		id: number;
+		id: string;
 		name: string;
 		gradeInfo: {
 			groupList: Group[];

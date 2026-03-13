@@ -6,13 +6,13 @@
 //   - 积分值 - points
 
 export class Rule {
-	id: number;
+	id: string;
 	name: string;
 	description: string;
 	points: number;
-	allow_grades: number[];
+	allow_grades: string[];
 
-	constructor(params: { id: number, name: string, description: string, points: number, allow_grades: number[] }) {
+	constructor(params: { id: string, name: string, description: string, points: number, allow_grades: string[] }) {
 		this.id = params.id;
 		this.name = params.name;
 		this.description = params.description;

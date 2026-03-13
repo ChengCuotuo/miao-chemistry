@@ -1,9 +1,9 @@
 export class Group {
-	id: number;
+	id: string;
 	name: string;
-	grade_id: number;
+	grade_id: string;
 
-	constructor(params: { id: number, name: string, grade_id: number }) {
+	constructor(params: { id: string, name: string, grade_id: string }) {
 		this.id = params.id;
 		this.name = params.name;
 		this.grade_id = params.grade_id;
