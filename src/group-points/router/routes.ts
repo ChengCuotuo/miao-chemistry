@@ -1,5 +1,3 @@
-import { Edit } from '@element-plus/icons-vue';
-
 export const routes = [
 	{
 		path: '/',
