@@ -27,7 +27,6 @@ import Header from './components/Header/index.vue'
 	display: flex;
 
 	.left {
-		width: 200px;
 		height: 100%;
 	}
 
@@ -41,6 +40,8 @@ import Header from './components/Header/index.vue'
 
 		.content {
 			height: calc(100% - 40px);
+			background-color:#f6f7fa;
+			padding: 10px;
 		}
 	}
 }
