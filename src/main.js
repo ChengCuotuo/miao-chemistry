@@ -55,6 +55,9 @@ app.on('window-all-closed', () => {
   }
 });
 
+// ===============================================================================================
+const userDataPath = app.getPath('userData');
+
 // 监听渲染进程发来的 'file-open-dialog' 事件
 ipcMain.handle('file-open-dialog', async (event) => {
   const result = await dialog.showOpenDialog({
@@ -70,7 +73,10 @@ ipcMain.handle('file-open-dialog', async (event) => {
 // 监听渲染进程发来的 'read-file' 事件
 ipcMain.handle('read-file', async (event, filePath) => {
   try {
-    const content = await fs.readFile(filePath, 'utf-8');
+    const content = await fs.readFile(
+      path.join(userDataPath, filePath),
+      'utf-8',
+    );
     return content;
   } catch (error) {
     console.error('读取文件失败:', error);
@@ -78,6 +84,41 @@ ipcMain.handle('read-file', async (event, filePath) => {
   }
 });
 
+// 监听渲染进程发来的 'load-config-list' 事件
+ipcMain.handle('load-config-list', async (event, params) => {
+  const {
+    mainPath,
+    fileList = [],
+    suffix = '.json',
+    defaultContent = '{}',
+  } = params || {};
+  if (!mainPath || fileList.length === 0) {
+    return {};
+  } else {
+    try {
+      const allFileInfos = await Promise.all(
+        fileList.map(async (fileName) => {
+          const filePath = path.join(userDataPath, mainPath, fileName + suffix);
+          await ensureFileExists(filePath, defaultContent);
+          const content = await fs.readFile(filePath, 'utf-8');
+          return {
+            fileName,
+            content,
+          };
+        }),
+      );
+      return (allFileInfos || []).reduce((prev, cur) => {
+        prev[cur.fileName] = cur.content;
+        return prev;
+      }, {});
+    } catch (error) {
+      console.error('读取文件失败:', error);
+      throw error; // 将错误抛回给渲染进程
+    }
+  }
+});
+
+// 确保文件存在，不存在则创建
 async function ensureFileExists(filePath, defaultContent = '') {
   try {
     // 尝试访问文件
@@ -108,14 +149,19 @@ async function ensureFileExists(filePath, defaultContent = '') {
   }
 }
 
-ipcMain.handle('read-group-points-config', async (event) => {
-  const filePath = path.join(__dirname, './group-points.json');
-  try {
-    await ensureFileExists(filePath, '{}');
-    const content = await fs.readFile(filePath, 'utf-8');
-    return content;
-  } catch (error) {
-    console.error('读取文件失败:', error);
-    throw error; // 将错误抛回给渲染进程
+// 写入文件
+ipcMain.handle('write-file', async (event, params) => {
+  const { filePath, content = '' } = params || {};
+  if (!filePath) {
+    return false;
+  } else {
+    try {
+      await fs.writeFile(path.join(userDataPath, filePath), content, 'utf8');
+      console.log('文件写入成功');
+      return true;
+    } catch (error) {
+      console.error('写入文件失败:', error);
+      return false;
+    }
   }
 });

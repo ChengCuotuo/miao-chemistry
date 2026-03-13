@@ -1,0 +1,47 @@
+// - 积分记录 - record
+//   - id - id
+//   - 学生id - student_id
+//   - 规则id - rule_id
+//   - 积分值 - points
+//   - 记录时间 - time
+
+export class Record {
+	id: number;
+	grade_id: number;
+	grade_name: string;
+	student_id: number;
+	student_name: string;
+	rule_id: number;
+	rule_name: string;
+	points: number;
+	time: Date;
+
+	constructor(params: { id: number, grade_id: number, grade_name: string, student_id: number, student_name: string, rule_id: number, rule_name: string, points: number, time: Date }) {
+		this.id = params.id;
+		this.grade_id = params.grade_id;
+		this.grade_name = params.grade_name;
+		this.student_id = params.student_id;
+		this.student_name = params.student_name;
+		this.rule_id = params.rule_id;
+		this.rule_name = params.rule_name;
+		this.points = params.points;
+		this.time = params.time;
+		this.grade_id = params.grade_id;
+	}
+	toJSON() {
+		return {
+			id: this.id,
+			student_id: this.student_id,
+			student_name: this.student_name,
+			rule_id: this.rule_id,
+			points: this.points,
+			time: this.time,
+			grade_id: this.grade_id,
+			grade_name: this.grade_name,
+		}
+	}
+
+	toString() {
+		return JSON.stringify(this.toJSON());
+	}
+}
