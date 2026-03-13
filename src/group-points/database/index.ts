@@ -7,6 +7,20 @@ import {
 	Student,
 	StudentGroup
 } from './class';
+export interface DatabaseInfoType {
+	gradeList: {
+		gradeInfo: {
+			groupList: Group[];
+			studentList: Student[];
+			studentGroupList: StudentGroup[];
+		};
+		id: string;
+		name: string;
+	}[];
+	ruleList: Rule[];
+	prizeList: Prize[];
+	recordList: Record[];
+}
 
 export const curWindow = window as any;
 
@@ -45,7 +59,7 @@ export async function loadGroupPointsConfig() {
 			defaultContent: '{"groupList": [], "studentList": [], "studentGroupList": []}',
 		})
 
-		return {
+		const data: DatabaseInfoType = {
 			gradeList: gradeList.map(grade => ({
 				...grade,
 				gradeInfo: JSON.parse(allGrades[`${SUFFIX}}-${grade.id}`]) as { groupList: Group[], studentList: Student[], studentGroupList: StudentGroup[] },
@@ -54,6 +68,7 @@ export async function loadGroupPointsConfig() {
 			prizeList,
 			recordList,
 		}
+		return data
 	} catch (error) {
 		console.error('读取文件出错:', error);
 	}
