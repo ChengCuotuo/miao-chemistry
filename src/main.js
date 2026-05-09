@@ -122,6 +122,7 @@ ipcMain.handle('load-config-list', async (event, params) => {
 async function ensureFileExists(filePath, defaultContent = '') {
   try {
     // 尝试访问文件
+    console.log('尝试访问文件:', filePath);
     await fs.access(filePath, fs.constants.F_OK);
     console.log('文件已存在');
     return true;
@@ -151,17 +152,17 @@ async function ensureFileExists(filePath, defaultContent = '') {
 
 // 写入文件
 ipcMain.handle('write-file', async (event, params) => {
-  const { filePath, content = '' } = params || {};
-  if (!filePath) {
+  const { mainPath, fileName, suffix, content = '' } = params || {};
+  try {
+    await fs.writeFile(
+      path.join(userDataPath, mainPath, fileName + suffix),
+      content,
+      'utf8',
+    );
+    console.log('文件写入成功');
+    return true;
+  } catch (error) {
+    console.error('写入文件失败:', error);
     return false;
-  } else {
-    try {
-      await fs.writeFile(path.join(userDataPath, filePath), content, 'utf8');
-      console.log('文件写入成功');
-      return true;
-    } catch (error) {
-      console.error('写入文件失败:', error);
-      return false;
-    }
   }
 });

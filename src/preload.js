@@ -11,7 +11,6 @@ contextBridge.exposeInMainWorld('electronAPI', {
   // 从文件加载配置列表
   loadConfigFromFile: (params) =>
     ipcRenderer.invoke('load-config-list', params),
-
-  writeFile: (filePath, content) =>
+  writeConfigToFile: (filePath, content) =>
     ipcRenderer.invoke('write-file', filePath, content),
 });
