@@ -1,10 +1,16 @@
 <template>
 	<div class="grade-list-container">
-		<el-card shadow="hover" style="width: 160px; height: 200px;" v-for="grade in gradeList" :key="grade.id"
+		<el-card shadow="hover" style="width: 160px; height: 200px;" v-for="grade in validGradeList" :key="grade.id"
 			@click="handleClick(grade)">
 			<div style="height: 100%; width: 100%; display: flex; justify-content: center; align-items: center;">
 				<h4>{{ grade.name }}</h4>
 			</div>
+			<template #footer>
+				<el-space style="width: 100%; justify-content: space-around; ">
+					<el-button type="primary" :icon="Edit" circle @click="handleEditGrade(grade)"/>
+					<el-button type="danger" :icon="Delete" circle @click="handleDeleteGrade(grade.id)"/>
+				</el-space>
+			</template>
 		</el-card>
 		<el-card shadow="hover" style="width: 160px; height: 200px;" @click="handleAddGrade">
 			<div style="height: 100%; width: 100%; display: flex; justify-content: center; align-items: center;">
@@ -15,7 +21,7 @@
 		</el-card>
 	</div>
 
-	<el-dialog v-model="dialogVisible" title="新增班级" width="400px">
+	<el-dialog v-model="dialogVisible" :title="isEditMode ? '编辑班级' : '新增班级'" width="400px">
 		<el-form ref="formRef" :model="form" label-width="80px" :rules="rules">
 			<el-form-item label="班级名称" prop="name">
 				<el-input v-model="form.name" placeholder="请输入班级名称" />
@@ -32,18 +38,23 @@
 import { ref, reactive } from 'vue';
 import { DatabaseInfoType } from '../database';
 import { useAppStore } from '../store/models/app';
-import { FormRules, FormInstance, ElMessage } from 'element-plus';
+import { FormRules, FormInstance, ElMessage, ElMessageBox } from 'element-plus';
 import { useGrade } from '../database/utils/useGrade';
+import { Delete, Edit } from '@element-plus/icons-vue';
+import { computed } from 'vue';
 
 interface RuleForm {
   name: string
 }
 
 const appStore = useAppStore();
-const { createGrade } = useGrade();
+const { createGrade, deleteGrade, updateGrade } = useGrade();
 const gradeList = appStore.database.gradeList;
+const validGradeList = computed(() => gradeList.filter(item => item.delete === 0));
 
 const dialogVisible = ref(false);
+const isEditMode = ref(false);
+const currentEditId = ref('');
 const formRef = ref<FormInstance>()
 const form = reactive<RuleForm>({
 	name: ''
@@ -59,8 +70,35 @@ const handleClick = (grade: DatabaseInfoType['gradeList'][0]) => {
 }
 
 const handleAddGrade = () => {
+	isEditMode.value = false;
 	form.name = '';
 	dialogVisible.value = true;
+}
+
+const handleEditGrade = (grade: DatabaseInfoType['gradeList'][0]) => {
+	isEditMode.value = true;
+	currentEditId.value = grade.id;
+	form.name = grade.name;
+	dialogVisible.value = true;
+}
+
+const handleDeleteGrade = async (id: string) => {
+	try {
+		await ElMessageBox.confirm('确定要删除该班级吗？', '提示', {
+			confirmButtonText: '确定',
+			cancelButtonText: '取消',
+			type: 'warning'
+		});
+		
+		const res = await deleteGrade(id);
+		if (res) {
+			ElMessage.success('删除班级成功');
+		} else {
+			ElMessage.error('删除班级失败');
+		}
+	} catch (error) {
+		console.log('取消删除');
+	}
 }
 
 const handleSubmit = async (formEl: FormInstance | undefined) => {
@@ -68,9 +106,25 @@ const handleSubmit = async (formEl: FormInstance | undefined) => {
 	const data = await formEl.validate();
 	if (data) {
 		const gradeName = form.name;
-		const res = await createGrade(gradeName);
-		if(res) {
-			ElMessage.success('新增班级成功');
+		let res;
+		
+		if (isEditMode.value) {
+			res = await updateGrade(currentEditId.value, gradeName);
+			if (res) {
+				ElMessage.success('编辑班级成功');
+			} else {
+				ElMessage.error('编辑班级失败');
+			}
+		} else {
+			res = await createGrade(gradeName);
+			if (res) {
+				ElMessage.success('新增班级成功');
+			} else {
+				ElMessage.error('新增班级失败');
+			}
+		}
+		
+		if (res) {
 			dialogVisible.value = false;
 		}
 	}

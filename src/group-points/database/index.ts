@@ -16,6 +16,7 @@ export interface DatabaseInfoType {
 		};
 		id: string;
 		name: string;
+		delete: number;
 	}[];
 	ruleList: Rule[];
 	prizeList: Prize[];
