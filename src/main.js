@@ -70,13 +70,18 @@ ipcMain.handle('file-open-dialog', async (event) => {
   }
 });
 
-// 监听渲染进程发来的 'read-file' 事件
-ipcMain.handle('read-file', async (event, filePath) => {
+// 监听渲染进程发来的 'load-file' 事件
+ipcMain.handle('load-file', async (event, params) => {
+  const {
+    mainPath,
+    fileName,
+    suffix = '.json',
+    defaultContent = '{}',
+  } = params || {};
   try {
-    const content = await fs.readFile(
-      path.join(userDataPath, filePath),
-      'utf-8',
-    );
+    const filePath = path.join(userDataPath, mainPath, fileName + suffix);
+    await ensureFileExists(filePath, defaultContent);
+    const content = await fs.readFile(filePath, 'utf-8');
     return content;
   } catch (error) {
     console.error('读取文件失败:', error);

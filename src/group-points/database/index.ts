@@ -62,20 +62,28 @@ export async function loadGroupPointsConfig() {
 		const prizeList: Prize[] = JSON.parse(prize) || [];
 		const recordList: Record[] = JSON.parse(record) || [];
 
+		// TODO Grade 具体信息，不放到外层加载，放到每个班级的配置文件中加载
 		// 加载具体班级配置，根据 gradeList 中的 id 加载对应的配置文件，设置默认信息
 		// groupList 分组信息、studentList 学生、studentGroupList 学生分组
-		const allGrades = await curWindow.electronAPI.loadConfigFromFile({
-			mainPath: GroupPointsConfig.database,
-			fileList: gradeList.map((item: any) => `${DEFAULT_TABLE_NAME.grade}-${item.id}`),
-			suffix: GroupPointsConfig.suffix,
-			defaultContent: '{"groupList": [], "studentList": [], "studentGroupList": []}',
-		})
+		// const allGrades = await curWindow.electronAPI.loadConfigFromFile({
+		// 	mainPath: GroupPointsConfig.database,
+		// 	fileList: gradeList.map((item: any) => `${DEFAULT_TABLE_NAME.grade}-${item.id}`),
+		// 	suffix: GroupPointsConfig.suffix,
+		// 	defaultContent: '{"groupList": [], "studentList": [], "studentGroupList": []}',
+		// })
+
+		// const data: DatabaseInfoType = {
+		// 	gradeList: gradeList.map(grade => ({
+		// 		...grade,
+		// 		gradeInfo: JSON.parse(allGrades[`${DEFAULT_TABLE_NAME.grade}-${grade.id}`]) as { groupList: Group[], studentList: Student[], studentGroupList: StudentGroup[] },
+		// 	})),
+		// 	ruleList,
+		// 	prizeList,
+		// 	recordList,
+		// }
 
 		const data: DatabaseInfoType = {
-			gradeList: gradeList.map(grade => ({
-				...grade,
-				gradeInfo: JSON.parse(allGrades[`${DEFAULT_TABLE_NAME.grade}-${grade.id}`]) as { groupList: Group[], studentList: Student[], studentGroupList: StudentGroup[] },
-			})),
+			gradeList,
 			ruleList,
 			prizeList,
 			recordList,
@@ -101,6 +109,15 @@ export async function saveGradeInfo(gradeId: string, content: string) {
 		fileName: `${DEFAULT_TABLE_NAME.grade}-${gradeId}`,
 		suffix: GroupPointsConfig.suffix,
 		content
+	});
+}
+
+export async function loadGradeInfoById(gradeId: string) {
+	return await curWindow.electronAPI.loadFile({
+		mainPath: GroupPointsConfig.database,
+		fileName: `${DEFAULT_TABLE_NAME.grade}-${gradeId}`,
+		suffix: GroupPointsConfig.suffix,
+		defaultContent: '{"groupList": [], "studentList": [], "studentGroupList": []}',
 	});
 }
 

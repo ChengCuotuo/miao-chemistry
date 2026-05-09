@@ -48,7 +48,7 @@ interface RuleForm {
 }
 
 const appStore = useAppStore();
-const { createGrade, deleteGrade, updateGrade } = useGrade();
+const { createGrade, deleteGrade, updateGrade, getGradeInfoById } = useGrade();
 const gradeList = appStore.database.gradeList;
 const validGradeList = computed(() => gradeList.filter(item => item.delete === 0));
 
@@ -65,8 +65,10 @@ const rules = reactive<FormRules<RuleForm>>({
 	]
 });
 
-const handleClick = (grade: DatabaseInfoType['gradeList'][0]) => {
+const handleClick = async(grade: DatabaseInfoType['gradeList'][0]) => {
 	console.log(grade);
+	const gradeInfo = await getGradeInfoById(grade.id);
+	console.log(gradeInfo);
 }
 
 const handleAddGrade = () => {

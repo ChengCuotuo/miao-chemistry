@@ -7,7 +7,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   // 打开文件选择对话框
   openFileDialog: () => ipcRenderer.invoke('file-open-dialog'),
   // 读取文件内容
-  readFile: (filePath) => ipcRenderer.invoke('read-file', filePath),
+  loadFile: (params) => ipcRenderer.invoke('load-file', params),
   // 从文件加载配置列表
   loadConfigFromFile: (params) =>
     ipcRenderer.invoke('load-config-list', params),
