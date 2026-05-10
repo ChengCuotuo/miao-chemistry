@@ -1,6 +1,6 @@
 import { appendGradeConfig, DatabaseInfoType, loadGradeInfoById, saveGradeInfo } from "..";
 import { useAppStore } from "../../store/models/app";
-import { Grade, Group, Student, StudentGroup } from "../class"
+import { Grade } from "../class"
 import { v4 as uuidv4 } from 'uuid';
 
 export const useGrade = () => {
@@ -18,6 +18,12 @@ export const useGrade = () => {
 					studentList: [],
 					studentGroupList: [],
 					recordList: [],
+					indexMap: {
+						group: 0,
+						student: 0,
+						studentGroup: 0,
+						record: 0,
+					}
 				},
 				delete: 0
 			})
@@ -74,15 +80,21 @@ export const useGrade = () => {
 	// 获取班级配置信息
 	const getGradeInfoById = async (gradeId: string) => {
 		const gradeInfo = await loadGradeInfoById(gradeId);
-		const data = JSON.parse(gradeInfo) as Grade['gradeInfo']
+		const data = JSON.parse(gradeInfo) as Grade
 		const target = appStore.database.gradeList.find(item => item.id === gradeId)
 		if (!target) {
 			console.error('班级不存在:', gradeId);
 			return null
 		}
-		target.gradeInfo = data;
+		target.gradeInfo = data.gradeInfo;
+		target.delete = data.delete;
+		target.name = data.name;
 		return target as DatabaseInfoType['gradeList'][0]
 	}
 
-	return { createGrade, deleteGrade, updateGrade, getGradeInfoById }
+	const updateGradeInfoById = async (gradeId: string, gradeInfo: DatabaseInfoType['gradeList'][0]) => {
+		await saveGradeInfo(gradeId, JSON.stringify(gradeInfo));
+	}
+
+	return { createGrade, deleteGrade, updateGrade, getGradeInfoById, updateGradeInfoById }
 }

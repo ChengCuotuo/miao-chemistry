@@ -29,6 +29,22 @@ const createWindow = () => {
 
   // 打开开发者工具
   mainWindow.webContents.openDevTools();
+
+  // 禁用刷新
+  mainWindow.webContents.on('before-input-event', (event, input) => {
+    // 判断 Ctrl/Cmd + R
+    if (input.control && input.key.toLowerCase() === 'r') {
+      event.preventDefault();
+    }
+    // 判断 F5 刷新
+    if (input.key === 'F5') {
+      event.preventDefault();
+    }
+    // 可选：同时禁用强制刷新 Ctrl/Cmd + Shift + R
+    if (input.control && input.shift && input.key.toLowerCase() === 'r') {
+      event.preventDefault();
+    }
+  });
 };
 
 // This method will be called when Electron has finished

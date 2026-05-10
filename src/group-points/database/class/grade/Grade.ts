@@ -12,6 +12,12 @@ export class Grade {
 		studentList: Student[];
 		studentGroupList: StudentGroup[];
 		recordList: PrizeRecord[];
+		indexMap: {
+			group: number,
+			student: number,
+			studentGroup: number,
+			record: number,
+		}
 	};
 
 	constructor(grade: {
@@ -23,6 +29,12 @@ export class Grade {
 			studentList: Student[];
 			studentGroupList: StudentGroup[];
 			recordList: PrizeRecord[];
+			indexMap: {
+				group: number,
+				student: number,
+				studentGroup: number,
+				record: number,
+			}
 		};
 	}) {
 		this.id = grade.id;

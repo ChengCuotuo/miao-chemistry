@@ -14,6 +14,12 @@ export interface DatabaseInfoType {
 			studentList: Student[];
 			studentGroupList: StudentGroup[];
 			recordList: PrizeRecord[];
+			indexMap: {
+				group: number,
+				student: number,
+				studentGroup: number,
+				record: number,
+			}
 		};
 		id: string;
 		name: string;
@@ -93,7 +99,7 @@ export async function loadGradeInfoById(gradeId: string) {
 		mainPath: GroupPointsConfig.database,
 		fileName: `${DEFAULT_TABLE_NAME.grade}-${gradeId}`,
 		suffix: GroupPointsConfig.suffix,
-		defaultContent: '{"groupList": [], "studentList": [], "studentGroupList": [], "recordList": []}',
+		defaultContent: '{"groupList": [], "studentList": [], "studentGroupList": [], "recordList": [], "indexMap": {"group": 0, "student": 0, "studentGroup": 0, "record": 0}}',
 	});
 }
 

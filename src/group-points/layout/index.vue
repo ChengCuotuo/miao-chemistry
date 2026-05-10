@@ -3,7 +3,7 @@
 		<div class="left">
 			<Menu style="height: 100%;"></Menu>
 		</div>
-		<div class="right">
+		<div class="right" :style="{ width: isCollapse ? 'calc(100% - 64px)' : 'calc(100% - 160px)' }">
 			<div class="content">
 				<router-view></router-view>
 			</div>
@@ -12,7 +12,11 @@
 </template>
 
 <script setup lang="ts">
+import { computed } from 'vue';
+import { useAppStore } from '../store/models/app';
 import Menu from './components/Menu/index.vue'
+const appStore = useAppStore();
+const isCollapse = computed(() => appStore.isCollapse);
 </script>
 
 <style scoped lang="scss">
@@ -28,7 +32,6 @@ import Menu from './components/Menu/index.vue'
 
 	.right {
 		height: 100%;
-		flex: 1;
 
 		.header {
 			height: 40px;
