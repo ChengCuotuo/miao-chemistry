@@ -7,6 +7,9 @@
     text-color="#fff"
     :collapse="appStore.isCollapse"
   >
+    <div v-if="activeGrade" style="color: #fff; text-align: center; padding: 10px 0px;">
+      <h2>{{ activeGrade.name }}</h2>
+    </div>
     <template v-for="route in routes" :key="route.name">
       <template
         v-if="Array.isArray(route.children) && route.children.length > 0"
@@ -47,8 +50,11 @@ import { useRouter } from 'vue-router';
 import { routes } from '../../../router/routes';
 const router = useRouter();
 import { useAppStore } from '../../../store/models/app';
+import { computed } from 'vue';
 
 const appStore = useAppStore();
+
+const activeGrade = computed(() => appStore.activeGrade);
 
 const handleClick = (route: any) => {
   router.push({ name: route.name });

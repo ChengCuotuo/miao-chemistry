@@ -35,7 +35,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive } from 'vue';
+import { ref, reactive, onMounted } from 'vue';
 import { DatabaseInfoType } from '../database';
 import { useAppStore } from '../store/models/app';
 import { FormRules, FormInstance, ElMessage, ElMessageBox } from 'element-plus';
@@ -65,10 +65,16 @@ const rules = reactive<FormRules<RuleForm>>({
 	]
 });
 
+onMounted(() => {
+	// 初始化时，将 activeGrade 设置为 undefined
+	appStore.setActiveGrade(undefined);
+})
+
 const handleClick = async(grade: DatabaseInfoType['gradeList'][0]) => {
-	console.log(grade);
 	const gradeInfo = await getGradeInfoById(grade.id);
-	console.log(gradeInfo);
+	if (gradeInfo) {
+		appStore.setActiveGrade(gradeInfo);
+	}
 }
 
 const handleAddGrade = () => {

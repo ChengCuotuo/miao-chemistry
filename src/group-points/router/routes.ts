@@ -3,7 +3,7 @@ export const routes = [
 		path: '/',
 		component: () => import('../view/HomeView.vue'),
 		name: 'home',
-		meta: { hide: false, title: '班级管理', icon: 'HomeFilled' },
+		meta: { hide: false, title: '所有班级', icon: 'HomeFilled' },
 	},
 	{
 		path: "/base",
@@ -23,5 +23,5 @@ export const routes = [
 				meta: { hide: false, title: '规则设置', icon: 'Setting' },
 			}
 		]
-	}
+	},
 ];
