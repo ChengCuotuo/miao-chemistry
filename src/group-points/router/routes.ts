@@ -24,4 +24,10 @@ export const routes = [
 			}
 		]
 	},
+	{
+		path: '/grade',
+		component: () => import('../view/grade/index.vue'),
+		name: 'grade',
+		meta: { hide: true },
+	},
 ];

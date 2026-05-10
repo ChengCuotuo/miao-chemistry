@@ -42,12 +42,14 @@ import { FormRules, FormInstance, ElMessage, ElMessageBox } from 'element-plus';
 import { useGrade } from '../database/utils/useGrade';
 import { Delete, Edit } from '@element-plus/icons-vue';
 import { computed } from 'vue';
+import { useRouter } from 'vue-router';
 
 interface RuleForm {
   name: string
 }
 
 const appStore = useAppStore();
+const router = useRouter();
 const { createGrade, deleteGrade, updateGrade, getGradeInfoById } = useGrade();
 const gradeList = appStore.database.gradeList;
 const validGradeList = computed(() => gradeList.filter(item => item.delete === 0));
@@ -74,6 +76,8 @@ const handleClick = async(grade: DatabaseInfoType['gradeList'][0]) => {
 	const gradeInfo = await getGradeInfoById(grade.id);
 	if (gradeInfo) {
 		appStore.setActiveGrade(gradeInfo);
+		appStore.setIsCollapse(true);
+		router.push({ name: 'grade' });
 	}
 }
 
