@@ -3,7 +3,7 @@ export const routes = [
 		path: '/',
 		component: () => import('../view/HomeView.vue'),
 		name: 'home',
-		meta: { hide: false, title: '首页', icon: 'HomeFilled' },
+		meta: { hide: false, title: '班级管理', icon: 'HomeFilled' },
 	},
 	{
 		path: "/base",

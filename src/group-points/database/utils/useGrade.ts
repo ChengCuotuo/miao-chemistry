@@ -5,6 +5,8 @@ import { v4 as uuidv4 } from 'uuid';
 
 export const useGrade = () => {
 	const appStore = useAppStore();
+
+	// 创建班级
 	const createGrade = async (name: string) => {
 		try {
 			const uuid = uuidv4() as string
@@ -32,6 +34,7 @@ export const useGrade = () => {
 		return true
 	}
 
+	// 删除班级
 	const deleteGrade = async (id: string) => {
 		try {
 			const grade = appStore.database.gradeList.find(item => item.id === id);
@@ -49,6 +52,7 @@ export const useGrade = () => {
 		}
 	}
 
+	// 更新班级名称
 	const updateGrade = async (id: string, name: string) => {
 		try {
 			const grade = appStore.database.gradeList.find(item => item.id === id);
@@ -66,6 +70,7 @@ export const useGrade = () => {
 		}
 	}
 
+	// 获取班级配置信息
 	const getGradeInfoById = async (gradeId: string) => {
 		const gradeInfo = await loadGradeInfoById(gradeId);
 		const data = JSON.parse(gradeInfo) as { groupList: Group[], studentList: Student[], studentGroupList: StudentGroup[] };
