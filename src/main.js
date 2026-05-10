@@ -30,19 +30,21 @@ const createWindow = () => {
   // 打开开发者工具
   mainWindow.webContents.openDevTools();
 
-  // 禁用刷新
+  // 拦截 Cmd+R、F5、Cmd+Shift+R 等刷新键
   mainWindow.webContents.on('before-input-event', (event, input) => {
-    // 判断 Ctrl/Cmd + R
-    if (input.control && input.key.toLowerCase() === 'r') {
+    // 需要拦截的组合键
+    const isCmdR = input.meta && input.key.toLowerCase() === 'r';
+    const isF5 = input.key === 'F5';
+    const isCmdShiftR =
+      input.meta && input.shift && input.key.toLowerCase() === 'r';
+
+    if (isCmdR || isF5 || isCmdShiftR) {
       event.preventDefault();
-    }
-    // 判断 F5 刷新
-    if (input.key === 'F5') {
-      event.preventDefault();
-    }
-    // 可选：同时禁用强制刷新 Ctrl/Cmd + Shift + R
-    if (input.control && input.shift && input.key.toLowerCase() === 'r') {
-      event.preventDefault();
+      // 关键：让 webContents 忽略菜单快捷键
+      mainWindow.webContents.setIgnoreMenuShortcuts(true);
+    } else {
+      // 恢复菜单快捷键的正常行为
+      mainWindow.webContents.setIgnoreMenuShortcuts(false);
     }
   });
 };
