@@ -1,4 +1,5 @@
 import { Group } from './Group';
+import { PrizeRecord } from './PrizeRecord';
 import { Student } from './Student';
 import { StudentGroup } from './StudentGroup';
 
@@ -10,6 +11,7 @@ export class Grade {
 		groupList: Group[];
 		studentList: Student[];
 		studentGroupList: StudentGroup[];
+		recordList: PrizeRecord[];
 	};
 
 	constructor(grade: {
@@ -20,6 +22,7 @@ export class Grade {
 			groupList: Group[];
 			studentList: Student[];
 			studentGroupList: StudentGroup[];
+			recordList: PrizeRecord[];
 		};
 	}) {
 		this.id = grade.id;

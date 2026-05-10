@@ -2,7 +2,7 @@ import {
 	Grade,
 	Rule,
 	Prize,
-	Record,
+	PrizeRecord,
 	Group,
 	Student,
 	StudentGroup
@@ -13,6 +13,7 @@ export interface DatabaseInfoType {
 			groupList: Group[];
 			studentList: Student[];
 			studentGroupList: StudentGroup[];
+			recordList: PrizeRecord[];
 		};
 		id: string;
 		name: string;
@@ -20,7 +21,6 @@ export interface DatabaseInfoType {
 	}[];
 	ruleList: Rule[];
 	prizeList: Prize[];
-	recordList: Record[];
 }
 export const curWindow = window as any;
 
@@ -32,7 +32,6 @@ const DEFAULT_TABLE_NAME = {
 	grade: 'grade',
 	rule: 'rule',
 	prize: 'prize',
-	record: 'record',
 }
 export const GroupPointsConfig = {
 	database: "group-points", // 数据库路径
@@ -40,7 +39,6 @@ export const GroupPointsConfig = {
 		DEFAULT_TABLE_NAME.grade, // 年级配置
 		DEFAULT_TABLE_NAME.rule, // 规则配置
 		DEFAULT_TABLE_NAME.prize, // 奖励配置
-		DEFAULT_TABLE_NAME.record, // 积分记录
 	],
 	suffix: '.json', // 文件后缀
 };
@@ -56,37 +54,15 @@ export async function loadGroupPointsConfig() {
 		});
 
 		// 解析信息
-		const { grade, rule, prize, record } = mainConfig;
+		const { grade, rule, prize } = mainConfig;
 		const gradeList: Grade[] = JSON.parse(grade) || [];
 		const ruleList: Rule[] = JSON.parse(rule) || [];
 		const prizeList: Prize[] = JSON.parse(prize) || [];
-		const recordList: Record[] = JSON.parse(record) || [];
-
-		// TODO Grade 具体信息，不放到外层加载，放到每个班级的配置文件中加载
-		// 加载具体班级配置，根据 gradeList 中的 id 加载对应的配置文件，设置默认信息
-		// groupList 分组信息、studentList 学生、studentGroupList 学生分组
-		// const allGrades = await curWindow.electronAPI.loadConfigFromFile({
-		// 	mainPath: GroupPointsConfig.database,
-		// 	fileList: gradeList.map((item: any) => `${DEFAULT_TABLE_NAME.grade}-${item.id}`),
-		// 	suffix: GroupPointsConfig.suffix,
-		// 	defaultContent: '{"groupList": [], "studentList": [], "studentGroupList": []}',
-		// })
-
-		// const data: DatabaseInfoType = {
-		// 	gradeList: gradeList.map(grade => ({
-		// 		...grade,
-		// 		gradeInfo: JSON.parse(allGrades[`${DEFAULT_TABLE_NAME.grade}-${grade.id}`]) as { groupList: Group[], studentList: Student[], studentGroupList: StudentGroup[] },
-		// 	})),
-		// 	ruleList,
-		// 	prizeList,
-		// 	recordList,
-		// }
 
 		const data: DatabaseInfoType = {
 			gradeList,
 			ruleList,
 			prizeList,
-			recordList,
 		}
 		return data
 	} catch (error) {
@@ -117,7 +93,7 @@ export async function loadGradeInfoById(gradeId: string) {
 		mainPath: GroupPointsConfig.database,
 		fileName: `${DEFAULT_TABLE_NAME.grade}-${gradeId}`,
 		suffix: GroupPointsConfig.suffix,
-		defaultContent: '{"groupList": [], "studentList": [], "studentGroupList": []}',
+		defaultContent: '{"groupList": [], "studentList": [], "studentGroupList": [], "recordList": []}',
 	});
 }
 

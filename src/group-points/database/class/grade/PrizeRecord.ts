@@ -5,10 +5,8 @@
 //   - 积分值 - points
 //   - 记录时间 - time
 
-export class Record {
+export class PrizeRecord {
 	id: string;
-	grade_id: string;
-	grade_name: string;
 	student_id: string;
 	student_name: string;
 	rule_id: string;
@@ -16,17 +14,14 @@ export class Record {
 	points: number;
 	time: Date;
 
-	constructor(params: { id: string, grade_id: string, grade_name: string, student_id: string, student_name: string, rule_id: string, rule_name: string, points: number, time: Date }) {
+	constructor(params: { id: string, student_id: string, student_name: string, rule_id: string, rule_name: string, points: number, time: Date }) {
 		this.id = params.id;
-		this.grade_id = params.grade_id;
-		this.grade_name = params.grade_name;
 		this.student_id = params.student_id;
 		this.student_name = params.student_name;
 		this.rule_id = params.rule_id;
 		this.rule_name = params.rule_name;
 		this.points = params.points;
 		this.time = params.time;
-		this.grade_id = params.grade_id;
 	}
 	toJSON() {
 		return {
@@ -36,8 +31,6 @@ export class Record {
 			rule_id: this.rule_id,
 			points: this.points,
 			time: this.time,
-			grade_id: this.grade_id,
-			grade_name: this.grade_name,
 		}
 	}
 

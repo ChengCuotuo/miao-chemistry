@@ -17,6 +17,7 @@ export const useGrade = () => {
 					groupList: [],
 					studentList: [],
 					studentGroupList: [],
+					recordList: [],
 				},
 				delete: 0
 			})
