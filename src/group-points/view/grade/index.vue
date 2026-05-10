@@ -7,24 +7,33 @@
 		</div>
 		<el-divider border-style="dashed" style="margin: 10px 0;" />
 		<div class="main-content">
-			
+			<el-tabs v-model="activeName" @tab-click="handleClick">
+				<el-tab-pane label="分组管理" name="group">分组管理</el-tab-pane>
+				<el-tab-pane label="学生管理" name="student">学生管理</el-tab-pane>
+			</el-tabs>
 		</div>
 	</div>
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue';
+import { computed, ref } from 'vue';
 import { useAppStore } from '../../store/models/app';
 import { Back } from '@element-plus/icons-vue';
 import { useRouter } from 'vue-router';
+import { TabsPaneContext } from 'element-plus';
 
 const router = useRouter();
 const appStore = useAppStore();
 const activeGrade = computed(() => appStore.activeGrade);
+const activeName = ref('group')
 
 const handleBack = () => {
 	appStore.setIsCollapse(false);
 	router.back();
+}
+
+const handleClick = (tab: TabsPaneContext) => {
+	console.log(tab)
 }
 
 </script>

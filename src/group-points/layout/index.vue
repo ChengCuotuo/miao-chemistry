@@ -4,9 +4,6 @@
 			<Menu style="height: 100%;"></Menu>
 		</div>
 		<div class="right">
-			<div class="header">
-				<Header></Header>
-			</div>
 			<div class="content">
 				<router-view></router-view>
 			</div>
@@ -16,7 +13,6 @@
 
 <script setup lang="ts">
 import Menu from './components/Menu/index.vue'
-import Header from './components/Header/index.vue'
 </script>
 
 <style scoped lang="scss">
@@ -39,8 +35,8 @@ import Header from './components/Header/index.vue'
 		}
 
 		.content {
-			height: calc(100% - 40px);
-			background-color:#f6f7fa;
+			height: 100%;
+			background-color: #f6f7fa;
 			padding: 10px;
 		}
 	}
