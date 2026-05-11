@@ -63,6 +63,7 @@ const handleSubtractPoints = (student: Student) => {
 
 <style scoped>
 .group-card {
+	width: 300px;
 	transition: transform 0.3s ease, box-shadow 0.3s ease;
 }
 
@@ -101,8 +102,6 @@ const handleSubtractPoints = (student: Student) => {
 	display: flex;
 	flex-direction: column;
 	gap: 12px;
-	max-height: 400px;
-	overflow-y: auto;
 }
 
 .student-item {

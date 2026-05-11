@@ -191,7 +191,6 @@ const handleSubtractPoints = (student: Student) => {
 	height: 100%;
 	display: flex;
 	flex-direction: column;
-	flex-wrap: wrap;
 }
 
 .action-bar {
@@ -202,9 +201,11 @@ const handleSubtractPoints = (student: Student) => {
 }
 
 .group-list-content {
-	display: grid;
-	grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
-	gap: 20px;
 	padding: 10px;
+	flex: 1 1;
+	display: flex;
+	flex-wrap: wrap;
+	gap: 10px;
+	overflow-y: auto;
 }
 </style>
