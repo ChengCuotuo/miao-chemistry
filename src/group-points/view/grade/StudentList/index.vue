@@ -11,6 +11,7 @@
 		<el-table :data="filteredStudents" border>
 			<el-table-column prop="id" label="序号" width="100" align="center" />
 			<el-table-column prop="name" label="姓名" align="center" />
+			<el-table-column prop="points" label="积分" width="100" align="center" />
 			<el-table-column label="班级" width="150" align="center">
 				<template #default="scope">
 					{{ activeGrade?.name || '' }}
@@ -39,6 +40,9 @@
 				</el-form-item>
 				<el-form-item label="姓名" prop="name" :rules="[{ required: true, message: '请输入姓名', trigger: 'blur' }]">
 					<el-input v-model="formData.name" placeholder="请输入姓名" />
+				</el-form-item>
+				<el-form-item label="积分" prop="points" :rules="[{ required: true, message: '请输入积分', trigger: 'blur' }]">
+					<el-input-number style="width: 100%" v-model="formData.points" placeholder="请输入积分" />
 				</el-form-item>
 			</el-form>
 			<template #footer>
@@ -92,6 +96,7 @@ const deleteStudent = ref<Student | null>(null);
 const formData = ref<Partial<Student>>({
 	id: '',
 	name: '',
+	points: 0,
 });
 
 // 弹窗标题

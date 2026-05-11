@@ -8,11 +8,14 @@
 		<el-divider border-style="dashed" style="margin: 10px 0;" />
 		<div class="main-content">
 			<el-tabs v-model="activeName" @tab-click="handleClick">
-				<el-tab-pane label="分组管理" name="group">分组管理</el-tab-pane>
+				<el-tab-pane label="分组管理" name="group"/>
 				<el-tab-pane label="学生管理" name="student"/>
 			</el-tabs>
-			<div v-if="activeName === 'student'" class="list-container">
+			<div v-if="activeName === 'student'" class="info-container">
 				<StudentList></StudentList>
+			</div>
+			<div v-if="activeName === 'group'" class="info-container">
+				<GroupList></GroupList>
 			</div>
 		</div>
 	</div>
@@ -25,6 +28,7 @@ import { Back } from '@element-plus/icons-vue';
 import { useRouter } from 'vue-router';
 import { TabsPaneContext } from 'element-plus';
 import StudentList from './StudentList/index.vue';
+import GroupList from './GroupList/index.vue';
 
 const router = useRouter();
 const appStore = useAppStore();
@@ -67,7 +71,7 @@ const handleClick = (tab: TabsPaneContext) => {
 	flex-direction: column;
 }
 
-.list-container {
+.info-container {
 	position: relative;
 	flex: 1 1;
 	overflow: hidden;
