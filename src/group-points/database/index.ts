@@ -17,7 +17,6 @@ export interface DatabaseInfoType {
 			indexMap: {
 				group: number,
 				student: number,
-				studentGroup: number,
 				record: number,
 			}
 		};

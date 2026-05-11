@@ -21,7 +21,6 @@ export const useGrade = () => {
 					indexMap: {
 						group: 0,
 						student: 0,
-						studentGroup: 0,
 						record: 0,
 					}
 				},
@@ -70,6 +69,11 @@ export const useGrade = () => {
 			grade.name = name;
 			const newGradeList = appStore.database.gradeList.map(item => ({ id: item.id, name: item.name, delete: item.delete }))
 			await appendGradeConfig(JSON.stringify(newGradeList));
+			const target = await getGradeInfoById(id);
+			if (target) {
+				target.name = name;
+				await updateGradeInfoById(id, target);
+			}
 			return true
 		} catch (error) {
 			console.error('更新班级出错:', error);

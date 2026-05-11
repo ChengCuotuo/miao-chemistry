@@ -15,7 +15,6 @@ export class Grade {
 		indexMap: {
 			group: number,
 			student: number,
-			studentGroup: number,
 			record: number,
 		}
 	};
@@ -32,7 +31,6 @@ export class Grade {
 			indexMap: {
 				group: number,
 				student: number,
-				studentGroup: number,
 				record: number,
 			}
 		};

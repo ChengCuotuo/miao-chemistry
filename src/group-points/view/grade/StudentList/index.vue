@@ -33,7 +33,7 @@
 		</div>
 
 		<!-- 新增/编辑弹窗 -->
-		<el-dialog :title="dialogTitle" v-model="dialogVisible" width="400px" :before-close="handleDialogClose">
+		<el-dialog :title="dialogTitle" v-model="dialogVisible" width="600px" :before-close="handleDialogClose">
 			<el-form ref="formRef" :model="formData" label-width="80px" class="dialog-form">
 				<el-form-item label="序号" prop="id" :rules="[{ required: true, message: '请输入ID', trigger: 'blur' }]">
 					<el-input v-model="formData.id" placeholder="请输入ID" disabled />
@@ -135,7 +135,7 @@ const handleSearch = () => {
 // 新增
 const handleAdd = () => {
 	isEdit.value = false;
-	formData.value = { id: `${studentIndex.value}`, name: '' };
+	formData.value = { id: `${studentIndex.value}`, name: '', points: 0 };
 	dialogVisible.value = true;
 };
 

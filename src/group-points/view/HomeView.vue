@@ -7,16 +7,14 @@
 			</div>
 			<template #footer>
 				<el-space style="width: 100%; justify-content: space-around; ">
-					<el-button type="primary" :icon="Edit" circle @click="handleEditGrade(grade)"/>
-					<el-button type="danger" :icon="Delete" circle @click="handleDeleteGrade(grade.id)"/>
+					<el-button type="primary" :icon="Edit" circle @click="handleEditGrade(grade, $event)"/>
+					<el-button type="danger" :icon="Delete" circle @click="handleDeleteGrade(grade.id, $event)"/>
 				</el-space>
 			</template>
 		</el-card>
 		<el-card shadow="hover" style="width: 160px; height: 200px;" @click="handleAddGrade">
 			<div style="height: 100%; width: 100%; display: flex; justify-content: center; align-items: center;">
-				<el-icon>
-					<Plus />
-				</el-icon>
+				<el-icon> <Plus /></el-icon>
 			</div>
 		</el-card>
 	</div>
@@ -87,14 +85,16 @@ const handleAddGrade = () => {
 	dialogVisible.value = true;
 }
 
-const handleEditGrade = (grade: DatabaseInfoType['gradeList'][0]) => {
+const handleEditGrade = (grade: DatabaseInfoType['gradeList'][0], event: MouseEvent) => {
+	event.stopPropagation();
 	isEditMode.value = true;
 	currentEditId.value = grade.id;
 	form.name = grade.name;
 	dialogVisible.value = true;
 }
 
-const handleDeleteGrade = async (id: string) => {
+const handleDeleteGrade = async (id: string, event: MouseEvent) => {
+	event.stopPropagation();
 	try {
 		await ElMessageBox.confirm('确定要删除该班级吗？', '提示', {
 			confirmButtonText: '确定',
