@@ -1,7 +1,7 @@
 <template>
 	<div class="group-list-container">
 		<div class="action-bar">
-			<!-- TODO 搜索功能，可以搜索小组名/学生名 -->
+			 <el-input v-model="searchQuery" placeholder="请输入小组名或学生名搜索" class="search-input" prefix-icon="Search"/>
 			<el-button type="primary" :icon="Plus" @click="handleAdd">新增小组</el-button>
 		</div>
 		<div class="group-list-content">
@@ -57,20 +57,21 @@ const formRef = ref<FormInstance>();
 const { updateGradeInfoById } = useGrade();
 
 const appStore = useAppStore();
+// 搜索关键词
+const searchQuery = ref('');
+
 const activeGrade = computed(() => appStore.activeGrade);
 const studentList = computed(() => {
 	// 过滤出没有分入小组的学生
-	// 编辑的时候可以处理本组中的数据
 	if (appStore.activeGrade) {
 		const { studentList, studentGroupList } = appStore.activeGrade.gradeInfo;
 		const studentIds = [...new Set(studentGroupList.map(item => item.student_id))];
-
+		let disabledIds = [...new Set(studentIds)];
+		// 编辑的时候可以处理本组中的数据
 		if (isEdit.value) {
-			const disabledIds = studentIds.filter(id => !curGroupStuIds.value.includes(id));
-			return (studentList || []).map(stu => ({ ...stu, key: stu.id, disabled: disabledIds.includes(stu.id) }))
-		} else {
-			return (studentList || []).map(stu => ({ ...stu, key: stu.id, disabled: studentIds.includes(stu.id) }))
+			disabledIds = studentIds.filter(id => !curGroupStuIds.value.includes(id));
 		}
+		return (studentList || []).map(stu => ({ ...stu, key: stu.id, disabled: studentIds.includes(stu.id) }))
 	}
 });
 const groupIndex = computed(() => appStore.activeGrade?.gradeInfo?.indexMap?.group || 0);
@@ -107,6 +108,11 @@ const groupInfoList = computed(() => {
 				studentList: groupStuList,
 			} as GroupInfo;
 		})
+		.filter(group => {
+			const val = searchQuery.value.toLowerCase();
+			return group.name.toLowerCase().includes(val) || group.studentList.some(stu => stu.name.toLowerCase().includes(val));
+		})
+		.sort((a, b) => b.points - a.points);
 	}
 	return [];
 });

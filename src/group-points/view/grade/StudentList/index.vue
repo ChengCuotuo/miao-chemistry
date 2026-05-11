@@ -4,6 +4,7 @@
 		<div class="search-bar">
 			<el-input v-model="searchQuery" placeholder="请输入姓名或ID搜索" class="search-input" prefix-icon="Search"
 				@keyup.enter="handleSearch" />
+				<!-- TODO 批量处理 -->
 			<el-button type="primary" :icon="Plus" @click="handleAdd">新增学生</el-button>
 		</div>
 
