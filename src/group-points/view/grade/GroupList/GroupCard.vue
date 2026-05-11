@@ -20,7 +20,9 @@
 				</div>
 				<div class="student-actions">
 					<el-button type="success" :icon="Plus" circle size="small" @click="handleAddPoints(student)" />
-					<el-button type="warning" :icon="Minus" circle size="small" @click="handleSubtractPoints(student)" />
+					<el-button type="danger" :icon="Minus" circle size="small" @click="handleSubtractPoints(student)" />
+					<!-- 根据规则调整分数 -->
+					 <el-button type="warning" :icon="Ticket" circle size="small" @click="handleAdjustPoints(student)" />
 				</div>
 			</div>
 			<el-empty v-if="!group.studentList.length" description="暂无成员" :image-size="60" />
@@ -29,7 +31,7 @@
 </template>
 
 <script setup lang="ts">
-import { Edit, Delete, Plus, Minus } from '@element-plus/icons-vue';
+import { Edit, Delete, Plus, Minus, Ticket } from '@element-plus/icons-vue';
 import { Student } from '../../../database/class';
 import { GroupInfo } from './index.vue';
 
@@ -42,6 +44,7 @@ const emit = defineEmits<{
 	delete: [group: GroupInfo];
 	'add-points': [student: Student];
 	'subtract-points': [student: Student];
+	'adjust-points': [student: Student];
 }>();
 
 const handleEdit = () => {
@@ -58,6 +61,10 @@ const handleAddPoints = (student: Student) => {
 
 const handleSubtractPoints = (student: Student) => {
 	emit('subtract-points', student);
+};
+
+const handleAdjustPoints = (student: Student) => {
+	emit('adjust-points', student);
 };
 </script>
 

@@ -6,7 +6,8 @@
 		</div>
 		<div class="group-list-content">
 			<GroupCard v-for="group in groupInfoList || []" :key="group.id" :group="group" @edit="handleEdit"
-				@delete="handleDelete" @add-points="handleAddPoints" @subtract-points="handleSubtractPoints" />
+				@delete="handleDelete" @add-points="handleAddPoints" @subtract-points="handleSubtractPoints"
+				@adjust-points="handleAdjustPoints" />
 		</div>
 
 		<el-dialog :title="dialogTitle" v-model="dialogVisible" width="800px" :before-close="handleDialogClose">
@@ -209,6 +210,11 @@ const handleAddPoints = (student: Student) => {
 const handleSubtractPoints = (student: Student) => {
 	console.log('减少积分:', student);
 };
+
+const handleAdjustPoints = (student: Student) => {
+	console.log('根据规则调整积分:', student);
+};
+
 </script>
 
 <style scoped>

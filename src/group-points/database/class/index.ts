@@ -5,6 +5,7 @@ import { PrizeRecord } from './grade/PrizeRecord';
 import { Rule } from './main/Rule';
 import { Student } from './grade/Student';
 import { StudentGroup } from './grade/StudentGroup';
+import { Basic } from './main/Basic';
 
 export {
 	Grade,
@@ -13,5 +14,6 @@ export {
 	Prize,
 	PrizeRecord,
 	Student,
-	StudentGroup
+	StudentGroup,
+	Basic,
 }

@@ -7,6 +7,7 @@ import {
 	Student,
 	StudentGroup
 } from './class';
+import { Basic } from './class/main/Basic';
 export interface DatabaseInfoType {
 	gradeList: {
 		gradeInfo: {
@@ -26,6 +27,7 @@ export interface DatabaseInfoType {
 	}[];
 	ruleList: Rule[];
 	prizeList: Prize[];
+	basicConfig: Basic;
 }
 export const curWindow = window as any;
 
@@ -37,6 +39,7 @@ const DEFAULT_TABLE_NAME = {
 	grade: 'grade',
 	rule: 'rule',
 	prize: 'prize',
+	basic: 'basic',
 }
 export const GroupPointsConfig = {
 	database: "group-points", // 数据库路径
@@ -58,16 +61,25 @@ export async function loadGroupPointsConfig() {
 			defaultContent: '[]'
 		});
 
+		const basicConfig = await curWindow.electronAPI.loadFile({
+			mainPath: GroupPointsConfig.database,
+			fileName: DEFAULT_TABLE_NAME.basic,
+			suffix: GroupPointsConfig.suffix,
+			defaultContent: JSON.stringify({ step: "1" }), // 设置步长为 1
+		});
+
 		// 解析信息
 		const { grade, rule, prize } = mainConfig;
 		const gradeList: Grade[] = JSON.parse(grade) || [];
 		const ruleList: Rule[] = JSON.parse(rule) || [];
 		const prizeList: Prize[] = JSON.parse(prize) || [];
+		const basicConfigData = JSON.parse(basicConfig) || { step: "1" };
 
 		const data: DatabaseInfoType = {
 			gradeList,
 			ruleList,
 			prizeList,
+			basicConfig: basicConfigData
 		}
 		return data
 	} catch (error) {
@@ -98,7 +110,13 @@ export async function loadGradeInfoById(gradeId: string) {
 		mainPath: GroupPointsConfig.database,
 		fileName: `${DEFAULT_TABLE_NAME.grade}-${gradeId}`,
 		suffix: GroupPointsConfig.suffix,
-		defaultContent: '{"groupList": [], "studentList": [], "studentGroupList": [], "recordList": [], "indexMap": {"group": 0, "student": 0, "studentGroup": 0, "record": 0}}',
+		defaultContent: JSON.stringify({
+			groupList: [], // 分组列表
+			studentList: [], // 学生列表
+			studentGroupList: [], // 学生分组列表
+			recordList: [], // 奖励记录列表
+			indexMap: { group: 0, student: 0, studentGroup: 0, record: 0 } // 索引映射
+		}),
 	});
 }
 
