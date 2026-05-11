@@ -3,8 +3,8 @@
 		<template #header>
 			<div class="card-header">
 				<div class="group-title">
-					<span class="group-name">{{ group.name }}</span>
 					<el-tag type="primary" size="large" class="group-points">{{ group.points }} 分</el-tag>
+					<span class="group-name">{{ group.name }}</span>
 				</div>
 				<div class="card-actions">
 					<el-button type="primary" :icon="Edit" circle size="small" @click="handleEdit" />
