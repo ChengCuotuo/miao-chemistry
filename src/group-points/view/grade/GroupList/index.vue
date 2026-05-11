@@ -1,6 +1,7 @@
 <template>
 	<div class="group-list-container">
 		<div class="action-bar">
+			<!-- TODO 搜索功能，可以搜索小组名/学生名 -->
 			<el-button type="primary" :icon="Plus" @click="handleAdd">新增小组</el-button>
 		</div>
 		<div class="group-list-content">
@@ -69,11 +70,24 @@ const { updateGradeInfoById } = useGrade();
 const appStore = useAppStore();
 const activeGrade = computed(() => appStore.activeGrade);
 const studentList = computed(() => {
-	return (appStore.activeGrade?.gradeInfo.studentList || []).map(stu => ({...stu, key: stu.id}))
+	// 过滤出没有分入小组的学生
+	// 编辑的时候可以处理本组中的数据
+	if(appStore.activeGrade) {
+		const { studentList, studentGroupList} = appStore.activeGrade.gradeInfo;
+			const studentIds = [...new Set(studentGroupList.map(item => item.student_id))];
+
+		if(isEdit.value) {
+			const disabledIds = studentIds.filter(id => !curGroupStuIds.value.includes(id));
+			return (studentList || []).map(stu => ({...stu, key: stu.id, disabled: disabledIds.includes(stu.id)}))
+		} else {
+			return (studentList || []).map(stu => ({...stu, key: stu.id, disabled: studentIds.includes(stu.id)}))
+		}
+	}
 });
 const groupIndex = computed(() => appStore.activeGrade?.gradeInfo?.indexMap?.group || 0);
 
 const isEdit = ref(false);
+const curGroupStuIds = ref<string[]>([]);
 const dialogVisible = ref(false);
 const dialogTitle = computed(() => (isEdit.value ? '编辑小组' : '新增小组'));
 
@@ -89,7 +103,7 @@ const formData = ref<GroupInfo>({
 const groupInfoList= computed(() => {
 	if(appStore.activeGrade) {
 		const gradeInfo = appStore.activeGrade.gradeInfo;
-		const { groupList, studentList, indexMap, studentGroupList} = gradeInfo;
+		const { groupList, studentList, studentGroupList} = gradeInfo;
 		// 组装小组信息
 		return groupList.map(group => {
 			const groupId = group.id;
@@ -131,7 +145,6 @@ const handleSubmit = () => {
 			const { id, name, studentIdList } = formData.value;
 			if(isEdit.value) {
 				// 编辑
-				
 				if(appStore.activeGrade) {
 					// 更新小组信息
 					const group = appStore.activeGrade.gradeInfo.groupList.find(item => item.id === id);
@@ -169,6 +182,7 @@ const handleUpdateGradeInfo = async () => {
 const handleEdit = (group: GroupInfo) => {
 	isEdit.value = true;
 	formData.value = { ...group };
+	curGroupStuIds.value = group.studentIdList;
 	dialogVisible.value = true;
 };
 
