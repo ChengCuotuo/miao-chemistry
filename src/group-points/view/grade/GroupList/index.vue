@@ -226,6 +226,10 @@ const handleSubtractPoints = (student: Student) => {
 	margin-bottom: 20px;
 }
 
+.search-input {
+	width: 300px;
+}
+
 .group-list-content {
 	padding: 10px;
 	flex: 1 1;
