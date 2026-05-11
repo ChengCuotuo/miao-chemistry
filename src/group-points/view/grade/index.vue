@@ -11,7 +11,7 @@
 				<el-tab-pane label="分组管理" name="group">分组管理</el-tab-pane>
 				<el-tab-pane label="学生管理" name="student"/>
 			</el-tabs>
-			<div v-if="activeName === 'student'">
+			<div v-if="activeName === 'student'" class="list-container">
 				<StudentList></StudentList>
 			</div>
 		</div>
@@ -48,11 +48,28 @@ const handleClick = (tab: TabsPaneContext) => {
 	width: 100%;
 	background-color: #fff;
 	padding: 10px;
+
+	display: flex;
+	flex-direction: column;
 }
 
 .header-content {
 	display: flex;
 	align-items: center;
 	justify-content: space-between;
+}
+
+.main-content {
+	flex: 1 1;
+	overflow: hidden;
+
+	display: flex;
+	flex-direction: column;
+}
+
+.list-container {
+	position: relative;
+	flex: 1 1;
+	overflow: hidden;
 }
 </style>

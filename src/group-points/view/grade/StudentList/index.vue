@@ -8,10 +8,10 @@
 		</div>
 
 		<!-- 学生列表 -->
-		<el-table :data="filteredStudents" border highlight-current-row style="width: 100%;">
+		<el-table :data="filteredStudents" border>
 			<el-table-column prop="id" label="序号" width="100" align="center" />
 			<el-table-column prop="name" label="姓名" align="center" />
-			<el-table-column  label="班级" width="150" align="center">
+			<el-table-column label="班级" width="150" align="center">
 				<template #default="scope">
 					{{ activeGrade?.name || '' }}
 				</template>
@@ -35,7 +35,7 @@
 		<el-dialog :title="dialogTitle" v-model="dialogVisible" width="400px" :before-close="handleDialogClose">
 			<el-form ref="formRef" :model="formData" label-width="80px" class="dialog-form">
 				<el-form-item label="序号" prop="id" :rules="[{ required: true, message: '请输入ID', trigger: 'blur' }]">
-					<el-input  v-model="formData.id" placeholder="请输入ID" disabled />
+					<el-input v-model="formData.id" placeholder="请输入ID" disabled />
 				</el-form-item>
 				<el-form-item label="姓名" prop="name" :rules="[{ required: true, message: '请输入姓名', trigger: 'blur' }]">
 					<el-input v-model="formData.name" placeholder="请输入姓名" />
@@ -59,7 +59,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue';
+import { ref, computed, onMounted, onUnmounted } from 'vue';
 import { Plus, Edit, Delete, Search } from '@element-plus/icons-vue';
 import type { FormInstance } from 'element-plus';
 import { useAppStore } from '../../../store/models/app';
@@ -110,6 +110,17 @@ const filteredStudents = computed(() => {
 	).slice((currentPage.value - 1) * pageSize.value, currentPage.value * pageSize.value);
 });
 
+onMounted(() => {
+	window.addEventListener('resize', handleResize);
+});
+
+onUnmounted(() => {
+	window.removeEventListener('resize', handleResize);
+});
+
+const handleResize = () => {
+	
+}
 
 // 搜索
 const handleSearch = () => {
@@ -137,14 +148,14 @@ const handleDelete = (row: Student) => {
 };
 
 // 确认删除
-const confirmDelete = async() => {
+const confirmDelete = async () => {
 	if (deleteStudent.value) {
 		const index = students.value.findIndex(
 			(item) => item.id === deleteStudent.value?.id
 		);
 		if (index > -1) {
 			students.value.splice(index, 1);
-			if(appStore.activeGrade) {
+			if (appStore.activeGrade) {
 				appStore.activeGrade.gradeInfo.studentList = [...students.value];
 			}
 		}
@@ -157,7 +168,7 @@ const confirmDelete = async() => {
 
 // 提交表单
 const handleSubmit = () => {
-	formRef.value?.validate(async(valid) => {
+	formRef.value?.validate(async (valid) => {
 		if (valid) {
 			if (isEdit.value) {
 				// 编辑
@@ -165,14 +176,14 @@ const handleSubmit = () => {
 					(item) => item.id === formData.value.id
 				);
 				if (index > -1) {
-					if(appStore.activeGrade) {
+					if (appStore.activeGrade) {
 						students.value[index] = { ...students.value[index], ...formData.value };
 						appStore.activeGrade.gradeInfo.studentList = [...students.value];
 					}
 				}
 			} else {
 				const newStudent = new Student(formData.value as Student);
-				if(appStore.activeGrade) {
+				if (appStore.activeGrade) {
 					appStore.activeGrade.gradeInfo.studentList.push(newStudent);
 					appStore.activeGrade.gradeInfo.indexMap.student++;
 				}
@@ -209,8 +220,10 @@ const handleCurrentChange = (val: number) => {
 
 <style scoped>
 .student-list-container {
-	height: 100%;
 	width: 100%;
+	height: 100%;
+	display: flex;
+	flex-direction: column;
 }
 
 .search-bar {
@@ -227,7 +240,7 @@ const handleCurrentChange = (val: number) => {
 .pagination {
 	display: flex;
 	justify-content: flex-end;
-	margin-top: 20px;
+	margin-top: 10px;
 }
 
 .dialog-form {
