@@ -11,7 +11,7 @@
 				<el-tab-pane label="分组管理" name="group">分组管理</el-tab-pane>
 				<el-tab-pane label="学生管理" name="student"/>
 			</el-tabs>
-			<div v-if="activeName === 'student'" style="flex: 1 1;">
+			<div v-if="activeName === 'student'">
 				<StudentList></StudentList>
 			</div>
 		</div>
@@ -54,10 +54,5 @@ const handleClick = (tab: TabsPaneContext) => {
 	display: flex;
 	align-items: center;
 	justify-content: space-between;
-}
-
-.main-content {
-	display: flex;
-	flex-direction: column;
 }
 </style>

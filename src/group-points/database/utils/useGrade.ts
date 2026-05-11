@@ -92,6 +92,7 @@ export const useGrade = () => {
 		return target as DatabaseInfoType['gradeList'][0]
 	}
 
+	// 更新班级配置信息
 	const updateGradeInfoById = async (gradeId: string, gradeInfo: DatabaseInfoType['gradeList'][0]) => {
 		await saveGradeInfo(gradeId, JSON.stringify(gradeInfo));
 	}

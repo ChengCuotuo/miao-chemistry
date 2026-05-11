@@ -9,7 +9,7 @@
 
 		<!-- 学生列表 -->
 		<el-table :data="filteredStudents" border highlight-current-row style="width: 100%;">
-			<el-table-column prop="id" label="ID" width="100" align="center" />
+			<el-table-column prop="id" label="序号" width="100" align="center" />
 			<el-table-column prop="name" label="姓名" align="center" />
 			<el-table-column  label="班级" width="150" align="center">
 				<template #default="scope">
@@ -28,13 +28,13 @@
 		<div class="pagination">
 			<el-pagination @size-change="handleSizeChange" @current-change="handleCurrentChange" :current-page="currentPage"
 				:page-sizes="[5, 10, 20, 50]" :page-size="pageSize" layout="total, sizes, prev, pager, next, jumper"
-				:total="filteredStudents.length" />
+				:total="students.length" />
 		</div>
 
 		<!-- 新增/编辑弹窗 -->
 		<el-dialog :title="dialogTitle" v-model="dialogVisible" width="400px" :before-close="handleDialogClose">
 			<el-form ref="formRef" :model="formData" label-width="80px" class="dialog-form">
-				<el-form-item label="ID" prop="id" :rules="[{ required: true, message: '请输入ID', trigger: 'blur' }]">
+				<el-form-item label="序号" prop="id" :rules="[{ required: true, message: '请输入ID', trigger: 'blur' }]">
 					<el-input  v-model="formData.id" placeholder="请输入ID" disabled />
 				</el-form-item>
 				<el-form-item label="姓名" prop="name" :rules="[{ required: true, message: '请输入姓名', trigger: 'blur' }]">
@@ -100,14 +100,14 @@ const dialogTitle = computed(() => (isEdit.value ? '编辑学生' : '新增学�
 // 过滤后的学生列表
 const filteredStudents = computed(() => {
 	if (!searchQuery.value) {
-		return students.value;
+		return students.value.slice((currentPage.value - 1) * pageSize.value, currentPage.value * pageSize.value);
 	}
 	const query = searchQuery.value.toLowerCase();
 	return students.value.filter(
 		(item) =>
 			item.name.toLowerCase().includes(query) ||
 			item.id.toLowerCase().includes(query)
-	);
+	).slice((currentPage.value - 1) * pageSize.value, currentPage.value * pageSize.value);
 });
 
 
