@@ -1,9 +1,9 @@
 import { curWindow } from "../database";
 
 // 假设这是在一个按钮点击事件的处理函数中
-export async function openFile() {
+export async function openFile(extensions: string) {
 	// 1. 让用户选择文件
-	const filePath = await curWindow.electronAPI.openFileDialog();
+	const filePath = await curWindow.electronAPI.openFileDialog(extensions);
 	if (filePath) {
 		// 2. 读取文件内容
 		try {

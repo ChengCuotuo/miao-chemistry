@@ -5,8 +5,11 @@ const { contextBridge, ipcRenderer } = require('electron');
 // 安全地向渲染进程暴露 API
 contextBridge.exposeInMainWorld('electronAPI', {
   // 打开文件选择对话框
-  openFileDialog: () => ipcRenderer.invoke('file-open-dialog'),
+  openFileDialog: (extensions) =>
+    ipcRenderer.invoke('file-open-dialog', extensions),
   // 读取文件内容
+  readFile: (filePath) => ipcRenderer.invoke('read-file', filePath),
+  // 加载配置文件
   loadFile: (params) => ipcRenderer.invoke('load-file', params),
   // 从文件加载配置列表
   loadConfigFromFile: (params) =>

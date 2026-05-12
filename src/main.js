@@ -77,14 +77,26 @@ app.on('window-all-closed', () => {
 const userDataPath = app.getPath('userData');
 
 // 监听渲染进程发来的 'file-open-dialog' 事件
-ipcMain.handle('file-open-dialog', async (event) => {
+ipcMain.handle('file-open-dialog', async (event, extensions) => {
   const result = await dialog.showOpenDialog({
     properties: ['openFile'],
+    filters: [{ extensions }],
   });
   if (result.canceled) {
     return null;
   } else {
     return result.filePaths[0];
+  }
+});
+
+// 监听渲染进程发来的 'read-file' 事件
+ipcMain.handle('read-file', async (event, filePath) => {
+  try {
+    const content = await fs.readFile(filePath);
+    return content;
+  } catch (error) {
+    console.error('读取文件失败:', error);
+    throw error; // 将错误抛回给渲染进程
   }
 });
 
