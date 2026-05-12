@@ -166,7 +166,7 @@ const getFilePath = async (image: string) => {
   if (!image) return '';
 	const staticPath = await loadFilePath(preFullPath.value + '/' + image)
   try {
-    const fileURL = getStaticFilePath(staticPath);
+    const fileURL = await getStaticFilePath(staticPath);
     console.log('本地路径:', staticPath, 'File URL:', fileURL);
     return fileURL;
   } catch (error) {

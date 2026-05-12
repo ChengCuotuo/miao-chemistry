@@ -29,7 +29,6 @@ contextBridge.exposeInMainWorld('electronAPI', {
   // 写入配置文件
   writeConfigToFile: (filePath, content) =>
     ipcRenderer.invoke('write-config-file', filePath, content),
-  loadStaticFileURL: (filePath) => {
-    return pathToFileURL(filePath).href;
-  },
+  loadStaticFileURL: (filePath) =>
+    ipcRenderer.invoke('path-to-file-url', filePath),
 });

@@ -242,3 +242,15 @@ ipcMain.handle('write-config-file', async (event, params) => {
     return false;
   }
 });
+
+// 转换路径为 file URL
+ipcMain.handle('path-to-file-url', async (event, filePath) => {
+  try {
+    const { pathToFileURL } = require('url');
+    const fileURL = pathToFileURL(filePath).href;
+    return fileURL;
+  } catch (error) {
+    console.error('路径转换失败:', error);
+    throw error;
+  }
+});
