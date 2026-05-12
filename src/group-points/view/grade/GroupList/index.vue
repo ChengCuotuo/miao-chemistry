@@ -4,21 +4,14 @@
 			<el-space>
 				<el-input v-model="searchQuery" placeholder="请输入小组名或学生名搜索" class="search-input" prefix-icon="Search" />
 				<el-button type="info" @click="handleReset">重置</el-button>
-			</el-space>	
+			</el-space>
 			<el-button type="primary" :icon="Plus" @click="handleAdd">新增小组</el-button>
 		</div>
 		<div class="group-list-content">
-			<GroupCard 
-				v-for="group in groupInfoList || []" :key="group.id" :group="group" 
-				@edit="handleEdit"
-				@delete="handleDelete" 
-				@add-points="handleAddPoints" 
-				@subtract-points="handleSubtractPoints"
-				@adjust-points="handleAdjustPoints" 
-				@mul-add-points="handleMulAddPoints"
-				@mul-subtract-points="handleMulSubtractPoints" 
-				@mul-adjust-points="handleMulAdjustPoints" 
-			/>
+			<GroupCard v-for="group in groupInfoList || []" :key="group.id" :group="group" @edit="handleEdit"
+				@delete="handleDelete" @add-points="handleAddPoints" @subtract-points="handleSubtractPoints"
+				@adjust-points="handleAdjustPoints" @mul-add-points="handleMulAddPoints"
+				@mul-subtract-points="handleMulSubtractPoints" @mul-adjust-points="handleMulAdjustPoints" />
 		</div>
 
 		<el-dialog :title="dialogTitle" v-model="dialogVisible" width="800px" :before-close="handleDialogClose">
@@ -46,22 +39,12 @@
 		</el-dialog>
 
 		<!-- 批量加减分弹窗 -->
-		<BatchPointsModal
-			v-model:visible="batchPointsVisible"
-			:type="batchPointsType"
-			:group="currentGroup"
-			:step="Number(step)"
-			@confirm="handleBatchPointsConfirm"
-		/>
+		<BatchPointsModal v-model:visible="batchPointsVisible" :type="batchPointsType" :group="currentGroup"
+			:step="Number(step)" @confirm="handleBatchPointsConfirm" />
 
 		<!-- 规则选择弹窗 -->
-		<RuleSelectorModal
-			v-model:visible="ruleSelectorVisible"
-			:rules="rules"
-			:target-name="ruleTargetName"
-			:type="ruleSelectorType"
-			@confirm="handleRuleConfirm"
-		/>
+		<RuleSelectorModal v-model:visible="ruleSelectorVisible" :rules="rules" :target-name="ruleTargetName"
+			:type="ruleSelectorType" @confirm="handleRuleConfirm" />
 	</div>
 </template>
 
@@ -255,13 +238,32 @@ const handleDelete = (group: Partial<GroupInfo>) => {
 	})
 };
 
-const handleAddPoints = async(student: Student) => {
+const handlePrizeRecord = (params: {stu_id: string, points: number, rule_id?: string}) => {
+// 记录积分变化
+	if (appStore.activeGrade) {
+		const { stu_id, points, rule_id } = params;
+		const recordIndex = appStore.activeGrade.gradeInfo.indexMap.record;
+		const prizeRecord = new PrizeRecord({ id: recordIndex, stu_id, rule_id, points, time: dayjs().format('YYYY-MM-DD HH:mm:ss') });
+		appStore.activeGrade.gradeInfo.indexMap.record++;
+		appStore.activeGrade.gradeInfo.recordList.push(prizeRecord);
+	}
+}
+
+const handleAddPoints = async (student: Student) => {
 	student.points = Number(student.points) + Number(step.value);
+	// 记录积分变化
+	if (appStore.activeGrade) {
+		handlePrizeRecord({ stu_id: student.id, points: Number(step.value) });
+	}
 	await handleUpdateGradeInfo();
 };
 
-const handleSubtractPoints = async(student: Student) => {
+const handleSubtractPoints = async (student: Student) => {
 	student.points = Number(student.points) - Number(step.value);
+	// 记录积分变化
+	if (appStore.activeGrade) {
+		handlePrizeRecord({ stu_id: student.id, points: Number(step.value) });
+	}
 	await handleUpdateGradeInfo();
 };
 
@@ -289,10 +291,14 @@ const handleBatchPointsConfirm = async (points: number) => {
 		// 批量调整小组成员的积分
 		currentGroup.value.studentList.forEach(student => {
 			student.points = Number(student.points) + points;
+			// 记录积分变化
+			if (appStore.activeGrade) {
+				handlePrizeRecord({ stu_id: student.id, points });
+			}
 		});
 		await handleUpdateGradeInfo();
 		ElMessage.success(
-			batchPointsType.value === 'add' 
+			batchPointsType.value === 'add'
 				? `成功为 ${currentGroup.value.studentList.length} 名学生各加 ${points} 分`
 				: `成功为 ${currentGroup.value.studentList.length} 名学生各减 ${Math.abs(points)} 分`
 		);
@@ -313,16 +319,13 @@ const handleRuleConfirm = async (rule: Rule) => {
 		// 单个学生调整
 		currentStudent.value.points = Number(currentStudent.value.points) + points;
 		// 记录积分变化
-		if(appStore.activeGrade) {
-			const recordIndex = appStore.activeGrade.gradeInfo.indexMap.record;
-			const prizeRecord = new PrizeRecord({ id: recordIndex, stu_id: currentStudent.value.id, rule_id: rule.id, time: dayjs().format('YYYY-MM-DD HH:mm:ss') });
-			appStore.activeGrade.gradeInfo.indexMap.record++;
-			appStore.activeGrade.gradeInfo.recordList.push(prizeRecord);
+		if (appStore.activeGrade) {
+			handlePrizeRecord({ stu_id: currentStudent.value.id, points, rule_id: rule.id });
 		}
 
 		await handleUpdateGradeInfo();
 		ElMessage.success(
-			points > 0 
+			points > 0
 				? `${currentStudent.value.name} 加分 ${points} 分`
 				: `${currentStudent.value.name} 减分 ${Math.abs(points)} 分`
 		);
@@ -332,16 +335,13 @@ const handleRuleConfirm = async (rule: Rule) => {
 		currentGroup.value.studentList.forEach(student => {
 			student.points = Number(student.points) + points;
 			// 记录积分变化
-			if(appStore.activeGrade) {
-				const recordIndex = appStore.activeGrade.gradeInfo.indexMap.record;
-				const prizeRecord = new PrizeRecord({ id: recordIndex, stu_id: student.id, rule_id: rule.id,time: dayjs().format('YYYY-MM-DD HH:mm:ss')});
-				appStore.activeGrade.gradeInfo.indexMap.record++;
-				appStore.activeGrade.gradeInfo.recordList.push(prizeRecord);
+			if (appStore.activeGrade) {
+				handlePrizeRecord({ stu_id: student.id, points, rule_id: rule.id });
 			}
 		});
 		await handleUpdateGradeInfo();
 		ElMessage.success(
-			points > 0 
+			points > 0
 				? `成功为 ${currentGroup.value.studentList.length} 名学生各加 ${points} 分`
 				: `成功为 ${currentGroup.value.studentList.length} 名学生各减 ${Math.abs(points)} 分`
 		);
