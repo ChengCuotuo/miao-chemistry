@@ -246,6 +246,9 @@ const handlePrizeRecord = (params: {stu_id: string, points: number, rule_id?: st
 		const prizeRecord = new PrizeRecord({ id: recordIndex, stu_id, rule_id, points, time: dayjs().format('YYYY-MM-DD HH:mm:ss') });
 		appStore.activeGrade.gradeInfo.indexMap.record++;
 		appStore.activeGrade.gradeInfo.recordList.push(prizeRecord);
+		// 仅保留最近100条记录
+		// TODO 后续确定要不要做数据归档
+		appStore.activeGrade.gradeInfo.recordList = appStore.activeGrade.gradeInfo.recordList.slice(-1000);
 	}
 }
 
