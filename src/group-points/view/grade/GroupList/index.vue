@@ -44,6 +44,15 @@
 				<el-button type="primary" @click="handleSubmit">确定</el-button>
 			</template>
 		</el-dialog>
+
+		<!-- 批量加减分弹窗 -->
+		<BatchPointsModal
+			v-model:visible="batchPointsVisible"
+			:type="batchPointsType"
+			:group="currentGroup"
+			:step="Number(step)"
+			@confirm="handleBatchPointsConfirm"
+		/>
 	</div>
 </template>
 
@@ -56,6 +65,7 @@ import { ElMessage, ElMessageBox, FormInstance } from 'element-plus';
 import { Group, StudentGroup } from '../../../database/class';
 import { useGrade } from '../../../database/utils/useGrade';
 import GroupCard from './GroupCard.vue';
+import BatchPointsModal from './BatchPointsModal.vue';
 
 export interface GroupInfo {
 	id: string,
@@ -87,11 +97,17 @@ const studentList = computed(() => {
 	}
 });
 const groupIndex = computed(() => appStore.activeGrade?.gradeInfo?.indexMap?.group || 0);
+const step = computed(() => appStore.database.basicConfig?.step || 0);
 
 const isEdit = ref(false);
 const curGroupStuIds = ref<string[]>([]);
 const dialogVisible = ref(false);
 const dialogTitle = computed(() => (isEdit.value ? '编辑小组' : '新增小组'));
+
+// 批量加减分弹窗相关
+const batchPointsVisible = ref(false);
+const batchPointsType = ref<'add' | 'subtract'>('add');
+const currentGroup = ref<GroupInfo | null>(null);
 
 const formData = ref<GroupInfo>({
 	id: '',
@@ -220,12 +236,14 @@ const handleDelete = (group: Partial<GroupInfo>) => {
 	})
 };
 
-const handleAddPoints = (student: Student) => {
-	console.log('增加积分:', student);
+const handleAddPoints = async(student: Student) => {
+	student.points = Number(student.points) + Number(step.value);
+	await handleUpdateGradeInfo();
 };
 
-const handleSubtractPoints = (student: Student) => {
-	console.log('减少积分:', student);
+const handleSubtractPoints = async(student: Student) => {
+	student.points = Number(student.points) - Number(step.value);
+	await handleUpdateGradeInfo();
 };
 
 const handleAdjustPoints = (student: Student) => {
@@ -233,11 +251,31 @@ const handleAdjustPoints = (student: Student) => {
 };
 
 const handleMulAddPoints = (group: GroupInfo) => {
-	console.log('批量增加积分:', group);
+	batchPointsType.value = 'add';
+	currentGroup.value = group;
+	batchPointsVisible.value = true;
 };
 
 const handleMulSubtractPoints = (group: GroupInfo) => {
-	console.log('批量减少积分:', group);
+	batchPointsType.value = 'subtract';
+	currentGroup.value = group;
+	batchPointsVisible.value = true;
+};
+
+const handleBatchPointsConfirm = async (points: number) => {
+	if (currentGroup.value) {
+		// 批量调整小组成员的积分
+		currentGroup.value.studentList.forEach(student => {
+			student.points = Number(student.points) + points;
+		});
+		await handleUpdateGradeInfo();
+		ElMessage.success(
+			batchPointsType.value === 'add' 
+				? `成功为 ${currentGroup.value.studentList.length} 名学生各加 ${points} 分`
+				: `成功为 ${currentGroup.value.studentList.length} 名学生各减 ${Math.abs(points)} 分`
+		);
+		currentGroup.value = null;
+	}
 };
 
 const handleMulAdjustPoints = (group: GroupInfo) => {
