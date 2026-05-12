@@ -98,7 +98,7 @@ import { useAppStore } from '../../store/models/app';
 import { Rule } from '../../database/class';
 import { useRule } from '../../database/utils/useRule';
 
-const { createRule, deleteRule, updateRule, getRuleList, searchRules } = useRule();
+const { createRule, deleteRule, updateRule, getRuleList } = useRule();
 
 const appStore = useAppStore();
 const rules = ref<Rule[]>(getRuleList() || []);

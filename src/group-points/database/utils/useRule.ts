@@ -70,41 +70,5 @@ export const useRule = () => {
 		return appStore.database.ruleList;
 	}
 
-	// 搜索规则
-	const searchRules = (keyword: string, searchType: 'name' | 'points' | 'all' = 'all') => {
-		const rules = appStore.database.ruleList;
-
-		if (!keyword.trim()) {
-			return rules;
-		}
-
-		if (searchType === 'name') {
-			return rules.filter(rule =>
-				rule.name.toLowerCase().includes(keyword.toLowerCase())
-			);
-		}
-
-		if (searchType === 'points') {
-			const pointsNum = parseInt(keyword);
-			if (isNaN(pointsNum)) {
-				return rules.filter(rule =>
-					rule.points.toString().includes(keyword)
-				);
-			}
-			return rules.filter(rule => rule.points === pointsNum);
-		}
-
-		// 搜索所有字段
-		const pointsNum = parseInt(keyword);
-		const searchByPoints = !isNaN(pointsNum);
-
-		return rules.filter(rule => {
-			const matchName = rule.name.toLowerCase().includes(keyword.toLowerCase());
-			const matchDesc = rule.description.toLowerCase().includes(keyword.toLowerCase());
-			const matchPoints = searchByPoints ? rule.points === pointsNum : rule.points.toString().includes(keyword);
-			return matchName || matchDesc || matchPoints;
-		});
-	}
-
-	return { createRule, deleteRule, updateRule, getRuleList, searchRules }
+	return { createRule, deleteRule, updateRule, getRuleList }
 }
