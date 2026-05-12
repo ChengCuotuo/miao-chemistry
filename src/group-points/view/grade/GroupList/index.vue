@@ -1,13 +1,21 @@
 <template>
 	<div class="group-list-container">
 		<div class="action-bar">
-			 <el-input v-model="searchQuery" placeholder="请输入小组名或学生名搜索" class="search-input" prefix-icon="Search"/>
+			<el-input v-model="searchQuery" placeholder="请输入小组名或学生名搜索" class="search-input" prefix-icon="Search" />
 			<el-button type="primary" :icon="Plus" @click="handleAdd">新增小组</el-button>
 		</div>
 		<div class="group-list-content">
-			<GroupCard v-for="group in groupInfoList || []" :key="group.id" :group="group" @edit="handleEdit"
-				@delete="handleDelete" @add-points="handleAddPoints" @subtract-points="handleSubtractPoints"
-				@adjust-points="handleAdjustPoints" />
+			<GroupCard 
+				v-for="group in groupInfoList || []" :key="group.id" :group="group" 
+				@edit="handleEdit"
+				@delete="handleDelete" 
+				@add-points="handleAddPoints" 
+				@subtract-points="handleSubtractPoints"
+				@adjust-points="handleAdjustPoints" 
+				@mul-add-points="handleMulAddPoints"
+				@mul-subtract-points="handleMulSubtractPoints" 
+				@mul-adjust-points="handleMulAdjustPoints" 
+			/>
 		</div>
 
 		<el-dialog :title="dialogTitle" v-model="dialogVisible" width="800px" :before-close="handleDialogClose">
@@ -109,11 +117,11 @@ const groupInfoList = computed(() => {
 				studentList: groupStuList,
 			} as GroupInfo;
 		})
-		.filter(group => {
-			const val = searchQuery.value.toLowerCase();
-			return group.name.toLowerCase().includes(val) || group.studentList.some(stu => stu.name.toLowerCase().includes(val));
-		})
-		.sort((a, b) => b.points - a.points);
+			.filter(group => {
+				const val = searchQuery.value.toLowerCase();
+				return group.name.toLowerCase().includes(val) || group.studentList.some(stu => stu.name.toLowerCase().includes(val));
+			})
+			.sort((a, b) => b.points - a.points);
 	}
 	return [];
 });
@@ -190,7 +198,8 @@ const handleDelete = (group: Partial<GroupInfo>) => {
 	}).then(async () => {
 		console.log('group:', group, appStore.activeGrade);
 		const groupId = group.id || '';
-		if(appStore.activeGrade) {
+		if (appStore.activeGrade) {
+			// 删除小组信息和小组学生关联关系
 			const { groupList, studentGroupList } = appStore.activeGrade.gradeInfo;
 			appStore.activeGrade.gradeInfo.groupList = groupList.filter(item => item.id !== groupId);
 			appStore.activeGrade.gradeInfo.studentGroupList = studentGroupList.filter(item => item.group_id !== groupId);
@@ -213,6 +222,18 @@ const handleSubtractPoints = (student: Student) => {
 
 const handleAdjustPoints = (student: Student) => {
 	console.log('根据规则调整积分:', student);
+};
+
+const handleMulAddPoints = (group: GroupInfo) => {
+	console.log('批量增加积分:', group);
+};
+
+const handleMulSubtractPoints = (group: GroupInfo) => {
+	console.log('批量减少积分:', group);
+};
+
+const handleMulAdjustPoints = (group: GroupInfo) => {
+	console.log('批量根据规则调整积分:', group);
 };
 
 </script>

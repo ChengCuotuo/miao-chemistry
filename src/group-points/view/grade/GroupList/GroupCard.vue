@@ -19,14 +19,31 @@
 					<el-tag type="success" size="small">{{ student.points }} 分</el-tag>
 				</div>
 				<div class="student-actions">
-					<el-button type="success" :icon="Plus" circle size="small" @click="handleAddPoints(student)" />
-					<el-button type="danger" :icon="Minus" circle size="small" @click="handleSubtractPoints(student)" />
+					<el-button type="success" style="margin: 0px;" :icon="Plus" circle size="small"
+						@click="handleAddPoints(student)" />
+					<el-button type="danger" style="margin: 0px;" :icon="Minus" circle size="small"
+						@click="handleSubtractPoints(student)" />
 					<!-- 根据规则调整分数 -->
-					 <el-button type="warning" :icon="Ticket" circle size="small" @click="handleAdjustPoints(student)" />
+					<el-button type="warning" style="margin: 0px;" :icon="Ticket" circle size="small"
+						@click="handleAdjustPoints(student)" />
 				</div>
 			</div>
 			<el-empty v-if="!group.studentList.length" description="暂无成员" :image-size="60" />
 		</div>
+		<template #footer>
+			<div class="card-footer">
+				<div>批量操作：</div>
+				<div class="student-actions">
+					<el-button type="success" style="margin: 0px;" :icon="Plus" circle size="small"
+						@click="handleMulAddPoints" />
+					<el-button type="danger" style="margin: 0px;" :icon="Minus" circle size="small"
+						@click="handleMulSubtractPoints" />
+					<!-- 根据规则调整分数 -->
+					<el-button type="warning" style="margin: 0px;" :icon="Ticket" circle size="small"
+						@click="handleMulAdjustPoints" />
+				</div>
+			</div>
+		</template>
 	</el-card>
 </template>
 
@@ -45,6 +62,9 @@ const emit = defineEmits<{
 	'add-points': [student: Student];
 	'subtract-points': [student: Student];
 	'adjust-points': [student: Student];
+	'mul-add-points': [group: GroupInfo];
+	'mul-subtract-points': [group: GroupInfo];	
+	'mul-adjust-points': [group: GroupInfo];
 }>();
 
 const handleEdit = () => {
@@ -65,6 +85,18 @@ const handleSubtractPoints = (student: Student) => {
 
 const handleAdjustPoints = (student: Student) => {
 	emit('adjust-points', student);
+};
+
+const handleMulAddPoints = () => {
+	emit('mul-add-points', props.group);
+};
+
+const handleMulSubtractPoints = () => {
+	emit('mul-subtract-points', props.group);
+};
+
+const handleMulAdjustPoints = () => {
+	emit('mul-adjust-points', props.group);
 };
 </script>
 
@@ -140,5 +172,15 @@ const handleAdjustPoints = (student: Student) => {
 .student-actions {
 	display: flex;
 	gap: 8px;
+}
+
+.card-footer {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+}
+
+::v-deep(.el-card__footer) {
+	padding: 20px;
 }
 </style>
