@@ -76,6 +76,38 @@ app.on('window-all-closed', () => {
 // ===============================================================================================
 const userDataPath = app.getPath('userData');
 
+// 确保文件存在，不存在则创建
+async function ensureFileExists(filePath, defaultContent = '') {
+  try {
+    // 尝试访问文件
+    console.log('尝试访问文件:', filePath);
+    await fs.access(filePath, fs.constants.F_OK);
+    console.log('文件已存在');
+    return true;
+  } catch (error) {
+    // 文件不存在，创建它
+    if (error.code === 'ENOENT') {
+      try {
+        // 确保目录存在
+        const dirPath = path.dirname(filePath);
+        await fs.mkdir(dirPath, { recursive: true });
+
+        // 创建文件并写入默认内容
+        await fs.writeFile(filePath, defaultContent, 'utf8');
+        console.log('文件创建成功');
+        return true;
+      } catch (createError) {
+        console.error('创建文件失败:', createError);
+        return false;
+      }
+    } else {
+      // 其他错误（如权限问题）
+      console.error('检查文件时出错:', error);
+      return false;
+    }
+  }
+}
+
 // 监听渲染进程发来的 'file-open-dialog' 事件
 ipcMain.handle('file-open-dialog', async (event, extensions) => {
   const result = await dialog.showOpenDialog({
@@ -89,14 +121,55 @@ ipcMain.handle('file-open-dialog', async (event, extensions) => {
   }
 });
 
-// 监听渲染进程发来的 'read-file' 事件
-ipcMain.handle('read-file', async (event, filePath) => {
+// 监听渲染进程发来的 'read-full-path-file' 事件
+ipcMain.handle('read-full-path-file', async (event, filePath) => {
   try {
     const content = await fs.readFile(filePath);
-    return content;
+    const name = path.basename(filePath);
+    return { content, name };
   } catch (error) {
     console.error('读取文件失败:', error);
     throw error; // 将错误抛回给渲染进程
+  }
+});
+
+// 监听渲染进程发来的 'read-file' 事件
+ipcMain.handle('read-file', async (event, params) => {
+  try {
+    const { mainPath, fileName } = params || {};
+    const filePath = path.join(userDataPath, mainPath, fileName);
+    const content = await fs.readFile(filePath);
+    const name = path.basename(filePath);
+    return { content, name };
+  } catch (error) {
+    console.error('读取文件失败:', error);
+    throw error; // 将错误抛回给渲染进程
+  }
+});
+
+// 获取文件完整路径
+ipcMain.handle('load-file-path', async (event, params) => {
+  try {
+    const { mainPath, fileName } = params || {};
+    return path.join(userDataPath, mainPath, fileName);
+  } catch (error) {
+    console.error('获取文件路径失败:', error);
+    throw error; // 将错误抛回给渲染进程
+  }
+});
+
+// 写入文件
+ipcMain.handle('write-file', async (event, params) => {
+  const { mainPath, fileName, content = '' } = params || {};
+  try {
+    const filePath = path.join(userDataPath, mainPath, fileName);
+    await ensureFileExists(filePath);
+    await fs.writeFile(filePath, content);
+    console.log('文件写入成功');
+    return true;
+  } catch (error) {
+    console.error('写入文件失败:', error);
+    return false;
   }
 });
 
@@ -153,40 +226,8 @@ ipcMain.handle('load-config-list', async (event, params) => {
   }
 });
 
-// 确保文件存在，不存在则创建
-async function ensureFileExists(filePath, defaultContent = '') {
-  try {
-    // 尝试访问文件
-    console.log('尝试访问文件:', filePath);
-    await fs.access(filePath, fs.constants.F_OK);
-    console.log('文件已存在');
-    return true;
-  } catch (error) {
-    // 文件不存在，创建它
-    if (error.code === 'ENOENT') {
-      try {
-        // 确保目录存在
-        const dirPath = path.dirname(filePath);
-        await fs.mkdir(dirPath, { recursive: true });
-
-        // 创建文件并写入默认内容
-        await fs.writeFile(filePath, defaultContent, 'utf8');
-        console.log('文件创建成功');
-        return true;
-      } catch (createError) {
-        console.error('创建文件失败:', createError);
-        return false;
-      }
-    } else {
-      // 其他错误（如权限问题）
-      console.error('检查文件时出错:', error);
-      return false;
-    }
-  }
-}
-
-// 写入文件
-ipcMain.handle('write-file', async (event, params) => {
+// 写入配置文件
+ipcMain.handle('write-config-file', async (event, params) => {
   const { mainPath, fileName, suffix, content = '' } = params || {};
   try {
     await fs.writeFile(

@@ -1,4 +1,3 @@
-// /Users/chunlei/Documents/code/chunlei/miao-chemistry/src/group-points/view/prize/index.vue
 <template>
 	<div class="prize-list-container">
 		<!-- 搜索和新增区域 -->
@@ -20,14 +19,8 @@
 			<el-table-column prop="name" label="奖品名称" align="center" min-width="150" fixed="left" />
 			<el-table-column prop="image" label="奖品图片" width="120" align="center">
 				<template #default="{ row }">
-					<el-image
-						v-if="row.image"
-						:src="row.image"
-						:preview-src-list="[row.image]"
-						fit="cover"
-						style="width: 60px; height: 60px; border-radius: 4px;"
-						preview-teleported
-					/>
+					<el-image v-if="row.image" :src="getFilePath(row.image)" :preview-src-list="[getFilePath(row.image)]"
+						fit="cover" style="width: 60px; height: 60px; border-radius: 4px;" preview-teleported />
 					<span v-else class="text-gray">暂无图片</span>
 				</template>
 			</el-table-column>
@@ -44,7 +37,8 @@
 			<el-table-column prop="allow_grades" label="适用班级" width="150" align="center" show-overflow-tooltip>
 				<template #default="{ row }">
 					<span v-if="!row.allow_grades || row.allow_grades.length === 0" class="text-gray">所有班级</span>
-					<span v-else>{{ row.allow_grades.map((gradeId: string) => gradeList.find((grade) => grade.id === gradeId)?.name || gradeId).join(', ') }}</span>
+					<span v-else>{{row.allow_grades.map((gradeId: string) => gradeList.find((grade) => grade.id ===
+						gradeId)?.name || gradeId).join(', ')}}</span>
 				</template>
 			</el-table-column>
 			<el-table-column prop="description" label="奖品描述" align="center" min-width="200" show-overflow-tooltip />
@@ -84,7 +78,7 @@
 					</el-select>
 				</el-form-item>
 				<el-form-item label="奖品图片" prop="image">
-					<el-input v-model="formData.image" placeholder="请输入图片URL" />
+					<image-editor ref="imageEditorRef" />
 				</el-form-item>
 				<el-form-item label="奖品描述" prop="description">
 					<el-input v-model="formData.description" type="textarea" :rows="3" placeholder="请输入奖品描述" />
@@ -108,17 +102,22 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue';
+import { ref, computed, onMounted } from 'vue';
+import { v4 as uuidv4 } from 'uuid';
 import { Plus, Edit, Delete } from '@element-plus/icons-vue';
 import type { FormInstance } from 'element-plus';
 import { useAppStore } from '../../store/models/app';
 import { Prize } from '../../database/class';
 import { usePrize } from '../../database/utils/usePrize';
+import ImageEditor from '../../components/image-editor.vue';
+import { saveStaticFile, loadFilePath, getStaticFilePath } from '../../database';
 
 const { createPrize, deletePrize, updatePrize, getPrizeList, searchPrizes } = usePrize();
 
 const appStore = useAppStore();
 const prizes = ref<Prize[]>(getPrizeList() || []);
+
+const preFullPath = ref("")
 
 // 搜索关键词
 const searchQuery = ref('');
@@ -145,6 +144,8 @@ const formData = ref<Partial<Prize>>({
 	allow_grades: []
 });
 
+const imageEditorRef = ref()
+
 // 班级列表
 const gradeList = computed(() => appStore.database.gradeList.filter(grade => grade.delete === 0));
 
@@ -160,6 +161,24 @@ const filteredPrizes = computed(() => {
 	const filtered = searchPrizes(query);
 	return filtered.slice((currentPage.value - 1) * pageSize.value, currentPage.value * pageSize.value);
 });
+
+const getFilePath = async (image: string) => {
+  if (!image) return '';
+	const staticPath = await loadFilePath(preFullPath.value + '/' + image)
+  try {
+    const fileURL = getStaticFilePath(staticPath);
+    console.log('本地路径:', staticPath, 'File URL:', fileURL);
+    return fileURL;
+  } catch (error) {
+    console.error('路径转换失败:', error);
+    return staticPath;
+  }
+}
+
+onMounted(async () => {
+	preFullPath.value = await loadFilePath('')
+	console.log('静态文件路径:', preFullPath.value);
+})
 
 // 搜索
 const handleSearch = () => {
@@ -202,15 +221,39 @@ const confirmDelete = async () => {
 const handleSubmit = async () => {
 	formRef.value?.validate(async (valid) => {
 		if (valid) {
-			const { name, description, points, image, quantity, allow_grades } = formData.value;
+			const { name, description, points, quantity, allow_grades } = formData.value;
+			let imageName = ''
+			const params = await imageEditorRef.value.getImage()
+			if (params) {
+				const { name: fileName, content } = params
+				const [namePart, ext] = fileName?.split(".") || []
+				imageName = `${namePart}_${uuidv4().slice(0, 16)}.${ext}`
+				await saveStaticFile(imageName, content)
+			}
+
 			let res;
 
 			if (isEdit.value) {
 				// 编辑
-				res = await updatePrize(formData.value.id!, name!, description!, points!, image!, quantity!, allow_grades || []);
+				res = await updatePrize({
+					id: formData.value.id!,
+					name: name!,
+					description: description!,
+					points: points!,
+					image: imageName,
+					quantity: quantity!,
+					allow_grades: allow_grades || []
+				});
 			} else {
 				// 新增
-				res = await createPrize(name!, description!, points!, image!, quantity!, allow_grades || []);
+				res = await createPrize({
+					name: name!,
+					description: description!,
+					points: points!,
+					quantity: quantity!,
+					image: imageName,
+					allow_grades: allow_grades || []
+				});
 			}
 
 			if (res) {

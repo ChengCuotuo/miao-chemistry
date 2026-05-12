@@ -7,7 +7,8 @@ export const usePrize = () => {
 	const appStore = useAppStore();
 
 	// 创建奖品
-	const createPrize = async (name: string, description: string, points: number, image: string, quantity: number, allow_grades: string[] = []) => {
+	const createPrize = async (params: { name: string, description: string, points: number, image: string, quantity: number, allow_grades: string[] }) => {
+		const { name, description, points, image, quantity, allow_grades = [] } = params;
 		try {
 			const uuid = uuidv4() as string;
 			const prize = new Prize({
@@ -48,7 +49,8 @@ export const usePrize = () => {
 	};
 
 	// 更新奖品
-	const updatePrize = async (id: string, name: string, description: string, points: number, image: string, quantity: number, allow_grades: string[] = []) => {
+	const updatePrize = async (params: { id: string, name: string, description: string, points: number, image: string, quantity: number, allow_grades: string[] }) => {
+		const { id, name, description, points, image, quantity, allow_grades = [] } = params;
 		try {
 			const prize = appStore.database.prizeList.find(item => item.id === id);
 			if (!prize) {

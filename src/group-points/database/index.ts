@@ -43,6 +43,7 @@ const DEFAULT_TABLE_NAME = {
 }
 export const GroupPointsConfig = {
 	database: "group-points", // 数据库路径
+	statics: "statics", // 静态资源路径
 	defaultTables: [ // 默认配置（全局数据）
 		DEFAULT_TABLE_NAME.grade, // 年级配置
 		DEFAULT_TABLE_NAME.rule, // 规则配置
@@ -136,4 +137,32 @@ export async function appendPrizeConfig(content: string) {
 		suffix: GroupPointsConfig.suffix,
 		content
 	});
+}
+
+// 保存静态文件
+export async function saveStaticFile(fileName: string, content: any) {
+	return await curWindow.electronAPI.writeToFile({
+		mainPath: `${GroupPointsConfig.database}/${GroupPointsConfig.statics}`,
+		fileName,
+		content
+	});
+}
+
+// // 读取静态文件
+// export async function loadStaticFile(fileName: string) {
+// 	return await curWindow.electronAPI.readFile({
+// 		mainPath: `${GroupPointsConfig.database}/${GroupPointsConfig.statics}`,
+// 		fileName,
+// 	});
+// }
+
+export async function loadFilePath(fileName: string) {
+	return await curWindow.electronAPI.loadFilePath({
+		mainPath: `${GroupPointsConfig.database}/${GroupPointsConfig.statics}`,
+		fileName
+	});
+}
+
+export function getStaticFilePath(filePath: string) {
+	return curWindow.electronAPI.loadStaticFileURL(filePath);
 }
