@@ -1,8 +1,6 @@
 // See the Electron documentation for details on how to use preload scripts:
 // https://www.electronjs.org/docs/latest/tutorial/process-model#preload-scripts
 const { contextBridge, ipcRenderer } = require('electron');
-const url = require('url');
-const pathToFileURL = url.pathToFileURL;
 
 // 安全地向渲染进程暴露 API
 contextBridge.exposeInMainWorld('electronAPI', {
@@ -29,6 +27,4 @@ contextBridge.exposeInMainWorld('electronAPI', {
   // 写入配置文件
   writeConfigToFile: (filePath, content) =>
     ipcRenderer.invoke('write-config-file', filePath, content),
-  loadStaticFileURL: (filePath) =>
-    ipcRenderer.invoke('path-to-file-url', filePath),
 });

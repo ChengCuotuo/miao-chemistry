@@ -1,6 +1,7 @@
 <template>
   <div class="image-editor-compact">
     <ImageEditor
+      :key="componentKey"
       ref="imageEditor"
       v-model:file-image="selectedFileImageForEdit"
       :max-width="400"
@@ -17,6 +18,7 @@
       <el-space v-if="selectedFileImageForEdit && !isEditing">
         <el-button @click="enablePainting">画笔</el-button>
         <el-button @click="enableCroping">裁剪</el-button>
+        <el-button type="danger" @click="removeImage">删除图片</el-button>
       </el-space>
       <div v-if="activeBrushing" class="color-picker-inline">
         <input type="color" v-model="colorBrush" title="选择画笔颜色" />
@@ -43,6 +45,7 @@ const colorBrush = ref('#ff0000')
 const activeBrushing = ref(false)
 const activeCroping = ref(false)
 const loading = ref(false)
+const componentKey = ref(0)
 
 const isEditing = computed(() => activeBrushing.value || activeCroping.value)
 
@@ -92,12 +95,20 @@ const handleCancelChanges = () => {
   activeCroping.value = false
 }
 
+// 删除图片
+const removeImage = () => {
+  // 通过更新 key 强制重新渲染组件
+  componentKey.value++;
+  // 清空响应式数据
+  selectedFileImageForEdit.value = null;
+};
+
 const compressionImage = async () => {
   if(activeBrushing.value || activeBrushing.value) {
     handleSaveChanges()
   }
 
-  if(!selectedFileImageForEdit.value) return ''
+  if(!selectedFileImageForEdit.value) return null
   const options = {
     maxSizeMB: 0.5,        // 最大体积 0.5MB (500KB)
     maxWidthOrHeight: 1920, // 最大宽/高为 1920px
@@ -109,16 +120,65 @@ const compressionImage = async () => {
   }
   try {
     // 执行压缩
-    return await imageCompression(selectedFileImageForEdit.value, options)
+    const compressedFile = await imageCompression(selectedFileImageForEdit.value, options)
     console.log('压缩成功！')
+    // 将 File 对象转换为 ArrayBuffer，便于 IPC 传输
+    const arrayBuffer = await compressedFile.arrayBuffer()
+    return {
+      name: compressedFile.name,
+      content: new Uint8Array(arrayBuffer)
+    }
   } catch (error) {
     console.error('压缩失败:', error)
+    return null
   }
 }
 
+// 设置图片（用于编辑场景）
+const setImage = async (imageData, fileName) => {
+  console.log('setImage called with:', { fileName, dataLength: imageData?.length });
+  
+  if (!imageData || imageData.length === 0) {
+    console.error('Invalid image data');
+    return false;
+  }
+  
+  try {
+    // 将 Uint8Array 转换为 File 对象
+    const ext = fileName.split('.').pop()?.toLowerCase() || 'jpg';
+    const mimeType = `image/${ext === 'png' ? 'png' : ext === 'gif' ? 'gif' : 'jpeg'}`;
+    const blob = new Blob([imageData], { type: mimeType });
+    
+    if (blob.size === 0) {
+      console.error('Blob is empty');
+      return false;
+    }
+    
+    const file = new File([blob], fileName, { type: mimeType });
+    
+    // 等待 Vue 响应式更新
+    selectedFileImageForEdit.value = file;
+    
+    // 验证设置是否成功
+    await new Promise(resolve => setTimeout(resolve, 100));
+    if (selectedFileImageForEdit.value === file) {
+      console.log('Image set successfully:', fileName);
+      return true;
+    } else {
+      console.error('Image was not set correctly');
+      return false;
+    }
+  } catch (error) {
+    console.error('Failed to set image:', error);
+    return false;
+  }
+};
+
 defineExpose({
   getImage: compressionImage,
-  download: () => imageEditor.value?.download()
+  download: () => imageEditor.value?.download(),
+  setImage,
+  removeImage
 })
 </script>
 

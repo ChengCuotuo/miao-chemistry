@@ -124,11 +124,13 @@ ipcMain.handle('file-open-dialog', async (event, extensions) => {
 // 监听渲染进程发来的 'read-full-path-file' 事件
 ipcMain.handle('read-full-path-file', async (event, filePath) => {
   try {
+    // 检查文件是否存在
+    await fs.access(filePath, fs.constants.F_OK);
     const content = await fs.readFile(filePath);
     const name = path.basename(filePath);
     return { content, name };
   } catch (error) {
-    console.error('读取文件失败:', error);
+    console.error('读取文件失败:', error.message);
     throw error; // 将错误抛回给渲染进程
   }
 });
@@ -161,14 +163,30 @@ ipcMain.handle('load-file-path', async (event, params) => {
 // 写入文件
 ipcMain.handle('write-file', async (event, params) => {
   const { mainPath, fileName, content = '' } = params || {};
+  console.log('write-file called with:', {
+    mainPath,
+    fileName,
+    contentLength: content?.length,
+    contentType: Object.prototype.toString.call(content),
+  });
   try {
     const filePath = path.join(userDataPath, mainPath, fileName);
+    console.log('Full file path:', filePath);
     await ensureFileExists(filePath);
-    await fs.writeFile(filePath, content);
+
+    // 处理 Uint8Array 类型的数据
+    let writeContent = content;
+    if (content && content.buffer && content.byteLength !== undefined) {
+      // 这是一个 TypedArray，转换为 Buffer
+      writeContent = Buffer.from(content);
+      console.log('Converted to Buffer, length:', writeContent.length);
+    }
+
+    await fs.writeFile(filePath, writeContent);
     console.log('文件写入成功');
     return true;
   } catch (error) {
-    console.error('写入文件失败:', error);
+    console.error('写入文件失败:', error.message);
     return false;
   }
 });
@@ -240,17 +258,5 @@ ipcMain.handle('write-config-file', async (event, params) => {
   } catch (error) {
     console.error('写入文件失败:', error);
     return false;
-  }
-});
-
-// 转换路径为 file URL
-ipcMain.handle('path-to-file-url', async (event, filePath) => {
-  try {
-    const { pathToFileURL } = require('url');
-    const fileURL = pathToFileURL(filePath).href;
-    return fileURL;
-  } catch (error) {
-    console.error('路径转换失败:', error);
-    throw error;
   }
 });

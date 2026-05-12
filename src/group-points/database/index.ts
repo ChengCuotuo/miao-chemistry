@@ -148,14 +148,6 @@ export async function saveStaticFile(fileName: string, content: any) {
 	});
 }
 
-// // 读取静态文件
-// export async function loadStaticFile(fileName: string) {
-// 	return await curWindow.electronAPI.readFile({
-// 		mainPath: `${GroupPointsConfig.database}/${GroupPointsConfig.statics}`,
-// 		fileName,
-// 	});
-// }
-
 export async function loadFilePath(fileName: string) {
 	return await curWindow.electronAPI.loadFilePath({
 		mainPath: `${GroupPointsConfig.database}/${GroupPointsConfig.statics}`,
@@ -163,6 +155,45 @@ export async function loadFilePath(fileName: string) {
 	});
 }
 
-export function getStaticFilePath(filePath: string) {
-	return curWindow.electronAPI.loadStaticFileURL(filePath);
+// 将 Uint8Array 转换为 base64
+function uint8ArrayToBase64(bytes: Uint8Array): string {
+	const CHUNK_SIZE = 0x8000;
+	const chunks: string[] = [];
+	for (let i = 0; i < bytes.length; i += CHUNK_SIZE) {
+		chunks.push(String.fromCharCode(...bytes.subarray(i, i + CHUNK_SIZE)));
+	}
+	return btoa(chunks.join(''));
+}
+
+// 读取图片文件并返回 Uint8Array
+export async function loadImageAsUint8Array(fileName: string): Promise<Uint8Array | null> {
+	try {
+		const filePath = await loadFilePath(fileName);
+		const result = await curWindow.electronAPI.readFullPathFile(filePath);
+
+		if (result && result.content) {
+			return new Uint8Array(result.content);
+		}
+		return null;
+	} catch (error) {
+		console.error('加载图片失败:', error);
+		return null;
+	}
+}
+
+// 读取图片文件并返回 base64 格式
+export async function loadImageAsBase64(fileName: string): Promise<string> {
+	try {
+		const uint8Array = await loadImageAsUint8Array(fileName);
+
+		if (uint8Array) {
+			const base64 = uint8ArrayToBase64(uint8Array);
+			const ext = fileName.split('.').pop()?.toLowerCase() || 'jpg';
+			return `data:image/${ext === 'png' ? 'png' : ext === 'gif' ? 'gif' : 'jpeg'};base64,${base64}`;
+		}
+		return '';
+	} catch (error) {
+		console.error('加载图片失败:', error);
+		return '';
+	}
 }

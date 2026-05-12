@@ -19,8 +19,10 @@
 			<el-table-column prop="name" label="奖品名称" align="center" min-width="150" fixed="left" />
 			<el-table-column prop="image" label="奖品图片" width="120" align="center">
 				<template #default="{ row }">
-					<el-image v-if="row.image" :src="getFilePath(row.image)" :preview-src-list="[getFilePath(row.image)]"
+					<el-image v-if="row.image && imageBase64Map[row.image]" :src="imageBase64Map[row.image]" 
+						:preview-src-list="[imageBase64Map[row.image]]"
 						fit="cover" style="width: 60px; height: 60px; border-radius: 4px;" preview-teleported />
+					<span v-else-if="row.image" class="text-gray">加载中...</span>
 					<span v-else class="text-gray">暂无图片</span>
 				</template>
 			</el-table-column>
@@ -102,7 +104,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue';
+import { ref, computed, onMounted, watch } from 'vue';
 import { v4 as uuidv4 } from 'uuid';
 import { Plus, Edit, Delete } from '@element-plus/icons-vue';
 import type { FormInstance } from 'element-plus';
@@ -110,7 +112,7 @@ import { useAppStore } from '../../store/models/app';
 import { Prize } from '../../database/class';
 import { usePrize } from '../../database/utils/usePrize';
 import ImageEditor from '../../components/image-editor.vue';
-import { saveStaticFile, loadFilePath, getStaticFilePath } from '../../database';
+import { saveStaticFile, loadFilePath, loadImageAsBase64, loadImageAsUint8Array } from '../../database';
 
 const { createPrize, deletePrize, updatePrize, getPrizeList, searchPrizes } = usePrize();
 
@@ -162,23 +164,35 @@ const filteredPrizes = computed(() => {
 	return filtered.slice((currentPage.value - 1) * pageSize.value, currentPage.value * pageSize.value);
 });
 
-const getFilePath = async (image: string) => {
-  if (!image) return '';
-	const staticPath = await loadFilePath(preFullPath.value + '/' + image)
-  try {
-    const fileURL = await getStaticFilePath(staticPath);
-    console.log('本地路径:', staticPath, 'File URL:', fileURL);
-    return fileURL;
-  } catch (error) {
-    console.error('路径转换失败:', error);
-    return staticPath;
-  }
-}
+// 图片 base64 缓存
+const imageBase64Map = ref<Record<string, string>>({});
+
+// 加载单张图片为 base64
+const loadSingleImage = async (imageName: string) => {
+	if (!imageName || imageBase64Map.value[imageName]) return;
+	const base64 = await loadImageAsBase64(imageName);
+	if (base64) {
+		imageBase64Map.value[imageName] = base64;
+	}
+};
+
+// 加载所有图片
+const loadAllImages = async () => {
+	const imageNames = [...new Set(prizes.value.map(p => p.image).filter(Boolean))];
+	await Promise.all(imageNames.map(loadSingleImage));
+};
 
 onMounted(async () => {
 	preFullPath.value = await loadFilePath('')
 	console.log('静态文件路径:', preFullPath.value);
-})
+	// 加载所有图片
+	await loadAllImages();
+});
+
+// 监听奖品列表变化，重新加载图片
+const prizesWatcher = watch(() => prizes.value, async () => {
+	await loadAllImages();
+}, { deep: true });
 
 // 搜索
 const handleSearch = () => {
@@ -193,10 +207,28 @@ const handleAdd = () => {
 };
 
 // 编辑
-const handleEdit = (row: Prize) => {
+const handleEdit = async (row: Prize) => {
 	isEdit.value = true;
 	formData.value = { ...row };
+	
+	// 先打开弹窗，确保组件已挂载
 	dialogVisible.value = true;
+	
+	// 等待弹窗打开和组件挂载
+	await new Promise(resolve => setTimeout(resolve, 100));
+	
+	// 如果有图片，加载并显示到编辑器
+	if (row.image) {
+		try {
+			const uint8Array = await loadImageAsUint8Array(row.image);
+			
+			if (uint8Array && imageEditorRef.value) {
+				await imageEditorRef.value.setImage(uint8Array, row.image);
+			} 
+		} catch (error) {
+			console.error('Failed to load existing image:', error);
+		}
+	}
 };
 
 // 删除确认
@@ -224,8 +256,12 @@ const handleSubmit = async () => {
 			const { name, description, points, quantity, allow_grades } = formData.value;
 			let imageName = ''
 			const params = await imageEditorRef.value.getImage()
+			console.log('getImage result:', params);
 			if (params) {
 				const { name: fileName, content } = params
+				console.log('File name:', fileName);
+				console.log('Content type:', Object.prototype.toString.call(content));
+				console.log('Content length:', content?.length);
 				const [namePart, ext] = fileName?.split(".") || []
 				imageName = `${namePart}_${uuidv4().slice(0, 16)}.${ext}`
 				await saveStaticFile(imageName, content)
