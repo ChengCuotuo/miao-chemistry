@@ -9,8 +9,11 @@
 					<el-option label="加分规则" value="add" />
 					<el-option label="减分规则" value="subtract" />
 				</el-select>
+				<el-button type="info" @click="handleReset">重置</el-button>
 			</el-space>
-			<el-button type="primary" :icon="Plus" @click="handleAdd">新增规则</el-button>
+			<el-space>
+				<el-button type="primary" :icon="Plus" @click="handleAdd">新增规则</el-button>
+			</el-space>
 		</div>
 
 		<!-- 规则列表 -->
@@ -148,6 +151,12 @@ const filteredRules = computed(() => {
 
 // 搜索
 const handleSearch = () => {
+	currentPage.value = 1;
+};
+
+const handleReset = () => {
+	searchQuery.value = '';
+	ruleType.value = '';
 	currentPage.value = 1;
 };
 

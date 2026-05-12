@@ -1,7 +1,10 @@
 <template>
 	<div class="group-list-container">
 		<div class="action-bar">
-			<el-input v-model="searchQuery" placeholder="请输入小组名或学生名搜索" class="search-input" prefix-icon="Search" />
+			<el-space>
+				<el-input v-model="searchQuery" placeholder="请输入小组名或学生名搜索" class="search-input" prefix-icon="Search" />
+				<el-button type="info" @click="handleReset">重置</el-button>
+			</el-space>	
 			<el-button type="primary" :icon="Plus" @click="handleAdd">新增小组</el-button>
 		</div>
 		<div class="group-list-content">
@@ -125,6 +128,11 @@ const groupInfoList = computed(() => {
 	}
 	return [];
 });
+
+// 搜索
+const handleReset = () => {
+	searchQuery.value = '';
+}
 
 const filterMethod = (query: string, item: Student) => {
 	return item.name.toLowerCase().includes(query.toLowerCase())

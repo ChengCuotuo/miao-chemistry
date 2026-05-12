@@ -2,8 +2,12 @@
 	<div class="prize-list-container">
 		<!-- 搜索和新增区域 -->
 		<div class="search-bar">
-			<el-input v-model="searchQuery" placeholder="请输入奖品名称搜索" class="search-input" prefix-icon="Search"
-				@keyup.enter="handleSearch" clearable />
+			<el-space>
+				<el-input v-model="searchQuery" placeholder="请输入奖品名称搜索" class="search-input" prefix-icon="Search"
+					@keyup.enter="handleSearch" clearable />
+				<el-button type="info" @click="handleReset">重置</el-button>
+			</el-space>
+
 			<el-button type="primary" :icon="Plus" @click="handleAdd">新增奖品</el-button>
 		</div>
 
@@ -19,9 +23,9 @@
 			<el-table-column prop="name" label="奖品名称" align="center" min-width="150" fixed="left" />
 			<el-table-column prop="image" label="奖品图片" width="120" align="center">
 				<template #default="{ row }">
-					<el-image v-if="row.image && imageBase64Map[row.image]" :src="imageBase64Map[row.image]" 
-						:preview-src-list="[imageBase64Map[row.image]]"
-						fit="cover" style="width: 60px; height: 60px; border-radius: 4px;" preview-teleported />
+					<el-image v-if="row.image && imageBase64Map[row.image]" :src="imageBase64Map[row.image]"
+						:preview-src-list="[imageBase64Map[row.image]]" fit="cover"
+						style="width: 60px; height: 60px; border-radius: 4px;" preview-teleported />
 					<span v-else-if="row.image" class="text-gray">加载中...</span>
 					<span v-else class="text-gray">暂无图片</span>
 				</template>
@@ -199,6 +203,11 @@ const handleSearch = () => {
 	currentPage.value = 1;
 };
 
+const handleReset = () => {
+	searchQuery.value = '';
+	currentPage.value = 1;
+};
+
 // 新增
 const handleAdd = () => {
 	isEdit.value = false;
@@ -210,21 +219,21 @@ const handleAdd = () => {
 const handleEdit = async (row: Prize) => {
 	isEdit.value = true;
 	formData.value = { ...row };
-	
+
 	// 先打开弹窗，确保组件已挂载
 	dialogVisible.value = true;
-	
+
 	// 等待弹窗打开和组件挂载
 	await new Promise(resolve => setTimeout(resolve, 100));
-	
+
 	// 如果有图片，加载并显示到编辑器
 	if (row.image) {
 		try {
 			const uint8Array = await loadImageAsUint8Array(row.image);
-			
+
 			if (uint8Array && imageEditorRef.value) {
 				await imageEditorRef.value.setImage(uint8Array, row.image);
-			} 
+			}
 		} catch (error) {
 			console.error('Failed to load existing image:', error);
 		}

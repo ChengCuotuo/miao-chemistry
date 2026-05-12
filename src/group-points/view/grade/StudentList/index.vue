@@ -2,9 +2,12 @@
 	<div class="student-list-container">
 		<!-- 搜索和新增区域 -->
 		<div class="search-bar">
-			<el-input v-model="searchQuery" placeholder="请输入姓名或ID搜索" class="search-input" prefix-icon="Search"
-				@keyup.enter="handleSearch" />
-				<!-- TODO 批量处理 -->
+			<el-space>
+				<el-input v-model="searchQuery" placeholder="请输入姓名或ID搜索" class="search-input" prefix-icon="Search"
+					@keyup.enter="handleSearch" />
+				<el-button type="info" @click="handleReset">重置</el-button>
+			</el-space>
+			<!-- TODO 批量处理 -->
 			<el-button type="primary" :icon="Plus" @click="handleAdd">新增学生</el-button>
 		</div>
 
@@ -43,7 +46,8 @@
 					<el-input v-model="formData.name" placeholder="请输入姓名" />
 				</el-form-item>
 				<el-form-item label="积分" prop="points" :rules="[{ required: true, message: '请输入积分', trigger: 'blur' }]">
-					<el-input-number style="width: 100%" controls-position="right" v-model="formData.points" placeholder="请输入积分" />
+					<el-input-number style="width: 100%" controls-position="right" v-model="formData.points"
+						placeholder="请输入积分" />
 				</el-form-item>
 			</el-form>
 			<template #footer>
@@ -121,6 +125,12 @@ const handleSearch = () => {
 	currentPage.value = 1;
 };
 
+// 重置
+const handleReset = () => {
+	searchQuery.value = '';
+	currentPage.value = 1;
+};
+
 // 新增
 const handleAdd = () => {
 	isEdit.value = false;
@@ -159,7 +169,7 @@ const handleSubmit = async () => {
 		if (valid) {
 			const { name, points } = formData.value;
 			let res;
-			
+
 			if (isEdit.value) {
 				// 编辑
 				res = await updateStudent(formData.value.id!, name!, points!);
@@ -167,7 +177,7 @@ const handleSubmit = async () => {
 				// 新增
 				res = await createStudent(name!, points!);
 			}
-			
+
 			if (res) {
 				students.value = getStudentList();
 				dialogVisible.value = false;
