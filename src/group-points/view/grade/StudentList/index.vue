@@ -54,7 +54,7 @@
 
 		<!-- 删除确认弹窗 -->
 		<el-dialog title="确认删除" v-model="deleteConfirmVisible" width="300px">
-			<span>确定要删除学生「{{ deleteStudent?.name }}」吗？</span>
+			<span>确定要删除学生“{{ deleteStudentRef?.name }}”吗？</span>
 			<template #footer>
 				<el-button @click="deleteConfirmVisible = false">取消</el-button>
 				<el-button type="danger" @click="confirmDelete">确定删除</el-button>
@@ -69,15 +69,15 @@ import { Plus, Edit, Delete } from '@element-plus/icons-vue';
 import type { FormInstance } from 'element-plus';
 import { useAppStore } from '../../../store/models/app';
 import { Student } from '../../../database/class';
-import { useGrade } from '../../../database/utils/useGrade';
+import { useStudent } from '../../../database/utils/useStudent';
 
-const { updateGradeInfoById } = useGrade();
+const { createStudent, deleteStudent, updateStudent, getStudentList, getStudentIndex } = useStudent();
 
 const appStore = useAppStore();
 const activeGrade = computed(() => appStore.activeGrade);
 
-const students = ref<Student[]>(activeGrade.value?.gradeInfo?.studentList || []);
-const studentIndex = computed(() => activeGrade.value?.gradeInfo?.indexMap?.student || 0);
+const students = ref<Student[]>(getStudentList());
+const studentIndex = computed(() => getStudentIndex());
 
 // 搜索关键词
 const searchQuery = ref('');
@@ -91,7 +91,7 @@ const dialogVisible = ref(false);
 const deleteConfirmVisible = ref(false);
 const isEdit = ref(false);
 const formRef = ref<FormInstance>();
-const deleteStudent = ref<Student | null>(null);
+const deleteStudentRef = ref<Student | null>(null);
 
 // 表单数据
 const formData = ref<Partial<Student>>({
@@ -137,62 +137,45 @@ const handleEdit = (row: Student) => {
 
 // 删除确认
 const handleDelete = (row: Student) => {
-	deleteStudent.value = row;
+	deleteStudentRef.value = row;
 	deleteConfirmVisible.value = true;
 };
 
 // 确认删除
 const confirmDelete = async () => {
-	if (deleteStudent.value) {
-		const index = students.value.findIndex(
-			(item) => item.id === deleteStudent.value?.id
-		);
-		if (index > -1) {
-			students.value.splice(index, 1);
-			if (appStore.activeGrade) {
-				appStore.activeGrade.gradeInfo.studentList = [...students.value];
-			}
+	if (deleteStudentRef.value) {
+		const res = await deleteStudent(deleteStudentRef.value.id);
+		if (res) {
+			students.value = getStudentList();
 		}
 	}
-	await handleUpdateGradeInfo();
-
 	deleteConfirmVisible.value = false;
-	deleteStudent.value = null;
+	deleteStudentRef.value = null;
 };
 
 // 提交表单
-const handleSubmit = () => {
+const handleSubmit = async () => {
 	formRef.value?.validate(async (valid) => {
 		if (valid) {
+			const { name, points } = formData.value;
+			let res;
+			
 			if (isEdit.value) {
 				// 编辑
-				const index = students.value.findIndex(
-					(item) => item.id === formData.value.id
-				);
-				if (index > -1) {
-					if (appStore.activeGrade) {
-						students.value[index] = { ...students.value[index], ...formData.value };
-						appStore.activeGrade.gradeInfo.studentList = [...students.value];
-					}
-				}
+				res = await updateStudent(formData.value.id!, name!, points!);
 			} else {
-				const newStudent = new Student(formData.value as Student);
-				if (appStore.activeGrade) {
-					appStore.activeGrade.gradeInfo.studentList.push(newStudent);
-					appStore.activeGrade.gradeInfo.indexMap.student++;
-				}
+				// 新增
+				res = await createStudent(name!, points!);
 			}
-			await handleUpdateGradeInfo();
-			dialogVisible.value = false;
+			
+			if (res) {
+				students.value = getStudentList();
+				dialogVisible.value = false;
+				formRef.value?.resetFields();
+			}
 		}
 	});
 };
-
-const handleUpdateGradeInfo = async () => {
-	if (activeGrade.value) {
-		await updateGradeInfoById(activeGrade.value.id, activeGrade.value);
-	}
-}
 
 // 关闭弹窗
 const handleDialogClose = () => {
