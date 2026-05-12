@@ -21,7 +21,7 @@
 - 奖励信息 - prize
   - id - id
   - 奖励名称 - name
-  - 奖励描述 - description
+  - 奖励描述 - desc
   - 奖励图片 - image
   - 奖励数量 - quantity
   - 积分值 - points
@@ -29,7 +29,7 @@
 - 规则信息 - rule
   - id - id
   - 规则名称 - name
-  - 规则描述 - description
+  - 规则描述 - desc
   - 积分值 - points
   - 允许的年级id - allow_grades
 - 积分记录 - record

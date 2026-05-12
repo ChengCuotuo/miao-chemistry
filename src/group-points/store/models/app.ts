@@ -14,8 +14,10 @@ export const useAppStore = defineStore('app', {
 			gradeList: [],
 			ruleList: [],
 			prizeList: [],
+			basicConfig: {} as DatabaseInfoType['basicConfig']
 		},
 		activeGrade: {} as DatabaseInfoType['gradeList'][0],
+
 	}),
 	getters: {
 		getIsCollapse: (state: AppState) => state.isCollapse,

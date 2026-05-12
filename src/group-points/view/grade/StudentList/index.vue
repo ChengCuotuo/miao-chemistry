@@ -64,8 +64,8 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted } from 'vue';
-import { Plus, Edit, Delete, Search } from '@element-plus/icons-vue';
+import { ref, computed } from 'vue';
+import { Plus, Edit, Delete } from '@element-plus/icons-vue';
 import type { FormInstance } from 'element-plus';
 import { useAppStore } from '../../../store/models/app';
 import { Student } from '../../../database/class';
@@ -115,18 +115,6 @@ const filteredStudents = computed(() => {
 			item.id.toLowerCase().includes(query)
 	).slice((currentPage.value - 1) * pageSize.value, currentPage.value * pageSize.value);
 });
-
-onMounted(() => {
-	window.addEventListener('resize', handleResize);
-});
-
-onUnmounted(() => {
-	window.removeEventListener('resize', handleResize);
-});
-
-const handleResize = () => {
-	
-}
 
 // 搜索
 const handleSearch = () => {
