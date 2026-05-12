@@ -18,12 +18,12 @@
   - 学生id - student_id
   - 分组id - group_id
   - 年级id - grade_id
-- 奖励信息 - prize
+- 奖品信息 - prize
   - id - id
-  - 奖励名称 - name
-  - 奖励描述 - desc
-  - 奖励图片 - image
-  - 奖励数量 - quantity
+  - 奖品名称 - name
+  - 奖品描述 - desc
+  - 奖品图片 - image
+  - 奖品数量 - quantity
   - 积分值 - points
   - 允许的年级id - allow_grades
 - 规则信息 - rule
