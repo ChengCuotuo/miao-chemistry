@@ -112,7 +112,7 @@ import { useAppStore } from '../../store/models/app';
 import { Prize } from '../../database/class';
 import { usePrize } from '../../database/utils/usePrize';
 import ImageEditor from '../../components/image-editor.vue';
-import { saveStaticFile, loadFilePath, loadImageAsBase64, loadImageAsUint8Array } from '../../database';
+import { saveStaticFile, loadFilePath, loadImageAsBase64, loadImageAsUint8Array, GroupPointsConfig } from '../../database';
 
 const { createPrize, deletePrize, updatePrize, getPrizeList, searchPrizes } = usePrize();
 
@@ -238,6 +238,7 @@ const handleDelete = (row: Prize) => {
 };
 
 // 确认删除
+// TODO 做一个根据 GroupPointsConfig.prizePrefix 删除 statics 下多余文件的方法
 const confirmDelete = async () => {
 	if (deletePrizeRef.value) {
 		const res = await deletePrize(deletePrizeRef.value.id);
@@ -256,14 +257,10 @@ const handleSubmit = async () => {
 			const { name, description, points, quantity, allow_grades } = formData.value;
 			let imageName = ''
 			const params = await imageEditorRef.value.getImage()
-			console.log('getImage result:', params);
 			if (params) {
 				const { name: fileName, content } = params
-				console.log('File name:', fileName);
-				console.log('Content type:', Object.prototype.toString.call(content));
-				console.log('Content length:', content?.length);
 				const [namePart, ext] = fileName?.split(".") || []
-				imageName = `${namePart}_${uuidv4().slice(0, 16)}.${ext}`
+				imageName = `${GroupPointsConfig.prizePrefix}${namePart.substring(0, 10)}_${uuidv4().slice(0, 16)}.${ext}`
 				await saveStaticFile(imageName, content)
 			}
 
