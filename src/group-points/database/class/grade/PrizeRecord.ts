@@ -2,21 +2,18 @@
 //   - id - id
 //   - 学生id - student_id
 //   - 规则id - rule_id
-//   - 积分值 - points
 //   - 记录时间 - time
 
 export class PrizeRecord {
-	id: string;
+	id: number;
 	stu_id: string;
 	rule_id: string;
-	points: number;
-	time: Date;
+	time: string;
 
-	constructor(params: { id: string, stu_id: string, rule_id: string, points: number, time: Date }) {
+	constructor(params: { id: number, stu_id: string, rule_id: string, time: string }) {
 		this.id = params.id;
 		this.stu_id = params.stu_id;
 		this.rule_id = params.rule_id;
-		this.points = params.points;
 		this.time = params.time;
 	}
 	toJSON() {
@@ -24,7 +21,6 @@ export class PrizeRecord {
 			id: this.id,
 			stu_id: this.stu_id,
 			rule_id: this.rule_id,
-			points: this.points,
 			time: this.time,
 		}
 	}

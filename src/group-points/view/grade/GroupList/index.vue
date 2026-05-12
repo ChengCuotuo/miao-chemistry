@@ -53,6 +53,15 @@
 			:step="Number(step)"
 			@confirm="handleBatchPointsConfirm"
 		/>
+
+		<!-- 规则选择弹窗 -->
+		<RuleSelectorModal
+			v-model:visible="ruleSelectorVisible"
+			:rules="rules"
+			:target-name="ruleTargetName"
+			:type="ruleSelectorType"
+			@confirm="handleRuleConfirm"
+		/>
 	</div>
 </template>
 
@@ -60,12 +69,14 @@
 import { computed, ref } from 'vue';
 import { useAppStore } from '../../../store/models/app';
 import { Plus } from '@element-plus/icons-vue';
-import { Student } from '../../../database/class';
-import { ElMessage, ElMessageBox, FormInstance } from 'element-plus';
-import { Group, StudentGroup } from '../../../database/class';
+import { PrizeRecord, Student } from '../../../database/class';
+import { dayjs, ElMessage, ElMessageBox, FormInstance } from 'element-plus';
+import { Group, StudentGroup, Rule } from '../../../database/class';
 import { useGrade } from '../../../database/utils/useGrade';
+import { useRule } from '../../../database/utils/useRule';
 import GroupCard from './GroupCard.vue';
 import BatchPointsModal from './BatchPointsModal.vue';
+import RuleSelectorModal from './RuleSelectorModal.vue';
 
 export interface GroupInfo {
 	id: string,
@@ -81,6 +92,9 @@ const { updateGradeInfoById } = useGrade();
 const appStore = useAppStore();
 // 搜索关键词
 const searchQuery = ref('');
+const isEdit = ref(false);
+const curGroupStuIds = ref<string[]>([]);
+const dialogVisible = ref(false);
 
 const activeGrade = computed(() => appStore.activeGrade);
 const studentList = computed(() => {
@@ -93,21 +107,26 @@ const studentList = computed(() => {
 		if (isEdit.value) {
 			disabledIds = studentIds.filter(id => !curGroupStuIds.value.includes(id));
 		}
-		return (studentList || []).map(stu => ({ ...stu, key: stu.id, disabled: studentIds.includes(stu.id) }))
+		return (studentList || []).map(stu => ({ ...stu, key: stu.id, disabled: disabledIds.includes(stu.id) }))
 	}
 });
 const groupIndex = computed(() => appStore.activeGrade?.gradeInfo?.indexMap?.group || 0);
 const step = computed(() => appStore.database.basicConfig?.step || 0);
 
-const isEdit = ref(false);
-const curGroupStuIds = ref<string[]>([]);
-const dialogVisible = ref(false);
 const dialogTitle = computed(() => (isEdit.value ? '编辑小组' : '新增小组'));
 
 // 批量加减分弹窗相关
 const batchPointsVisible = ref(false);
 const batchPointsType = ref<'add' | 'subtract'>('add');
 const currentGroup = ref<GroupInfo | null>(null);
+
+// 规则选择弹窗相关
+const ruleSelectorVisible = ref(false);
+const ruleSelectorType = ref<'single' | 'batch'>('single');
+const ruleTargetName = ref('');
+const currentStudent = ref<Student | null>(null);
+const { getRuleList } = useRule();
+const rules = computed(() => getRuleList() || []);
 
 const formData = ref<GroupInfo>({
 	id: '',
@@ -247,7 +266,10 @@ const handleSubtractPoints = async(student: Student) => {
 };
 
 const handleAdjustPoints = (student: Student) => {
-	console.log('根据规则调整积分:', student);
+	ruleSelectorType.value = 'single';
+	ruleTargetName.value = student.name;
+	currentStudent.value = student;
+	ruleSelectorVisible.value = true;
 };
 
 const handleMulAddPoints = (group: GroupInfo) => {
@@ -279,7 +301,51 @@ const handleBatchPointsConfirm = async (points: number) => {
 };
 
 const handleMulAdjustPoints = (group: GroupInfo) => {
-	console.log('批量根据规则调整积分:', group);
+	ruleSelectorType.value = 'batch';
+	ruleTargetName.value = group.name;
+	currentGroup.value = group;
+	ruleSelectorVisible.value = true;
+};
+
+const handleRuleConfirm = async (rule: Rule) => {
+	const points = rule.points;
+	if (ruleSelectorType.value === 'single' && currentStudent.value) {
+		// 单个学生调整
+		currentStudent.value.points = Number(currentStudent.value.points) + points;
+		// 记录积分变化
+		if(appStore.activeGrade) {
+			const recordIndex = appStore.activeGrade.gradeInfo.indexMap.record;
+			const prizeRecord = new PrizeRecord({ id: recordIndex, stu_id: currentStudent.value.id, rule_id: rule.id, time: dayjs().format('YYYY-MM-DD HH:mm:ss') });
+			appStore.activeGrade.gradeInfo.indexMap.record++;
+			appStore.activeGrade.gradeInfo.recordList.push(prizeRecord);
+		}
+
+		await handleUpdateGradeInfo();
+		ElMessage.success(
+			points > 0 
+				? `${currentStudent.value.name} 加分 ${points} 分`
+				: `${currentStudent.value.name} 减分 ${Math.abs(points)} 分`
+		);
+		currentStudent.value = null;
+	} else if (ruleSelectorType.value === 'batch' && currentGroup.value) {
+		// 批量调整
+		currentGroup.value.studentList.forEach(student => {
+			student.points = Number(student.points) + points;
+			// 记录积分变化
+			if(appStore.activeGrade) {
+				const recordIndex = appStore.activeGrade.gradeInfo.indexMap.record;
+				const prizeRecord = new PrizeRecord({ id: recordIndex, stu_id: student.id, rule_id: rule.id,time: dayjs().format('YYYY-MM-DD HH:mm:ss')});
+				appStore.activeGrade.gradeInfo.indexMap.record++;
+				appStore.activeGrade.gradeInfo.recordList.push(prizeRecord);
+			}
+		});
+		await handleUpdateGradeInfo();
+		ElMessage.success(
+			points > 0 
+				? `成功为 ${currentGroup.value.studentList.length} 名学生各加 ${points} 分`
+				: `成功为 ${currentGroup.value.studentList.length} 名学生各减 ${Math.abs(points)} 分`
+		);
+	}
 };
 
 </script>
