@@ -254,7 +254,7 @@ const handleMulAdjustPoints = (group: GroupInfo) => {
 }
 
 .search-input {
-	width: 300px;
+	width: 200px;
 }
 
 .group-list-content {

@@ -61,8 +61,7 @@
 					<el-input v-model="formData.name" placeholder="请输入规则名称" />
 				</el-form-item>
 				<el-form-item label="积分值" prop="points" :rules="[{ required: true, message: '请输入积分值', trigger: 'blur' }]">
-					<el-input-number v-model="formData.points" :min="-999" :max="999" controls-position="right"
-						style="width: 200px" />
+					<el-input-number v-model="formData.points" controls-position="right" style="width: 100%" />
 				</el-form-item>
 				<el-form-item label="适用班级" prop="allow_grades">
 					<el-select v-model="formData.allow_grades" multiple placeholder="请选择适用班级（留空表示所有班级）" style="width: 100%">
@@ -251,7 +250,7 @@ const getPointsTagType = (points: number) => {
 }
 
 .search-input {
-	width: 300px;
+	width: 200px;
 }
 
 .pagination {
