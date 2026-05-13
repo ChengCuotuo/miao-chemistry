@@ -9,7 +9,7 @@
 			</el-space>
 			<!-- TODO 批量处理 -->
 			<el-space>
-				<!-- <file-upload /> -->
+				<MultiAddDialog />
 				<el-button type="primary" :icon="Plus" @click="handleAdd">新增学生</el-button>
 			</el-space>
 		</div>
@@ -77,7 +77,7 @@ import type { FormInstance } from 'element-plus';
 import { useAppStore } from '../../../store/models/app';
 import { Student } from '../../../database/class';
 import { useStudent } from '../../../database/utils/useStudent';
-import FileUpload from '../../../components/file-upload.vue';
+import MultiAddDialog from './MultiAddDialog.vue';
 
 const { createStudent, deleteStudent, updateStudent, getStudentList, getStudentIndex } = useStudent();
 

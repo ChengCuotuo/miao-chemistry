@@ -23,6 +23,7 @@
 					:step="1"
 					style="width: 100%"
 					placeholder="请输入分值"
+					controls-position="right"
 				/>
 			</el-form-item>
 		</el-form>

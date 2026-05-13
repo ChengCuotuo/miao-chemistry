@@ -29,6 +29,7 @@
     "@electron/fuses": "^1.8.0",
     "@types/uuid": "^10.0.0",
     "@vitejs/plugin-vue": "^6.0.2",
+    "@vitejs/plugin-vue-jsx": "^5.1.5",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "electron": "39.2.6",

@@ -4,6 +4,7 @@
     :limit="1"
     v-model:file-list="fileList"
     :auto-upload="false"
+    :show-file-list="false"
     :on-change="handleChange"
     :accept="props.accept"
   >
@@ -29,7 +30,7 @@ const props = defineProps({
   },
   size: {
     type: Number,
-    default: 10 * 1024,
+    default: 100 * 1024,
   },
   onChange: {
     type: Function,
@@ -48,6 +49,7 @@ const handleChange: UploadProps['onChange'] = () => {
       return;
     }
     props.onChange(file);
+    fileList.value = []
   }
 };
 </script>
