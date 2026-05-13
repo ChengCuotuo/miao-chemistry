@@ -9,6 +9,10 @@
 					<el-option label="加分规则" value="add" />
 					<el-option label="减分规则" value="subtract" />
 				</el-select>
+				<el-select v-model="selectedGrade" placeholder="请选择适用班级" class="search-input" clearable>
+					<el-option label="所有班级" value="" />
+					<el-option v-for="grade in gradeList" :key="grade.id" :label="grade.name" :value="grade.id" />
+				</el-select>
 				<el-button type="info" @click="handleReset">重置</el-button>
 			</el-space>
 			<el-space>
@@ -108,6 +112,7 @@ const rules = ref<Rule[]>(getRuleList() || []);
 // 搜索关键词
 const searchQuery = ref('');
 const ruleType = ref('');
+const selectedGrade = ref('');
 
 // 分页
 const currentPage = ref(1);
@@ -137,14 +142,17 @@ const dialogTitle = computed(() => (isEdit.value ? '编辑规则' : '新增规�
 
 // 过滤后的规则列表
 const filteredRules = computed(() => {
-	if (!searchQuery.value && !ruleType.value) {
+	if (!searchQuery.value && !ruleType.value && !selectedGrade.value) {
 		return rules.value.slice((currentPage.value - 1) * pageSize.value, currentPage.value * pageSize.value);
 	}
 	const query = searchQuery.value.toLowerCase();
 	const filtered = rules.value.filter((item) => {
-		const includeName = item.name.toLowerCase().includes(query)
-		const sameType = ruleType.value === 'add' ? item.points > 0 : ruleType.value === 'subtract' ? item.points < 0 : true
-		return includeName && sameType
+		const includeName = !searchQuery.value || item.name.toLowerCase().includes(query);
+		const sameType = !ruleType.value || (ruleType.value === 'add' ? item.points > 0 : ruleType.value === 'subtract' ? item.points < 0 : true);
+		const matchGrade = !selectedGrade.value || 
+			(!item.allow_grades || item.allow_grades.length === 0) || 
+			item.allow_grades.includes(selectedGrade.value);
+		return includeName && sameType && matchGrade;
 	});
 	return filtered.slice((currentPage.value - 1) * pageSize.value, currentPage.value * pageSize.value);
 });
@@ -154,9 +162,11 @@ const handleSearch = () => {
 	currentPage.value = 1;
 };
 
+// 重置搜索
 const handleReset = () => {
 	searchQuery.value = '';
 	ruleType.value = '';
+	selectedGrade.value = '';
 	currentPage.value = 1;
 };
 

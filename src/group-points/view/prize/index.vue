@@ -5,6 +5,10 @@
 			<el-space>
 				<el-input v-model="searchQuery" placeholder="请输入奖品名称搜索" class="search-input" prefix-icon="Search"
 					@keyup.enter="handleSearch" clearable />
+				<el-select v-model="selectedGrade" placeholder="请选择适用班级" class="search-input" clearable>
+					<el-option label="所有班级" value="" />
+					<el-option v-for="grade in gradeList" :key="grade.id" :label="grade.name" :value="grade.id" />
+				</el-select>
 				<el-button type="info" @click="handleReset">重置</el-button>
 			</el-space>
 
@@ -127,6 +131,7 @@ const preFullPath = ref("")
 
 // 搜索关键词
 const searchQuery = ref('');
+const selectedGrade = ref('');
 
 // 分页
 const currentPage = ref(1);
@@ -160,11 +165,17 @@ const dialogTitle = computed(() => (isEdit.value ? '编辑奖品' : '新增奖�
 
 // 过滤后的奖品列表
 const filteredPrizes = computed(() => {
-	if (!searchQuery.value) {
+	if (!searchQuery.value && !selectedGrade.value) {
 		return prizes.value.slice((currentPage.value - 1) * pageSize.value, currentPage.value * pageSize.value);
 	}
 	const query = searchQuery.value.toLowerCase();
-	const filtered = searchPrizes(query);
+	const filtered = prizes.value.filter((item) => {
+		const includeName = !searchQuery.value || item.name.toLowerCase().includes(query);
+		const matchGrade = !selectedGrade.value || 
+			(!item.allow_grades || item.allow_grades.length === 0) || 
+			item.allow_grades.includes(selectedGrade.value);
+		return includeName && matchGrade;
+	});
 	return filtered.slice((currentPage.value - 1) * pageSize.value, currentPage.value * pageSize.value);
 });
 
@@ -205,6 +216,7 @@ const handleSearch = () => {
 
 const handleReset = () => {
 	searchQuery.value = '';
+	selectedGrade.value = '';
 	currentPage.value = 1;
 };
 

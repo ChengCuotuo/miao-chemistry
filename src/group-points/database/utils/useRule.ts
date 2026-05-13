@@ -66,8 +66,13 @@ export const useRule = () => {
 	}
 
 	// 获取规则列表
-	const getRuleList = () => {
-		return appStore.database.ruleList;
+	const getRuleList = (gradeId?: string) => {
+		return appStore.database.ruleList.filter(item => {
+			if (!gradeId) return true;
+			return Array.isArray(item?.allow_grades) && item.allow_grades.length > 0
+				? item.allow_grades.includes(gradeId || '')
+				: true;
+		});
 	}
 
 	return { createRule, deleteRule, updateRule, getRuleList }

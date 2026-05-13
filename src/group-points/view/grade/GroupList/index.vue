@@ -109,7 +109,8 @@ const ruleSelectorType = ref<'single' | 'batch'>('single');
 const ruleTargetName = ref('');
 const currentStudent = ref<Student | null>(null);
 const { getRuleList } = useRule();
-const rules = computed(() => getRuleList() || []);
+
+const rules = computed(() => getRuleList(appStore.activeGrade?.id) || []);
 
 const formData = ref<GroupInfo>({
 	id: '',
