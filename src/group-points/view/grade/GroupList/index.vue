@@ -143,6 +143,7 @@ const groupInfoList = computed(() => {
 				const val = searchQuery.value.toLowerCase();
 				return group.name.toLowerCase().includes(val) || group.studentList.some(stu => stu.name.toLowerCase().includes(val));
 			})
+			// 默认排序根据总积分
 			.sort((a, b) => b.points - a.points);
 	}
 	return [];

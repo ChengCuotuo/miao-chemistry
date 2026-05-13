@@ -7,7 +7,7 @@
 		</div>
 		<el-divider border-style="dashed" style="margin: 10px 0;" />
 		<div class="main-content">
-			<el-tabs v-model="activeName" @tab-click="handleClick">
+			<el-tabs v-model="activeName">
 				<el-tab-pane label="分组管理" name="group"/>
 				<el-tab-pane label="学生管理" name="student"/>
 			</el-tabs>
@@ -38,10 +38,6 @@ const activeName = ref('group')
 const handleBack = () => {
 	appStore.setIsCollapse(false);
 	router.back();
-}
-
-const handleClick = (tab: TabsPaneContext) => {
-	console.log(tab)
 }
 
 </script>

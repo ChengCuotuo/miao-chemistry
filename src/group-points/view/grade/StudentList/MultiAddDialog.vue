@@ -276,7 +276,7 @@ const handleSubmit = async () => {
 		})
 		const lastIndex = students[students.length - 1].id;
 		appStore.activeGrade.gradeInfo.studentList.push(...students);
-		appStore.activeGrade.gradeInfo.indexMap.student = Number(lastIndex);
+		appStore.activeGrade.gradeInfo.indexMap.student = Number(lastIndex) + 1;
 		await saveGradeInfo(appStore.activeGrade.id, JSON.stringify(appStore.activeGrade));
 		ElMessage.success('班级信息更新成功');
 		visible.value = false

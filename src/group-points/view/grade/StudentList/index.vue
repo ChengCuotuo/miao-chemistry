@@ -14,10 +14,15 @@
 		</div>
 
 		<!-- 学生列表 -->
-		<el-table :data="filteredStudents" border>
+		<el-table 
+			border
+			:data="filteredStudents"
+			:default-sort="{ prop: 'points', order: 'descending' }"
+			@sort-change="handleSortChange"
+		>
 			<el-table-column prop="id" label="序号" width="100" align="center" />
 			<el-table-column prop="name" label="姓名" align="center" />
-			<el-table-column prop="points" label="积分" width="100" align="center" />
+			<el-table-column prop="points" label="积分" width="100" align="center" sortable="custom"/>
 			<el-table-column label="班级" width="150" align="center">
 				<template #default="scope">
 					{{ activeGrade?.name || '' }}
@@ -72,7 +77,7 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue';
 import { Plus, Edit, Delete } from '@element-plus/icons-vue';
-import type { FormInstance } from 'element-plus';
+import type { FormInstance, TableColumnCtx } from 'element-plus';
 import { useAppStore } from '../../../store/models/app';
 import { Student } from '../../../database/class';
 import { useStudent } from '../../../database/utils/useStudent';
@@ -85,13 +90,17 @@ const activeGrade = computed(() => appStore.activeGrade);
 
 const students = ref<Student[]>(getStudentList());
 const studentIndex = computed(() => getStudentIndex());
-
+ 
 // 搜索关键词
 const searchQuery = ref('');
 
 // 分页
 const currentPage = ref(1);
 const pageSize = ref(10);
+
+// 排序状态
+const sortProp = ref<string>('points');
+const sortOrder = ref<'ascending' | 'descending' | null>('descending');
 
 // 弹窗相关
 const dialogVisible = ref(false);
@@ -112,12 +121,24 @@ const dialogTitle = computed(() => (isEdit.value ? '编辑学生' : '新增学�
 
 // 过滤后的学生列表
 const filteredStudents = computed(() => {
+	let curStuList: Student[] = Object.create([...students.value]);
+
+	if(sortProp.value === 'points' && sortOrder.value) {
+		curStuList.sort((a, b) => {
+			if(sortOrder.value === 'ascending') {
+				return a.points - b.points;
+			} else {
+				return b.points - a.points;
+			}
+		});
+	}
+
 	if (!searchQuery.value) {
-		return students.value.slice((currentPage.value - 1) * pageSize.value, currentPage.value * pageSize.value);
+		return curStuList.slice((currentPage.value - 1) * pageSize.value, currentPage.value * pageSize.value);
 	}
 	const query = searchQuery.value.toLowerCase();
-	return students.value.filter(
-		(item) =>
+	return curStuList.filter(
+		(item: Student) =>
 			item.name.toLowerCase().includes(query) ||
 			item.id.toLowerCase().includes(query)
 	).slice((currentPage.value - 1) * pageSize.value, currentPage.value * pageSize.value);
@@ -195,6 +216,12 @@ const handleDialogClose = () => {
 	dialogVisible.value = false;
 	formRef.value?.resetFields();
 };
+
+const handleSortChange = (data: {column: TableColumnCtx<Student>, prop: string, order: any }) => {
+	sortProp.value = data.prop || '';
+	sortOrder.value = data.order;
+	currentPage.value = 1;
+}
 
 // 分页大小变化
 const handleSizeChange = (val: number) => {
