@@ -52,7 +52,7 @@ const isEditing = computed(() => activeBrushing.value || activeCroping.value)
 const loadImage = async () => {
   loading.value = true
   try {
-    const {name, content} = await openFile('jpg,jpeg,png,gif')
+    const {name, content} = await openFile(['jpg', 'jpeg', 'png', 'gif'])
     if(name && content) {
       const extemsons = name.split('.')[1]
       const type = `image/${extemsons}`

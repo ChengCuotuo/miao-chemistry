@@ -281,7 +281,7 @@ const handleSubmit = async () => {
 			if (params) {
 				const { name: fileName, content } = params
 				const [namePart, ext] = fileName?.split(".") || []
-				imageName = `${GroupPointsConfig.prizePrefix}${namePart.substring(0, 10)}_${uuidv4().slice(0, 16)}.${ext}`
+				imageName = `${namePart.startsWith(GroupPointsConfig.prizePrefix) ? '' : GroupPointsConfig.prizePrefix}${namePart.substring(0, 10)}_${uuidv4().slice(0, 16)}.${ext}`
 				await saveStaticFile(imageName, content)
 			}
 

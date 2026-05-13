@@ -112,7 +112,7 @@ async function ensureFileExists(filePath, defaultContent = '') {
 ipcMain.handle('file-open-dialog', async (event, extensions) => {
   const result = await dialog.showOpenDialog({
     properties: ['openFile'],
-    filters: [{ extensions }],
+    filters: [{ name: 'miao-default', extensions }],
   });
   if (result.canceled) {
     return null;

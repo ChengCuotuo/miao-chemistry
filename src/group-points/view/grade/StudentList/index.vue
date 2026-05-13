@@ -77,7 +77,7 @@ import type { FormInstance } from 'element-plus';
 import { useAppStore } from '../../../store/models/app';
 import { Student } from '../../../database/class';
 import { useStudent } from '../../../database/utils/useStudent';
-import FileUpload from '../../../components/file-upload.vue';
+import FileUpload from '../../../components/file-select.vue';
 
 const { createStudent, deleteStudent, updateStudent, getStudentList, getStudentIndex } = useStudent();
 
