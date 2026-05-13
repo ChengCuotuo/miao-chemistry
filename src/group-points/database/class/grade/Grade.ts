@@ -1,5 +1,5 @@
 import { Group } from './Group';
-import { PrizeRecord } from './PrizeRecord';
+import { RuleRecord } from './RuleRecord';
 import { Student } from './Student';
 import { StudentGroup } from './StudentGroup';
 
@@ -11,7 +11,7 @@ export class Grade {
 		groupList: Group[];
 		studentList: Student[];
 		studentGroupList: StudentGroup[];
-		recordList: PrizeRecord[];
+		recordList: RuleRecord[];
 		indexMap: {
 			group: number,
 			student: number,
@@ -27,7 +27,7 @@ export class Grade {
 			groupList: Group[];
 			studentList: Student[];
 			studentGroupList: StudentGroup[];
-			recordList: PrizeRecord[];
+			recordList: RuleRecord[];
 			indexMap: {
 				group: number,
 				student: number,

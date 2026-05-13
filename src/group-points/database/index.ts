@@ -2,7 +2,7 @@ import {
 	Grade,
 	Rule,
 	Prize,
-	PrizeRecord,
+	RuleRecord,
 	Group,
 	Student,
 	StudentGroup
@@ -14,7 +14,7 @@ export interface DatabaseInfoType {
 			groupList: Group[];
 			studentList: Student[];
 			studentGroupList: StudentGroup[];
-			recordList: PrizeRecord[];
+			recordList: RuleRecord[];
 			indexMap: {
 				group: number,
 				student: number,

@@ -48,8 +48,12 @@ export const useStudent = () => {
 				return false;
 			}
 
+			// 删除学生
 			activeGrade.gradeInfo.studentList.splice(index, 1);
+			// 删除学生组中的学生
 			activeGrade.gradeInfo.studentGroupList = activeGrade.gradeInfo.studentGroupList.filter(item => item.student_id !== studentId);
+			// 删除 ruleRecord 中的学生记录
+			activeGrade.gradeInfo.recordList = activeGrade.gradeInfo.recordList.filter(item => item.stu_id !== studentId);
 
 			// 更新班级信息到文件
 			await updateGradeInfoById(activeGrade.id, activeGrade);

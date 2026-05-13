@@ -52,7 +52,7 @@
 import { computed, ref } from 'vue';
 import { useAppStore } from '../../../store/models/app';
 import { Plus } from '@element-plus/icons-vue';
-import { PrizeRecord, Student } from '../../../database/class';
+import { RuleRecord, Student } from '../../../database/class';
 import { dayjs, ElMessage, ElMessageBox, FormInstance } from 'element-plus';
 import { Group, StudentGroup, Rule } from '../../../database/class';
 import { useGrade } from '../../../database/utils/useGrade';
@@ -238,14 +238,14 @@ const handleDelete = (group: Partial<GroupInfo>) => {
 	})
 };
 
-const handlePrizeRecord = (params: {stu_id: string, points: number, rule_id?: string}) => {
+const handleRuleRecord = (params: {stu_id: string, points: number, rule_id?: string}) => {
 // 记录积分变化
 	if (appStore.activeGrade) {
 		const { stu_id, points, rule_id } = params;
 		const recordIndex = appStore.activeGrade.gradeInfo.indexMap.record;
-		const prizeRecord = new PrizeRecord({ id: recordIndex, stu_id, rule_id, points, time: dayjs().format('YYYY-MM-DD HH:mm:ss') });
+		const ruleRecord = new RuleRecord({ id: recordIndex, stu_id, rule_id, points, time: dayjs().format('YYYY-MM-DD HH:mm:ss') });
 		appStore.activeGrade.gradeInfo.indexMap.record++;
-		appStore.activeGrade.gradeInfo.recordList.push(prizeRecord);
+		appStore.activeGrade.gradeInfo.recordList.push(ruleRecord);
 		// 仅保留最近100条记录
 		// TODO 后续确定要不要做数据归档
 		appStore.activeGrade.gradeInfo.recordList = appStore.activeGrade.gradeInfo.recordList.slice(-1000);
@@ -256,7 +256,7 @@ const handleAddPoints = async (student: Student) => {
 	student.points = Number(student.points) + Number(step.value);
 	// 记录积分变化
 	if (appStore.activeGrade) {
-		handlePrizeRecord({ stu_id: student.id, points: Number(step.value) });
+		handleRuleRecord({ stu_id: student.id, points: Number(step.value) });
 	}
 	await handleUpdateGradeInfo();
 };
@@ -265,7 +265,7 @@ const handleSubtractPoints = async (student: Student) => {
 	student.points = Number(student.points) - Number(step.value);
 	// 记录积分变化
 	if (appStore.activeGrade) {
-		handlePrizeRecord({ stu_id: student.id, points: Number(step.value) });
+		handleRuleRecord({ stu_id: student.id, points: Number(step.value) });
 	}
 	await handleUpdateGradeInfo();
 };
@@ -296,7 +296,7 @@ const handleBatchPointsConfirm = async (points: number) => {
 			student.points = Number(student.points) + points;
 			// 记录积分变化
 			if (appStore.activeGrade) {
-				handlePrizeRecord({ stu_id: student.id, points });
+				handleRuleRecord({ stu_id: student.id, points });
 			}
 		});
 		await handleUpdateGradeInfo();
@@ -323,7 +323,7 @@ const handleRuleConfirm = async (rule: Rule) => {
 		currentStudent.value.points = Number(currentStudent.value.points) + points;
 		// 记录积分变化
 		if (appStore.activeGrade) {
-			handlePrizeRecord({ stu_id: currentStudent.value.id, points, rule_id: rule.id });
+			handleRuleRecord({ stu_id: currentStudent.value.id, points, rule_id: rule.id });
 		}
 
 		await handleUpdateGradeInfo();
@@ -339,7 +339,7 @@ const handleRuleConfirm = async (rule: Rule) => {
 			student.points = Number(student.points) + points;
 			// 记录积分变化
 			if (appStore.activeGrade) {
-				handlePrizeRecord({ stu_id: student.id, points, rule_id: rule.id });
+				handleRuleRecord({ stu_id: student.id, points, rule_id: rule.id });
 			}
 		});
 		await handleUpdateGradeInfo();

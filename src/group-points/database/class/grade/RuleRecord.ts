@@ -4,7 +4,7 @@
 //   - 规则id - rule_id
 //   - 记录时间 - time
 
-export class PrizeRecord {
+export class RuleRecord {
 	id: number;
 	stu_id: string;
 	rule_id: string;
