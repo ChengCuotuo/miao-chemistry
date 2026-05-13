@@ -27,4 +27,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   // 写入配置文件
   writeConfigToFile: (filePath, content) =>
     ipcRenderer.invoke('write-config-file', filePath, content),
+  // 读取模板文件
+  readTemplateFile: (relativePath) =>
+    ipcRenderer.invoke('read-template-file', relativePath),
 });

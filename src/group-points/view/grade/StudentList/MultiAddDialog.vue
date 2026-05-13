@@ -62,7 +62,7 @@ import * as XLSX from 'xlsx';
 import { useAppStore } from '../../../store/models/app';
 import type { FunctionalComponent } from 'vue'
 import type { Column, InputInstance } from 'element-plus'
-import { saveGradeInfo } from '../../../database';
+import { curWindow, saveGradeInfo } from '../../../database';
 
 const appStore = useAppStore();
 const studentList = ref<any[]>([]);
@@ -245,9 +245,8 @@ const handleConfirmBatchPoints = () => {
 }
 
 const downloadTemp = async () => {
-	// 下载 ./students.xlsx 文件
 	try {
-		const response = await fetch('/src/group-points/statics/students.xlsx');
+		const response = await fetch('/templates/students.xlsx');
 		if (!response.ok) {
 			ElMessage.error('模板文件加载失败');
 			return;
@@ -261,9 +260,7 @@ const downloadTemp = async () => {
 		a.click();
 		window.URL.revokeObjectURL(url);
 		document.body.removeChild(a);
-		setTimeout(() => {
-			ElMessage.success('模板下载成功');
-		}, 500);
+		ElMessage.success('模板下载成功');
 	} catch (error) {
 		console.error('下载模板失败:', error);
 		ElMessage.error('模板下载失败');

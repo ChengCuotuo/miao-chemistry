@@ -260,3 +260,35 @@ ipcMain.handle('write-config-file', async (event, params) => {
     return false;
   }
 });
+
+// 读取模板文件（用于下载）
+ipcMain.handle('read-template-file', async (event, relativePath) => {
+  try {
+    let templatePath;
+
+    // 开发环境
+    if (MAIN_WINDOW_VITE_DEV_SERVER_URL) {
+      templatePath = path.join(
+        __dirname,
+        '..',
+        '..',
+        'public',
+        'templates',
+        'students.xlsx',
+      );
+    } else {
+      // 生产环境：extraResource 的文件在 process.resourcesPath 下
+      templatePath = path.join(process.resourcesPath, 'students.xlsx');
+    }
+
+    console.log('读取模板文件路径:', templatePath);
+    console.log('process.resourcesPath:', process.resourcesPath);
+    console.log('__dirname:', __dirname);
+
+    const content = await fs.readFile(templatePath);
+    return { content, success: true };
+  } catch (error) {
+    console.error('读取模板文件失败:', error);
+    return { success: false, error: error.message };
+  }
+});

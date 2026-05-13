@@ -4,6 +4,8 @@ const { FuseV1Options, FuseVersion } = require('@electron/fuses');
 module.exports = {
   packagerConfig: {
     asar: true,
+    extraResource: ['./public/templates/students.xlsx'],
+    asarUnpack: ['./public/templates/students.xlsx'],
   },
   rebuildConfig: {},
   makers: [
