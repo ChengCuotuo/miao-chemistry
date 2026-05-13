@@ -11,7 +11,8 @@
 		<el-alert type="warning" show-icon :closable="false" style="margin-bottom: 10px;" title="">
 			<p> 支持两种快速添加方式：</p>
 			<p>1.上传 TXT 文件，内容以中文 **，或；** 分隔名称即可批量导入；</p>
-			<p>2.下载 <el-button link type="success" text="success" @click="downloadTemp">Excel 模板</el-button>，按模板填好信息后上传，一键批量添加。</p>
+			<p>2.下载 <el-button link type="success" text="success" @click="downloadTemp">Excel
+					模板</el-button>，按模板填好信息后上传，一键批量添加。</p>
 		</el-alert>
 		<FileUpload accept=".txt,.xlsx,.xls" @change="handleChangeFile" />
 		<el-divider style="margin: 10px 0;" />
@@ -61,6 +62,7 @@ import * as XLSX from 'xlsx';
 import { useAppStore } from '../../../store/models/app';
 import type { FunctionalComponent } from 'vue'
 import type { Column, InputInstance } from 'element-plus'
+import { saveGradeInfo } from '../../../database';
 
 const appStore = useAppStore();
 const studentList = ref<any[]>([]);
@@ -270,7 +272,16 @@ const downloadTemp = async () => {
 
 const handleSubmit = async () => {
 	// 提交表单
-	console.log('studentList:', studentList.value);
+	if (appStore.activeGrade) {
+		const students = studentList.value.map(stu => {
+			const { id, name, points } = stu;
+			return new Student({ id, name, points });
+		})
+		const lastIndex = students[students.length - 1].id;
+		appStore.activeGrade.gradeInfo.indexMap.student = Number(lastIndex);
+		await saveGradeInfo(appStore.activeGrade.id, JSON.stringify(appStore.activeGrade));
+		ElMessage.success('班级信息更新成功');
+	}
 }
 
 </script>
