@@ -7,6 +7,7 @@
 			</div>
 			<template #footer>
 				<el-space style="width: 100%; justify-content: space-around; ">
+					<el-button type="primary" :icon="Download" circle @click="handleDownload(grade, $event)"/>
 					<el-button type="primary" :icon="Edit" circle @click="handleEditGrade(grade, $event)"/>
 					<el-button type="danger" :icon="Delete" circle @click="handleDeleteGrade(grade.id, $event)"/>
 				</el-space>
@@ -38,7 +39,7 @@ import { DatabaseInfoType } from '../database';
 import { useAppStore } from '../store/models/app';
 import { FormRules, FormInstance, ElMessage, ElMessageBox } from 'element-plus';
 import { useGrade } from '../database/utils/useGrade';
-import { Delete, Edit } from '@element-plus/icons-vue';
+import { Delete, Download, Edit } from '@element-plus/icons-vue';
 import { computed } from 'vue';
 import { useRouter } from 'vue-router';
 
@@ -82,6 +83,11 @@ const handleAddGrade = () => {
 	isEditMode.value = false;
 	form.name = '';
 	dialogVisible.value = true;
+}
+
+const handleDownload =  (grade: DatabaseInfoType['gradeList'][0], event: MouseEvent) => {
+	// 下载数据到 txt 文档
+	event.stopPropagation();
 }
 
 const handleEditGrade = (grade: DatabaseInfoType['gradeList'][0], event: MouseEvent) => {
