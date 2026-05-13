@@ -49,8 +49,7 @@ interface RuleForm {
 const appStore = useAppStore();
 const router = useRouter();
 const { createGrade, deleteGrade, updateGrade, getGradeInfoById } = useGrade();
-const gradeList = appStore.database.gradeList;
-const validGradeList = computed(() => gradeList.filter(item => item.delete === 0));
+const validGradeList = computed(() => appStore.database.gradeList.filter(item => item.delete === 0));
 
 const dialogVisible = ref(false);
 const isEditMode = ref(false);
