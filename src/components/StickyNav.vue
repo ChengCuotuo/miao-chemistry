@@ -47,7 +47,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted } from 'vue'
+import { ref } from 'vue'
 import { ArrowDown, Lock } from '@element-plus/icons-vue'
 
 const props = defineProps({

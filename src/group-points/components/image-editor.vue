@@ -59,12 +59,11 @@ const loadImage = async () => {
       const file = new File([content], name, { type })
       selectedFileImageForEdit.value = file
       ElMessage.success('图片加载成功')
-    }else {
+    } else {
       throw new Error('图片加载失败')
     }
   } catch (error) {
     console.error('图片加载失败:', error)
-    ElMessage.error('图片加载失败')
   } finally {
     loading.value = false
   }
