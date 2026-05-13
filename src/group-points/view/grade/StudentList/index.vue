@@ -7,7 +7,6 @@
 					@keyup.enter="handleSearch" />
 				<el-button type="info" @click="handleReset">重置</el-button>
 			</el-space>
-			<!-- TODO 批量处理 -->
 			<el-space>
 				<MultiAddDialog />
 				<el-button type="primary" :icon="Plus" @click="handleAdd">新增学生</el-button>

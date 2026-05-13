@@ -39,8 +39,7 @@
 	<el-dialog title="统一修改积分" v-model="batchPointsVisible" width="400px">
 		<el-form label-width="80px">
 			<el-form-item label="积分值">
-				<el-input-number v-model="batchPointsValue" :min="0" :max="100" style="width: 100%;"
-					controls-position="right" />
+				<el-input-number v-model="batchPointsValue"  style="width: 100%;" controls-position="right" />
 			</el-form-item>
 		</el-form>
 		<template #footer>
@@ -51,7 +50,7 @@
 		</template>
 	</el-dialog>
 	<!-- 批量新增学生按钮 -->
-	<el-button type="primary" @click="visible = true">批量新增学生</el-button>
+	<el-button type="primary" @click="handleBatchAddStu">批量新增学生</el-button>
 </template>
 <script setup lang="tsx">
 import { ElMessage, ElInput } from 'element-plus';
@@ -62,7 +61,7 @@ import * as XLSX from 'xlsx';
 import { useAppStore } from '../../../store/models/app';
 import type { FunctionalComponent } from 'vue'
 import type { Column, InputInstance } from 'element-plus'
-import { curWindow, saveGradeInfo } from '../../../database';
+import { saveGradeInfo } from '../../../database';
 
 const appStore = useAppStore();
 const studentList = ref<any[]>([]);
@@ -197,7 +196,7 @@ const handleChangeFile = async (file: any) => {
 			const content = e.target?.result as string;
 			// 使用逗号或分号分割名称
 			const names = content.split(/[；，]/).map(name => name.trim()).filter(name => name);
-			studentList.value = names.map((name, index) => ({ id: (index + Number(studentCurIndex)).toString(), name, points: 0, nameEditing: false, pointsEditing: false }));
+			studentList.value = names.map((name, index) => ({ id: ((index + 1) + Number(studentCurIndex)).toString(), name, points: 0, nameEditing: false, pointsEditing: false }));
 		};
 		reader.readAsText(file.raw);
 	}
@@ -216,7 +215,7 @@ const handleChangeFile = async (file: any) => {
 			const jsonData = XLSX.utils.sheet_to_json(worksheet);
 			studentList.value = Array.from(jsonData.values()).map((item: any, index: number) => {
 				const [name, points] = Object.values(item);
-				return { name, points: points || 0, id: (index + Number(studentCurIndex)).toString(), nameEditing: false, pointsEditing: false }
+				return { name, points: points || 0, id: ((index + 1) + Number(studentCurIndex)).toString(), nameEditing: false, pointsEditing: false }
 			});
 		}
 		reader.readAsArrayBuffer(file.raw);
@@ -224,6 +223,11 @@ const handleChangeFile = async (file: any) => {
 	else {
 		ElMessage.error('文件类型错误');
 	}
+}
+
+const handleBatchAddStu = () => {
+	visible.value = true
+	studentList.value = []
 }
 
 const handleDialogClose = () => {
@@ -246,20 +250,16 @@ const handleConfirmBatchPoints = () => {
 
 const downloadTemp = async () => {
 	try {
-		const response = await fetch('/templates/students.xlsx');
-		if (!response.ok) {
-			ElMessage.error('模板文件加载失败');
-			return;
-		}
-		const blob = await response.blob();
-		const url = window.URL.createObjectURL(blob);
-		const a = document.createElement('a');
-		a.href = url;
-		a.download = 'students.xlsx';
-		document.body.appendChild(a);
-		a.click();
-		window.URL.revokeObjectURL(url);
-		document.body.removeChild(a);
+		const sheetData = [
+			["姓名", "积分"],      // 表头
+			["miaomiao", 0]       // 数据行
+		];
+		// 将数据转换为 SheetJS 的工作表
+		const workbook = XLSX.utils.book_new();         // 新建工作簿
+		const worksheet = XLSX.utils.aoa_to_sheet(sheetData); // 用二维数组创建工作表
+		XLSX.utils.book_append_sheet(workbook, worksheet, "积分榜"); // 将工作表添加到工作簿，命名为“积分榜”
+		//导出并触发下载
+		XLSX.writeFile(workbook, "students.xlsx");
 		ElMessage.success('模板下载成功');
 	} catch (error) {
 		console.error('下载模板失败:', error);
@@ -275,9 +275,11 @@ const handleSubmit = async () => {
 			return new Student({ id, name, points });
 		})
 		const lastIndex = students[students.length - 1].id;
+		appStore.activeGrade.gradeInfo.studentList.push(...students);
 		appStore.activeGrade.gradeInfo.indexMap.student = Number(lastIndex);
 		await saveGradeInfo(appStore.activeGrade.id, JSON.stringify(appStore.activeGrade));
 		ElMessage.success('班级信息更新成功');
+		visible.value = false
 	}
 }
 
