@@ -5,7 +5,9 @@
 				<el-input v-model="searchQuery" placeholder="请输入小组名或学生名搜索" class="search-input" prefix-icon="Search" />
 				<el-button type="info" @click="handleReset">重置</el-button>
 			</el-space>
-			<el-button type="primary" :icon="Plus" @click="handleAdd">新增小组</el-button>
+			<el-space>
+				<el-button type="primary" :icon="Plus" @click="handleAdd">新增小组</el-button>
+			</el-space>
 		</div>
 		<div class="group-list-content">
 			<GroupCard v-for="group in groupInfoList || []" :key="group.id" :group="group" @edit="handleEdit"

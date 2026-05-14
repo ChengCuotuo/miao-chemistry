@@ -13,7 +13,15 @@
 			</div>
 		</template>
 		<div class="student-list">
-			<div v-for="student in group.studentList" :key="student.id" class="student-item">
+			<!-- 小组成员筛选 -->
+			<el-input 
+				v-model="searchQuery" 
+				placeholder="搜索成员" 
+				class="search-input" 
+				prefix-icon="Search"
+				clearable
+			/>
+			<div v-for="student in filteredStudents" :key="student.id" class="student-item">
 				<div class="student-info">
 					<span class="student-name">{{ student.name }}</span>
 					<el-tag type="success" size="small">{{ student.points }} 分</el-tag>
@@ -28,7 +36,7 @@
 						@click="handleAdjustPoints(student)" />
 				</div>
 			</div>
-			<el-empty v-if="!group.studentList.length" description="暂无成员" :image-size="60" />
+			<el-empty v-if="filteredStudents.length === 0" description="暂无匹配成员" :image-size="60" />
 		</div>
 		<template #footer>
 			<div class="card-footer">
@@ -48,15 +56,31 @@
 </template>
 
 <script setup lang="ts">
-import { Edit, Delete, Plus, Minus, Ticket } from '@element-plus/icons-vue';
+import { computed, ref } from 'vue';
+import { Edit, Delete, Plus, Minus, Ticket, Search } from '@element-plus/icons-vue';
 import { Student } from '../../../database/class';
 import { GroupInfo } from './index.vue';
 
 const props = defineProps<{
-	group: GroupInfo;
-}>();
+		group: GroupInfo;
+	}>();
 
-const emit = defineEmits<{
+	// 搜索关键词
+	const searchQuery = ref('');
+
+	// 过滤后的学生列表
+	const filteredStudents = computed(() => {
+		if (!searchQuery.value) {
+			return props.group.studentList;
+		}
+		const query = searchQuery.value.toLowerCase();
+		return props.group.studentList.filter(student => 
+			student.name.toLowerCase().includes(query) || 
+			student.id.toLowerCase().includes(query)
+		);
+	});
+
+	const emit = defineEmits<{
 	edit: [group: GroupInfo];
 	delete: [group: GroupInfo];
 	'add-points': [student: Student];
@@ -141,6 +165,11 @@ const handleMulAdjustPoints = () => {
 	display: flex;
 	flex-direction: column;
 	gap: 12px;
+}
+
+.search-input {
+	width: 100%;
+	margin-bottom: 8px;
 }
 
 .student-item {
