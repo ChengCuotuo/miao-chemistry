@@ -1,6 +1,8 @@
 import { app, BrowserWindow, ipcMain, dialog } from 'electron';
 import path from 'node:path';
 import started from 'electron-squirrel-startup';
+import { encryptJSON, decryptJSON } from './utils.js';
+
 const fs = require('fs').promises; // 使用 promise 版本的 fs 更方便
 
 // Handle creating/removing shortcuts on Windows when installing/uninstalling.
@@ -75,6 +77,7 @@ app.on('window-all-closed', () => {
 
 // ===============================================================================================
 const userDataPath = app.getPath('userData');
+const PASS_KEY = '@miao@';
 
 // 确保文件存在，不存在则创建
 async function ensureFileExists(filePath, defaultContent = '') {
@@ -110,9 +113,10 @@ async function ensureFileExists(filePath, defaultContent = '') {
 
 // 监听渲染进程发来的 'file-open-dialog' 事件
 ipcMain.handle('file-open-dialog', async (event, extensions) => {
+  const filterExtensions = extensions.map((ext) => ext.replace('.', ''));
   const result = await dialog.showOpenDialog({
     properties: ['openFile'],
-    filters: [{ name: 'miao-default', extensions }],
+    filters: [{ name: 'miao-default', extensions: filterExtensions }],
   });
   if (result.canceled) {
     return null;
@@ -284,9 +288,11 @@ ipcMain.handle('download-file', async (event, params) => {
 
     // 读取源文件内容
     const content = await fs.readFile(filePath);
-
+    // content 是 Buffer 类型，需要转换为字符串
+    const contentStr = content.toString('utf-8');
+    const encryptedContent = await encryptJSON(contentStr);
     // 写入到目标位置
-    await fs.writeFile(result.filePath, content);
+    await fs.writeFile(result.filePath, encryptedContent);
 
     console.log('文件下载成功:', result.filePath);
     return { success: true, savedPath: result.filePath };
@@ -296,4 +302,7 @@ ipcMain.handle('download-file', async (event, params) => {
   }
 });
 
-//
+// 加密内容
+ipcMain.handle('decrypt-content', async (event, content) => {
+  return await decryptJSON(content);
+});

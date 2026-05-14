@@ -22,6 +22,11 @@
 		</el-card>
 	</div>
 
+	<el-button :icon="Upload" type="primary" style="position: fixed; right: 24px; bottom: 24px;" @click="handleUploadFile"
+		circle />
+	<ImportGradeDialog v-model:visible="importDialogVisible" :grade-data="importGradeData"
+		@success="handleImportSuccess" />
+
 	<el-dialog v-model="dialogVisible" :title="isEditMode ? '编辑班级' : '新增班级'" width="400px">
 		<el-form ref="formRef" :model="form" label-width="80px" :rules="rules">
 			<el-form-item label="班级名称" prop="name">
@@ -33,21 +38,35 @@
 			<el-button type="primary" @click="handleSubmit(formRef)">确定</el-button>
 		</template>
 	</el-dialog>
+
+	<ImportGradeDialog :visible="importDialogVisible" :grade-data="importGradeData" @success="handleImportSuccess" />
 </template>
 
 <script setup lang="ts">
 import { ref, reactive, onMounted } from 'vue';
-import { DEFAULT_TABLE_NAME, DatabaseInfoType, GroupPointsConfig, curWindow, loadFilePath } from '../database';
+import { DEFAULT_TABLE_NAME, DatabaseInfoType, GroupPointsConfig, curWindow } from '../database';
 import { useAppStore } from '../store/models/app';
 import { FormRules, FormInstance, ElMessage, ElMessageBox } from 'element-plus';
 import { useGrade } from '../database/utils/useGrade';
-import { Delete, Download, Edit } from '@element-plus/icons-vue';
+import { Delete, Download, Edit, Upload } from '@element-plus/icons-vue';
 import { computed } from 'vue';
 import { useRouter } from 'vue-router';
+import { openFile } from '../utils';
+import ImportGradeDialog from './components/ImportGradeDialog.vue';
 
 interface RuleForm {
 	name: string
 }
+
+interface GradeData {
+	id: string;
+	name: string;
+	delete: number;
+	gradeInfo: any;
+}
+
+const importDialogVisible = ref(false);
+const importGradeData = ref<GradeData | null>(null);
 
 const appStore = useAppStore();
 const router = useRouter();
@@ -94,8 +113,7 @@ const handleDownload = async (grade: DatabaseInfoType['gradeList'][0], event: Mo
 		mainPath: GroupPointsConfig.database,
 		fileName: `${DEFAULT_TABLE_NAME.grade}-${grade.id}${GroupPointsConfig.suffix}`
 	});
-	await curWindow.electronAPI.downloadFile({filePath, fileName: `${grade.name}${GroupPointsConfig.suffix}`});
-	
+	await curWindow.electronAPI.downloadFile({ filePath, fileName: `${grade.name}${GroupPointsConfig.downloadSuffix}` });
 }
 
 const handleEditGrade = (grade: DatabaseInfoType['gradeList'][0], event: MouseEvent) => {
@@ -154,6 +172,46 @@ const handleSubmit = async (formEl: FormInstance | undefined) => {
 		}
 	}
 }
+
+const handleImportSuccess = () => {
+	importDialogVisible.value = false;
+}
+
+const handleUploadFile = async () => {
+	const info = await openFile([GroupPointsConfig.downloadSuffix]);
+	if (info) {
+		const text = new TextDecoder().decode(info.content);
+		const decryptedText = await curWindow.electronAPI.decryptContent(text);
+		const uploadGrade = JSON.parse(decryptedText);
+		uploadGrade.delete = 0;
+
+		const existingGrade = validGradeList.value.find(item => item.name === uploadGrade.name || item.id === uploadGrade.id);
+		if (existingGrade) {
+			importDialogVisible.value = true;
+			importGradeData.value = uploadGrade;
+		} else {
+			appStore.database.gradeList.push(uploadGrade);
+
+			const gradeConfig = appStore.database.gradeList.map(item => ({ id: item.id, name: item.name, delete: item.delete }));
+			await curWindow.electronAPI.writeConfigToFile({
+				mainPath: GroupPointsConfig.database,
+				fileName: DEFAULT_TABLE_NAME.grade,
+				suffix: GroupPointsConfig.suffix,
+				content: JSON.stringify(gradeConfig)
+			});
+
+			await curWindow.electronAPI.writeConfigToFile({
+				mainPath: GroupPointsConfig.database,
+				fileName: `${DEFAULT_TABLE_NAME.grade}-${uploadGrade.id}`,
+				suffix: GroupPointsConfig.suffix,
+				content: JSON.stringify(uploadGrade)
+			});
+
+			ElMessage.success('导入班级成功');
+		}
+	}
+}
+
 </script>
 
 <style scoped>

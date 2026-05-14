@@ -17,6 +17,8 @@
 			</el-space>
 			<el-space>
 				<el-button type="primary" :icon="Plus" @click="handleAdd">新增规则</el-button>
+				<el-button type="success" :icon="Upload" @click="handleImport">导入</el-button>
+				<el-button type="warning" :icon="Download" @click="handleExport">导出</el-button>
 			</el-space>
 		</div>
 
@@ -98,11 +100,14 @@
 
 <script setup lang="ts">
 import { ref, computed } from 'vue';
-import { Plus, Edit, Delete } from '@element-plus/icons-vue';
+import { Plus, Edit, Delete, Upload, Download } from '@element-plus/icons-vue';
 import type { FormInstance } from 'element-plus';
+import { ElMessage } from 'element-plus';
 import { useAppStore } from '../../store/models/app';
 import { Rule } from '../../database/class';
 import { useRule } from '../../database/utils/useRule';
+import { GroupPointsConfig, DEFAULT_TABLE_NAME, curWindow } from '../../database';
+import { openFile } from '../../utils';
 
 const { createRule, deleteRule, updateRule, getRuleList } = useRule();
 
@@ -249,6 +254,49 @@ const getPointsTagType = (points: number) => {
 	if (points < 0) return 'danger';
 	return 'info';
 };
+
+const handleImport = async () => {
+	const info = await openFile([GroupPointsConfig.downloadSuffix]);
+	if (info) {
+		const text = new TextDecoder().decode(info.content);
+		const decryptedText = await curWindow.electronAPI.decryptContent(text);
+		const importRules = JSON.parse(decryptedText);
+		
+		let successCount = 0;
+		let failCount = 0;
+		
+		for (const rule of importRules) {
+			const res = await createRule(
+				rule.name,
+				rule.description || '',
+				rule.points,
+				rule.allow_grades || []
+			);
+			if (res) {
+				successCount++;
+			} else {
+				failCount++;
+			}
+		}
+		
+		if (successCount > 0) {
+			ElMessage.success(`成功导入 ${successCount} 条规则`);
+			rules.value = getRuleList();
+		}
+		if (failCount > 0) {
+			ElMessage.error(`导入失败 ${failCount} 条规则`);
+		}
+	}
+};
+
+const handleExport = async () => {
+	const filePath = await curWindow.electronAPI.loadFilePath({
+		mainPath: GroupPointsConfig.database,
+		fileName: `${DEFAULT_TABLE_NAME.rule}${GroupPointsConfig.suffix}`
+	});
+	await curWindow.electronAPI.downloadFile({ filePath, fileName: `${DEFAULT_TABLE_NAME.rule}${GroupPointsConfig.downloadSuffix}` });
+	ElMessage.success('导出规则成功');
+};
 </script>
 
 <style scoped>
@@ -264,8 +312,10 @@ const getPointsTagType = (points: number) => {
 .search-bar {
 	display: flex;
 	justify-content: space-between;
+	flex-wrap: wrap;
 	align-items: center;
 	margin-bottom: 20px;
+	gap: 10px;
 }
 
 .search-input {

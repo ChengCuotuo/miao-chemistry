@@ -120,7 +120,7 @@ import { useAppStore } from '../../store/models/app';
 import { Prize } from '../../database/class';
 import { usePrize } from '../../database/utils/usePrize';
 import ImageEditor from '../../components/image-editor.vue';
-import { saveStaticFile, loadFilePath, loadImageAsBase64, loadImageAsUint8Array, GroupPointsConfig } from '../../database';
+import { saveStaticFile, loadImagePath, loadImageAsBase64, loadImageAsUint8Array, GroupPointsConfig } from '../../database';
 
 const { createPrize, deletePrize, updatePrize, getPrizeList, searchPrizes } = usePrize();
 
@@ -198,16 +198,11 @@ const loadAllImages = async () => {
 };
 
 onMounted(async () => {
-	preFullPath.value = await loadFilePath('')
+	preFullPath.value = await loadImagePath('')
 	console.log('静态文件路径:', preFullPath.value);
 	// 加载所有图片
 	await loadAllImages();
 });
-
-// 监听奖品列表变化，重新加载图片
-const prizesWatcher = watch(() => prizes.value, async () => {
-	await loadAllImages();
-}, { deep: true });
 
 // 搜索
 const handleSearch = () => {

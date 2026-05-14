@@ -50,6 +50,7 @@ export const GroupPointsConfig = {
 		DEFAULT_TABLE_NAME.prize, // 奖励配置
 	],
 	suffix: '.json', // 文件后缀
+	downloadSuffix: '.miao', // 下载文件后缀
 	prizePrefix: '_prize_', // prize 前缀
 };
 

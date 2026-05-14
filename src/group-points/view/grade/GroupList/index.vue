@@ -190,7 +190,7 @@ const handleSubmit = () => {
 				}
 			} else {
 				// 新增
-				const group = new Group({ id, name });
+				const group = new Group({ id, name, order: -1 });
 				const studentGroupList = studentIdList.map(stuId => new StudentGroup({ id: `${id}-${stuId}`, group_id: id, student_id: stuId }))
 				if (appStore.activeGrade) {
 					appStore.activeGrade.gradeInfo.groupList.push(group);

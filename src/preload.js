@@ -29,4 +29,6 @@ contextBridge.exposeInMainWorld('electronAPI', {
     ipcRenderer.invoke('write-config-file', filePath, content),
   // 下载文件
   downloadFile: (params) => ipcRenderer.invoke('download-file', params),
+  // 内容解密
+  decryptContent: (content) => ipcRenderer.invoke('decrypt-content', content),
 });
