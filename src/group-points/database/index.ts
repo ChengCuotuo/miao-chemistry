@@ -35,7 +35,7 @@ export const curWindow = window as any;
 // grade 表，存储了有哪些班级，班级名称 + 班级 id
 // grade-{id} 存储了班级的配置信息，包括分组、学生、学生分组
 
-const DEFAULT_TABLE_NAME = {
+export const DEFAULT_TABLE_NAME = {
 	grade: 'grade',
 	rule: 'rule',
 	prize: 'prize',
@@ -149,7 +149,7 @@ export async function saveStaticFile(fileName: string, content: any) {
 	});
 }
 
-export async function loadFilePath(fileName: string) {
+export async function loadImagePath(fileName: string) {
 	return await curWindow.electronAPI.loadFilePath({
 		mainPath: `${GroupPointsConfig.database}/${GroupPointsConfig.statics}`,
 		fileName
@@ -169,7 +169,7 @@ function uint8ArrayToBase64(bytes: Uint8Array): string {
 // 读取图片文件并返回 Uint8Array
 export async function loadImageAsUint8Array(fileName: string): Promise<Uint8Array | null> {
 	try {
-		const filePath = await loadFilePath(fileName);
+		const filePath = await loadImagePath(fileName);
 		const result = await curWindow.electronAPI.readFullPathFile(filePath);
 
 		if (result && result.content) {

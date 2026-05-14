@@ -13,7 +13,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
     ipcRenderer.invoke('read-full-path-file', filePath),
   // 读取文件内容（不包含完整路径）
   readFile: (params) => ipcRenderer.invoke('read-file', params),
-  // 获取图片地址
+  // 获取文件完整路径
   loadFilePath: (params) => ipcRenderer.invoke('load-file-path', params),
   // 写入文件
   writeToFile: (filePath, content) =>
@@ -27,4 +27,6 @@ contextBridge.exposeInMainWorld('electronAPI', {
   // 写入配置文件
   writeConfigToFile: (filePath, content) =>
     ipcRenderer.invoke('write-config-file', filePath, content),
+  // 下载文件
+  downloadFile: (params) => ipcRenderer.invoke('download-file', params),
 });

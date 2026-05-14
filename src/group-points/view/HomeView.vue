@@ -7,15 +7,17 @@
 			</div>
 			<template #footer>
 				<el-space style="width: 100%; justify-content: space-around; ">
-					<el-button type="primary" :icon="Download" circle @click="handleDownload(grade, $event)"/>
-					<el-button type="primary" :icon="Edit" circle @click="handleEditGrade(grade, $event)"/>
-					<el-button type="danger" :icon="Delete" circle @click="handleDeleteGrade(grade.id, $event)"/>
+					<el-button type="primary" :icon="Download" circle @click="handleDownload(grade, $event)" />
+					<el-button type="primary" :icon="Edit" circle @click="handleEditGrade(grade, $event)" />
+					<el-button type="danger" :icon="Delete" circle @click="handleDeleteGrade(grade.id, $event)" />
 				</el-space>
 			</template>
 		</el-card>
 		<el-card shadow="hover" style="width: 160px; height: 200px;" @click="handleAddGrade">
 			<div style="height: 100%; width: 100%; display: flex; justify-content: center; align-items: center;">
-				<el-icon> <Plus /></el-icon>
+				<el-icon>
+					<Plus />
+				</el-icon>
 			</div>
 		</el-card>
 	</div>
@@ -29,13 +31,13 @@
 		<template #footer>
 			<el-button @click="dialogVisible = false">取消</el-button>
 			<el-button type="primary" @click="handleSubmit(formRef)">确定</el-button>
-			</template>
+		</template>
 	</el-dialog>
 </template>
 
 <script setup lang="ts">
 import { ref, reactive, onMounted } from 'vue';
-import { DatabaseInfoType } from '../database';
+import { DEFAULT_TABLE_NAME, DatabaseInfoType, GroupPointsConfig, curWindow, loadFilePath } from '../database';
 import { useAppStore } from '../store/models/app';
 import { FormRules, FormInstance, ElMessage, ElMessageBox } from 'element-plus';
 import { useGrade } from '../database/utils/useGrade';
@@ -44,7 +46,7 @@ import { computed } from 'vue';
 import { useRouter } from 'vue-router';
 
 interface RuleForm {
-  name: string
+	name: string
 }
 
 const appStore = useAppStore();
@@ -70,7 +72,7 @@ onMounted(() => {
 	appStore.setActiveGrade(undefined);
 })
 
-const handleClick = async(grade: DatabaseInfoType['gradeList'][0]) => {
+const handleClick = async (grade: DatabaseInfoType['gradeList'][0]) => {
 	const gradeInfo = await getGradeInfoById(grade.id);
 	if (gradeInfo) {
 		appStore.setActiveGrade(gradeInfo);
@@ -85,9 +87,15 @@ const handleAddGrade = () => {
 	dialogVisible.value = true;
 }
 
-const handleDownload =  (grade: DatabaseInfoType['gradeList'][0], event: MouseEvent) => {
-	// 下载数据到 txt 文档
+const handleDownload = async (grade: DatabaseInfoType['gradeList'][0], event: MouseEvent) => {
+	// 下载到 txt 文档中
 	event.stopPropagation();
+	const filePath = await curWindow.electronAPI.loadFilePath({
+		mainPath: GroupPointsConfig.database,
+		fileName: `${DEFAULT_TABLE_NAME.grade}-${grade.id}${GroupPointsConfig.suffix}`
+	});
+	await curWindow.electronAPI.downloadFile({filePath, fileName: `${grade.name}${GroupPointsConfig.suffix}`});
+	
 }
 
 const handleEditGrade = (grade: DatabaseInfoType['gradeList'][0], event: MouseEvent) => {
@@ -106,7 +114,7 @@ const handleDeleteGrade = async (id: string, event: MouseEvent) => {
 			cancelButtonText: '取消',
 			type: 'warning'
 		});
-		
+
 		const res = await deleteGrade(id);
 		if (res) {
 			ElMessage.success('删除班级成功');
@@ -124,7 +132,7 @@ const handleSubmit = async (formEl: FormInstance | undefined) => {
 	if (data) {
 		const gradeName = form.name;
 		let res;
-		
+
 		if (isEditMode.value) {
 			res = await updateGrade(currentEditId.value, gradeName);
 			if (res) {
@@ -140,7 +148,7 @@ const handleSubmit = async (formEl: FormInstance | undefined) => {
 				ElMessage.error('新增班级失败');
 			}
 		}
-		
+
 		if (res) {
 			dialogVisible.value = false;
 		}

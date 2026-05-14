@@ -260,3 +260,40 @@ ipcMain.handle('write-config-file', async (event, params) => {
     return false;
   }
 });
+
+// 下载文件 - 根据文件路径下载文件
+ipcMain.handle('download-file', async (event, params) => {
+  const { filePath, fileName } = params;
+  try {
+    // 检查源文件是否存在
+    await fs.access(filePath, fs.constants.F_OK);
+
+    // 获取源文件名作为默认保存文件名
+    const defaultFileName = fileName || path.basename(filePath);
+
+    // 打开保存对话框让用户选择保存位置
+    const result = await dialog.showSaveDialog({
+      defaultPath: defaultFileName,
+      filters: [{ name: 'All Files', extensions: ['*'] }],
+    });
+
+    // 如果用户取消对话框
+    if (result.canceled || !result.filePath) {
+      return { success: false, message: '用户取消保存' };
+    }
+
+    // 读取源文件内容
+    const content = await fs.readFile(filePath);
+
+    // 写入到目标位置
+    await fs.writeFile(result.filePath, content);
+
+    console.log('文件下载成功:', result.filePath);
+    return { success: true, savedPath: result.filePath };
+  } catch (error) {
+    console.error('下载文件失败:', error.message);
+    return { success: false, message: error.message };
+  }
+});
+
+//
