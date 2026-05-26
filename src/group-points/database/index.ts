@@ -147,6 +147,16 @@ export async function appendPrizeConfig(content: string) {
 	});
 }
 
+export async function appendBasicConfig(content: string) {
+	return await curWindow.electronAPI.writeConfigToFile({
+		mainPath: GroupPointsConfig.database,
+		fileName: DEFAULT_TABLE_NAME.basic,
+		suffix: GroupPointsConfig.suffix,
+		content
+	});
+}
+
+
 // 保存静态文件
 export async function saveStaticFile(fileName: string, content: any) {
 	return await curWindow.electronAPI.writeToFile({

@@ -8,7 +8,7 @@ export const routes = [
 	{
 		path: "/base",
 		name: 'base',
-		meta: { hide: false, title: '基础信息', icon: 'Tools' },
+		meta: { hide: false, title: '全局设置', icon: 'Tools' },
 		children: [
 			{
 				path: "prize",
@@ -20,7 +20,13 @@ export const routes = [
 				path: "rule",
 				component: () => import('../view/rule/index.vue'),
 				name: 'rule',
-				meta: { hide: false, title: '规则设置', icon: 'Setting' },
+				meta: { hide: false, title: '规则设置', icon: 'Connection' },
+			},
+			{
+				path: "basic",
+				component: () => import('../view/basic/index.vue'),
+				name: 'basic',
+				meta: { hide: false, title: '基础设置', icon: 'Setting' },
 			}
 		]
 	},
