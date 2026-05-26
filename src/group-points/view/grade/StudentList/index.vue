@@ -8,6 +8,9 @@
 				<el-button type="info" @click="handleReset">重置</el-button>
 			</el-space>
 			<el-space>
+				<!-- 随机点名组件 -->
+				<el-button type="success" :icon="Pointer" @click="randomCallVisible = true">随机点名</el-button>
+				 <!-- 批量添加学生 -->
 				<MultiAddDialog />
 				<el-button type="primary" :icon="Plus" @click="handleAdd">新增学生</el-button>
 			</el-space>
@@ -65,23 +68,27 @@
 
 		<!-- 删除确认弹窗 -->
 		<el-dialog title="确认删除" v-model="deleteConfirmVisible" width="300px">
-			<span>确定要删除学生“{{ deleteStudentRef?.name }}”吗？</span>
+			<span>确定要删除学生"{{ deleteStudentRef?.name }}"吗？</span>
 			<template #footer>
 				<el-button @click="deleteConfirmVisible = false">取消</el-button>
 				<el-button type="danger" @click="confirmDelete">确定删除</el-button>
 			</template>
 		</el-dialog>
+
+		<!-- 随机点名弹窗 -->
+		<RandomCallDialog v-model:visible="randomCallVisible" :students="students" />
 	</div>
 </template>
 
 <script setup lang="ts">
 import { ref, computed } from 'vue';
-import { Plus, Edit, Delete } from '@element-plus/icons-vue';
+import { Plus, Edit, Delete, Pointer } from '@element-plus/icons-vue';
 import type { FormInstance, TableColumnCtx } from 'element-plus';
 import { useAppStore } from '../../../store/models/app';
 import { Student } from '../../../database/class';
 import { useStudent } from '../../../database/utils/useStudent';
 import MultiAddDialog from './MultiAddDialog.vue';
+import RandomCallDialog from './RandomCallDialog.vue';
 
 const { createStudent, deleteStudent, updateStudent, getStudentList, getStudentIndex } = useStudent();
 
@@ -108,6 +115,9 @@ const deleteConfirmVisible = ref(false);
 const isEdit = ref(false);
 const formRef = ref<FormInstance>();
 const deleteStudentRef = ref<Student | null>(null);
+
+// 随机点名弹窗
+const randomCallVisible = ref(false);
 
 // 表单数据
 const formData = ref<Partial<Student>>({
