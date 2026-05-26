@@ -16,6 +16,9 @@ export class Grade {
 			group: number,
 			student: number,
 			record: number,
+		},
+		gradeConfig: {
+			orderByPoints: number,
 		}
 	};
 
@@ -32,7 +35,10 @@ export class Grade {
 				group: number,
 				student: number,
 				record: number,
-			}
+			},
+			gradeConfig: {
+				orderByPoints: number,
+			},
 		};
 	}) {
 		this.id = grade.id;

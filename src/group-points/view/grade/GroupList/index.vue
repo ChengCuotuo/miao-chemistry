@@ -6,6 +6,7 @@
 				<el-button type="info" @click="handleReset">重置</el-button>
 			</el-space>
 			<el-space>
+				<el-button type="success" :icon="Sort" @click="handleSort">调整排序</el-button>
 				<el-button type="primary" :icon="Plus" @click="handleAdd">新增小组</el-button>
 			</el-space>
 		</div>
@@ -47,13 +48,16 @@
 		<!-- 规则选择弹窗 -->
 		<RuleSelectorModal v-model:visible="ruleSelectorVisible" :rules="rules" :target-name="ruleTargetName"
 			:type="ruleSelectorType" @confirm="handleRuleConfirm" />
+		
+		<!-- 调整排序弹窗 -->
+		<SortModal v-model:visible="sortModalVisible" :defaultGroupList="groupInfoList" :defaultOrderByPoints="orderByPoints" @confirm="handleSortConfirm" />
 	</div>
 </template>
 
 <script setup lang="ts">
 import { computed, ref } from 'vue';
 import { useAppStore } from '../../../store/models/app';
-import { Plus } from '@element-plus/icons-vue';
+import { Plus, Sort } from '@element-plus/icons-vue';
 import { RuleRecord, Student } from '../../../database/class';
 import { dayjs, ElMessage, ElMessageBox, FormInstance } from 'element-plus';
 import { Group, StudentGroup, Rule } from '../../../database/class';
@@ -62,11 +66,13 @@ import { useRule } from '../../../database/utils/useRule';
 import GroupCard from './GroupCard.vue';
 import BatchPointsModal from './BatchPointsModal.vue';
 import RuleSelectorModal from './RuleSelectorModal.vue';
+import SortModal from './SortModal.vue';
 
 export interface GroupInfo {
 	id: string,
 	name: string,
 	points: number,
+	order: number,
 	studentIdList: string[];
 	studentList: Student[];
 }
@@ -110,6 +116,11 @@ const ruleSelectorVisible = ref(false);
 const ruleSelectorType = ref<'single' | 'batch'>('single');
 const ruleTargetName = ref('');
 const currentStudent = ref<Student | null>(null);
+
+// 调整排序弹窗相关
+const sortModalVisible = ref(false);
+const orderByPoints = ref(0);
+
 const { getRuleList } = useRule();
 
 const rules = computed(() => getRuleList(appStore.activeGrade?.id) || []);
@@ -118,6 +129,7 @@ const formData = ref<GroupInfo>({
 	id: '',
 	name: '',
 	points: 0,
+	order: 0,
 	studentIdList: [],
 	studentList: [],
 });
@@ -126,9 +138,11 @@ const formData = ref<GroupInfo>({
 const groupInfoList = computed(() => {
 	if (appStore.activeGrade) {
 		const gradeInfo = appStore.activeGrade.gradeInfo;
-		const { groupList, studentList, studentGroupList } = gradeInfo;
+		const { groupList, studentList, studentGroupList, gradeConfig } = gradeInfo;
+		orderByPoints.value = gradeConfig?.orderByPoints ?? 0;
+		
 		// 组装小组信息
-		return groupList.map(group => {
+		const formattedGroupList = groupList.map(group => {
 			const groupId = group.id;
 			const groupStuList = studentGroupList.filter(item => item.group_id === groupId)
 				.map(item => studentList.find(student => student.id === item.student_id));
@@ -137,6 +151,7 @@ const groupInfoList = computed(() => {
 				id: groupId,
 				name: group.name,
 				points: totalPoints,
+				order: group.order,
 				studentIdList: groupStuList.map(stu => stu?.id || ''),
 				studentList: groupStuList,
 			} as GroupInfo;
@@ -144,9 +159,14 @@ const groupInfoList = computed(() => {
 			.filter(group => {
 				const val = searchQuery.value.toLowerCase();
 				return group.name.toLowerCase().includes(val) || group.studentList.some(stu => stu.name.toLowerCase().includes(val));
-			})
-			// 默认排序根据总积分
-			.sort((a, b) => b.points - a.points);
+			});
+
+		if(orderByPoints.value === 1) {
+			// 默认排序根据总积分 
+			return (formattedGroupList || []).sort((a, b) => b.points - a.points);
+		}
+		// 默认排序根据排序字段 
+		return (formattedGroupList || []).sort((a, b) => a.order - b.order);
 	}
 	return [];
 });
@@ -163,7 +183,7 @@ const filterMethod = (query: string, item: Student) => {
 // 新增
 const handleAdd = () => {
 	isEdit.value = false;
-	formData.value = { id: `${groupIndex.value}`, name: '', points: 0, studentIdList: [], studentList: [] };
+	formData.value = { id: `${groupIndex.value}`, name: '', points: 0, order: 0, studentIdList: [], studentList: [] };
 	dialogVisible.value = true;
 };
 
@@ -192,7 +212,7 @@ const handleSubmit = () => {
 				}
 			} else {
 				// 新增
-				const group = new Group({ id, name, order: -1 });
+				const group = new Group({ id, name, order: 0 });
 				const studentGroupList = studentIdList.map(stuId => new StudentGroup({ id: `${id}-${stuId}`, group_id: id, student_id: stuId }))
 				if (appStore.activeGrade) {
 					appStore.activeGrade.gradeInfo.groupList.push(group);
@@ -353,6 +373,27 @@ const handleRuleConfirm = async (rule: Rule) => {
 				: `成功为 ${currentGroup.value.studentList.length} 名学生各减 ${Math.abs(points)} 分`
 		);
 	}
+};
+
+const handleSort = () => {
+	sortModalVisible.value = true;
+};
+
+const handleSortConfirm = async (prams: {orderByPoints: number, groupList: string[]}) => {
+	const {orderByPoints: orderByPointsValue, groupList} = prams;
+	if(appStore.activeGrade) {
+		const gradeInfo = appStore.activeGrade.gradeInfo;
+		gradeInfo.gradeConfig.orderByPoints = orderByPointsValue;
+		orderByPoints.value = orderByPointsValue
+		if(orderByPointsValue === 0) {
+			gradeInfo.groupList.forEach(group => {
+				group.order = groupList.indexOf(group.id) + 1;
+			});
+		}
+		await handleUpdateGradeInfo();
+	}
+	ElMessage.success(`成功调整排序`);
+	currentGroup.value = null;
 };
 
 </script>

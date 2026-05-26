@@ -13,6 +13,7 @@ export const useGrade = () => {
 			const grade = new Grade({
 				id: uuid,
 				name,
+				delete: 0,
 				gradeInfo: {
 					groupList: [],
 					studentList: [],
@@ -22,9 +23,11 @@ export const useGrade = () => {
 						group: 0,
 						student: 0,
 						record: 0,
-					}
+					},
+					gradeConfig: {
+						orderByPoints: 1,
+					},
 				},
-				delete: 0
 			})
 			appStore.database.gradeList.push(grade);
 

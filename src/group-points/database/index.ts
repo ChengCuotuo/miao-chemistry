@@ -19,6 +19,9 @@ export interface DatabaseInfoType {
 				group: number,
 				student: number,
 				record: number,
+			},
+			gradeConfig: {
+				orderByPoints: number,
 			}
 		};
 		id: string;
@@ -118,7 +121,10 @@ export async function loadGradeInfoById(gradeId: string) {
 			studentList: [], // 学生列表
 			studentGroupList: [], // 学生分组列表
 			recordList: [], // 奖励记录列表
-			indexMap: { group: 0, student: 0, studentGroup: 0, record: 0 } // 索引映射
+			indexMap: { group: 0, student: 0, studentGroup: 0, record: 0 }, // 索引映射
+			gradeConfig: {
+				orderByPoints: 1,
+			}
 		}),
 	});
 }
