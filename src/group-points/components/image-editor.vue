@@ -11,7 +11,7 @@
       border-crop-div-color="#42b983"
     />
 
-    <div class="controls">
+    <div class="controls" v-if="!props.disabled">
       <el-button v-if="!isEditing" type="primary" @click="loadImage" :loading="loading">
         {{ selectedFileImageForEdit ? '更换图片' : '选择图片' }}
       </el-button>
@@ -38,6 +38,13 @@ import 'vue3-image-editor/styles.css'
 import { openFile } from '../utils'
 import { ElMessage } from 'element-plus'
 import imageCompression from 'browser-image-compression'
+
+const props = defineProps({
+  disabled: {
+    type: Boolean,
+    default: false
+  }
+})
 
 const imageEditor = ref(null)
 const selectedFileImageForEdit = ref(null)

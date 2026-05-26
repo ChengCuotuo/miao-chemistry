@@ -10,12 +10,16 @@
 			<el-tabs v-model="activeName">
 				<el-tab-pane label="分组管理" name="group"/>
 				<el-tab-pane label="学生管理" name="student"/>
+				<el-tab-pane label="抽奖" name="lottery"/>
 			</el-tabs>
 			<div v-if="activeName === 'student'" class="info-container">
 				<StudentList></StudentList>
 			</div>
 			<div v-if="activeName === 'group'" class="info-container">
 				<GroupList></GroupList>
+			</div>
+			<div v-if="activeName === 'lottery'" class="info-container">
+				<LotteryDraw></LotteryDraw>
 			</div>
 		</div>
 	</div>
@@ -26,9 +30,9 @@ import { computed, ref } from 'vue';
 import { useAppStore } from '../../store/models/app';
 import { Back } from '@element-plus/icons-vue';
 import { useRouter } from 'vue-router';
-import { TabsPaneContext } from 'element-plus';
 import StudentList from './StudentList/index.vue';
 import GroupList from './GroupList/index.vue';
+import LotteryDraw from './LotteryDraw/index.vue';
 
 const router = useRouter();
 const appStore = useAppStore();
