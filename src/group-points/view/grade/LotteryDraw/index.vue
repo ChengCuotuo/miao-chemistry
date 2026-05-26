@@ -32,6 +32,7 @@
 			<el-table-column prop="description" label="奖品描述" align="center" min-width="200" show-overflow-tooltip />
 			<el-table-column label="操作" width="180" align="center" fixed="right">
 				<template #default="{ row }">
+					<el-button v-if="row.quantity > 0" size="small" text :icon="Money" @click="handleBid(row)">竞价</el-button>
 					<el-button size="small" text :icon="View" @click="handleEdit(row)">详情</el-button>
 				</template>
 			</el-table-column>
@@ -67,24 +68,36 @@
 				<el-button type="primary" @click="handleClose">关闭</el-button>
 			</template>
 		</el-dialog>
+
+		<!-- 竞价弹窗 -->
+		<BidDialog 
+			v-model:visible="bidDialogVisible" 
+			:prize="currentBidPrize" 
+			:students="students" 
+			@success="handleBidSuccess" 
+		/>
 	</div>
 </template>
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue';
-import {  View } from '@element-plus/icons-vue';
+import { View, Money } from '@element-plus/icons-vue';
 import type { FormInstance } from 'element-plus';
 import { useAppStore } from '../../../store/models/app';
 import { Prize } from '../../../database/class';
 import { usePrize } from '../../../database/utils/usePrize';
 import ImageEditor from '../../../components/image-editor.vue';
+import BidDialog from './BidDialog.vue';
+import { useStudent } from '../../../database/utils/useStudent';
 
 import {  loadImagePath, loadImageAsBase64, loadImageAsUint8Array } from '../../../database';
 
 const { getPrizeList } = usePrize();
+const { getStudentList } = useStudent();
 const appStore = useAppStore();
 
 const prizes = ref<Prize[]>(getPrizeList() || []);
+const students = ref(getStudentList());
 const preFullPath = ref("")
 
 // 分页
@@ -176,6 +189,22 @@ const handleEdit = async (row: Prize) => {
 	}
 };
 
+// 竞价弹窗
+const bidDialogVisible = ref(false);
+const currentBidPrize = ref<Prize | null>(null);
+
+// 竞价
+const handleBid = async (row: Prize) => {
+	currentBidPrize.value = row;
+	students.value = getStudentList();
+	bidDialogVisible.value = true;
+};
+
+// 竞价成功回调
+const handleBidSuccess = () => {
+	prizes.value = getPrizeList();
+	students.value = getStudentList();
+};
 
 // 提交表单
 const handleClose = async () => {
