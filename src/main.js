@@ -23,13 +23,13 @@ const createWindow = () => {
   // and load the index.html of the app.
   if (MAIN_WINDOW_VITE_DEV_SERVER_URL) {
     mainWindow.loadURL(MAIN_WINDOW_VITE_DEV_SERVER_URL);
+    // 打开开发者工具
+    mainWindow.webContents.openDevTools();
   } else {
     mainWindow.loadFile(
       path.join(__dirname, '../renderer/main_window/index.html'),
     );
   }
-  // 打开开发者工具
-  mainWindow.webContents.openDevTools();
 
   // 拦截 Cmd+R、F5、Cmd+Shift+R 等刷新键
   mainWindow.webContents.on('before-input-event', (event, input) => {

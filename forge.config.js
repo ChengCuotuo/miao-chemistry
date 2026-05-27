@@ -5,7 +5,7 @@ module.exports = {
   packagerConfig: {
     asar: true, // 代码加密打包
     appVersion: process.env.npm_package_version,
-    name: 'Miao Chemistry App',
+    name: 'Miao积分管理',
     icon: './build/icon', // 自动找 icon.icns / icon.ico
     osxSign: false, // 开发阶段先不签名
     osxNotarize: false,
@@ -18,7 +18,7 @@ module.exports = {
       platforms: ['win32'],
       config: {
         name: 'student-score-system',
-        productName: 'Miao Chemistry App',
+        productName: 'Miao积分管理',
         iconUrl: './build/icon.ico',
         setupIcon: './build/icon.ico',
       },

@@ -1,8 +1,8 @@
 {
   "name": "miao-chemistry",
-  "productName": "Miao Chemistry App",
+  "productName": "Miao积分管理",
   "version": "1.0.0",
-  "description": "Miao Chemistry App",
+  "description": "Miao积分管理",
   "main": ".vite/build/main.js",
   "scripts": {
     "start": "electron-forge start",
