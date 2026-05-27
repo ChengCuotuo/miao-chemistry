@@ -22,12 +22,18 @@
 			<!-- 学生列表 -->
 			<div class="student-section">
 				<h3>可选学生（积分 ≥ {{ prize.points }}）</h3>
-				<div v-if="eligibleStudents.length === 0" class="no-student">
+				<el-input
+					v-model="searchName"
+					placeholder="按姓名搜索"
+					class="search-input"
+					clearable
+				/>
+				<div v-if="filteredStudents.length === 0" class="no-student">
 					<p>暂无积分足够的学生</p>
 				</div>
 				<div v-else class="student-grid">
 					<div 
-						v-for="student in eligibleStudents" 
+						v-for="student in filteredStudents" 
 						:key="student.id"
 						class="student-card"
 						:class="{ selected: selectedStudentId === student.id }"
@@ -74,7 +80,8 @@ import { usePrize } from '../../../database/utils/usePrize';
 import { loadImageAsBase64 } from '../../../database';
 import { useAppStore } from '../../../store/models/app';
 import { useGrade } from '../../../database/utils/useGrade';
-import { ElMessage } from 'element-plus';
+import { ElMessage, dayjs } from 'element-plus';
+import { BID_RECORD_PREFIX } from '../RecordList/constant';
 
 interface Props {
 	visible: boolean;
@@ -95,10 +102,18 @@ const selectedStudentId = ref<string>('');
 const confirmVisible = ref(false);
 const isSubmitting = ref(false);
 const imageBase64 = ref('');
+const searchName = ref('');
 
 const eligibleStudents = computed(() => {
 	if (!props.prize) return [];
 	return props.students.filter(s => s.points >= props.prize!.points);
+});
+
+const filteredStudents = computed(() => {
+	if (!searchName.value) return eligibleStudents.value;
+	return eligibleStudents.value.filter(s => 
+		s.name.toLowerCase().includes(searchName.value.toLowerCase())
+	);
 });
 
 const selectedStudent = computed(() => {
@@ -127,7 +142,11 @@ const submitBid = async () => {
 	try {
 		// 1. 更新学生积分
 		const newPoints = selectedStudent.value.points - props.prize.points;
-		await updateStudent(selectedStudent.value.id, selectedStudent.value.name, newPoints);
+		await updateStudent({
+			studentId: selectedStudent.value.id,
+			name: selectedStudent.value.name,
+			points: newPoints
+		}, false);
 		
 		// 2. 更新奖品数量
 		await updatePrize({
@@ -143,9 +162,9 @@ const submitBid = async () => {
 			const newRecord = new RuleRecord({
 				id: recordIndex,
 				stu_id: selectedStudent.value.id,
-				rule_id: 'bid',
+				rule_id: `${BID_RECORD_PREFIX}${props.prize.id}`,
 				points: -props.prize.points,
-				time: new Date().toISOString()
+				time: dayjs().format('YYYY-MM-DD HH:mm:ss')
 			});
 			activeGrade.gradeInfo.recordList.push(newRecord);
 			activeGrade.gradeInfo.indexMap.record++;
@@ -250,6 +269,11 @@ watch(() => props.prize, () => {
 .student-section {
 	max-height: 300px;
 	overflow-y: auto;
+}
+
+.search-input {
+	margin-bottom: 12px;
+	width: 200px;
 }
 
 .no-student {

@@ -14,7 +14,8 @@
 			<GroupCard v-for="group in groupInfoList || []" :key="group.id" :group="group" @edit="handleEdit"
 				@delete="handleDelete" @add-points="handleAddPoints" @subtract-points="handleSubtractPoints"
 				@adjust-points="handleAdjustPoints" @mul-add-points="handleMulAddPoints"
-				@mul-subtract-points="handleMulSubtractPoints" @mul-adjust-points="handleMulAdjustPoints" />
+				@mul-subtract-points="handleMulSubtractPoints" @mul-adjust-points="handleMulAdjustPoints"
+				@view-records="handleViewRecords" />
 		</div>
 
 		<el-dialog :title="dialogTitle" v-model="dialogVisible" width="800px" :before-close="handleDialogClose">
@@ -51,6 +52,11 @@
 		
 		<!-- 调整排序弹窗 -->
 		<SortModal v-model:visible="sortModalVisible" :defaultGroupList="groupInfoList" :defaultOrderByPoints="orderByPoints" @confirm="handleSortConfirm" />
+
+		<!-- 学生记录弹窗 -->
+		<el-dialog title="学生积分记录" v-model="recordDialogVisible" width="900px">
+			<RecordList :student-id="selectedStudentId" />
+		</el-dialog>
 	</div>
 </template>
 
@@ -67,6 +73,7 @@ import GroupCard from './GroupCard.vue';
 import BatchPointsModal from './BatchPointsModal.vue';
 import RuleSelectorModal from './RuleSelectorModal.vue';
 import SortModal from './SortModal.vue';
+import RecordList from '../RecordList/index.vue';
 
 export interface GroupInfo {
 	id: string,
@@ -118,8 +125,12 @@ const ruleTargetName = ref('');
 const currentStudent = ref<Student | null>(null);
 
 // 调整排序弹窗相关
-const sortModalVisible = ref(false);
-const orderByPoints = ref(0);
+	const sortModalVisible = ref(false);
+	const orderByPoints = ref(0);
+
+	// 学生记录弹窗相关
+	const recordDialogVisible = ref(false);
+	const selectedStudentId = ref('');
 
 const { getRuleList } = useRule();
 
@@ -289,7 +300,7 @@ const handleSubtractPoints = async (student: Student) => {
 	student.points = Number(student.points) - Number(step.value);
 	// 记录积分变化
 	if (appStore.activeGrade) {
-		handleRuleRecord({ stu_id: student.id, points: Number(step.value) });
+		handleRuleRecord({ stu_id: student.id, points: -Number(step.value) });
 	}
 	await handleUpdateGradeInfo();
 };
@@ -377,6 +388,11 @@ const handleRuleConfirm = async (rule: Rule) => {
 
 const handleSort = () => {
 	sortModalVisible.value = true;
+};
+
+const handleViewRecords = (student: Student) => {
+	selectedStudentId.value = student.id;
+	recordDialogVisible.value = true;
 };
 
 const handleSortConfirm = async (prams: {orderByPoints: number, groupList: string[]}) => {

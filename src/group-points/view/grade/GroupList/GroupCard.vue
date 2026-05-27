@@ -22,10 +22,10 @@
 				clearable
 			/>
 			<div v-for="student in filteredStudents" :key="student.id" class="student-item">
-				<div class="student-info">
-					<span class="student-name">{{ student.name }}</span>
-					<el-tag type="success" size="small">{{ student.points }} 分</el-tag>
-				</div>
+						<div class="student-info">
+							<span class="student-name">{{ student.name }}</span>
+							<el-tag :type="student.points >= 0 ? 'success' : 'danger'" size="small" class="clickable-tag" @click="handleViewRecords(student)">{{ student.points }} 分</el-tag>
+						</div>
 				<div class="student-actions">
 					<el-button type="success" style="margin: 0px;" :icon="Plus" circle size="small"
 						@click="handleAddPoints(student)" />
@@ -89,6 +89,7 @@ const props = defineProps<{
 	'mul-add-points': [group: GroupInfo];
 	'mul-subtract-points': [group: GroupInfo];	
 	'mul-adjust-points': [group: GroupInfo];
+	'view-records': [student: Student];
 }>();
 
 const handleEdit = () => {
@@ -108,8 +109,12 @@ const handleSubtractPoints = (student: Student) => {
 };
 
 const handleAdjustPoints = (student: Student) => {
-	emit('adjust-points', student);
-};
+		emit('adjust-points', student);
+	};
+
+	const handleViewRecords = (student: Student) => {
+		emit('view-records', student);
+	};
 
 const handleMulAddPoints = () => {
 	emit('mul-add-points', props.group);
@@ -196,6 +201,14 @@ const handleMulAdjustPoints = () => {
 	font-size: 14px;
 	color: #606266;
 	font-weight: 500;
+}
+
+.clickable-tag {
+	cursor: pointer;
+}
+
+.clickable-tag:hover {
+	opacity: 0.8;
 }
 
 .student-actions {

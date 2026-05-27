@@ -32,7 +32,7 @@
 			<el-table-column prop="description" label="奖品描述" align="center" min-width="200" show-overflow-tooltip />
 			<el-table-column label="操作" width="180" align="center" fixed="right">
 				<template #default="{ row }">
-					<el-button v-if="row.quantity > 0" size="small" text :icon="Money" @click="handleBid(row)">竞价</el-button>
+					<el-button type="primary" v-if="row.quantity > 0" size="small" text :icon="Money" @click="handleBid(row)">竞价</el-button>
 					<el-button size="small" text :icon="View" @click="handleEdit(row)">详情</el-button>
 				</template>
 			</el-table-column>
@@ -45,29 +45,15 @@
 				:total="prizes.length" />
 		</div>
 
-		<!-- 新增/编辑弹窗 -->
-		<el-dialog :title="dialogTitle" v-model="dialogVisible" width="600px" :before-close="handleDialogClose">
-			<el-form ref="formRef" :model="formData" label-width="100px" class="dialog-form">
-				<el-form-item label="奖品名称" prop="name" :rules="[{ required: true, message: '请输入奖品名称', trigger: 'blur' }]">
-					<el-input disabled v-model="formData.name" placeholder="请输入奖品名称" />
-				</el-form-item>
-				<el-form-item label="积分值" prop="points" :rules="[{ required: true, message: '请输入积分值', trigger: 'blur' }]">
-					<el-input-number disabled v-model="formData.points" :min="1" controls-position="right" style="width: 100%" />
-				</el-form-item>
-				<el-form-item label="奖品数量" prop="quantity" :rules="[{ required: true, message: '请输入奖品数量', trigger: 'blur' }]">
-					<el-input-number disabled v-model="formData.quantity" :min="0" controls-position="right" style="width: 100%" />
-				</el-form-item>
-				<el-form-item label="奖品图片" prop="image">
-					<image-editor disabled ref="imageEditorRef" />
-				</el-form-item>
-				<el-form-item label="奖品描述" prop="description">
-					<el-input disabled v-model="formData.description" type="textarea" :rows="3" placeholder="请输入奖品描述" />
-				</el-form-item>
-			</el-form>
-			<template #footer>
-				<el-button type="primary" @click="handleClose">关闭</el-button>
-			</template>
-		</el-dialog>
+		<!-- 奖品详情弹窗 -->
+		<PrizeDetailDialog
+			v-model:visible="dialogVisible"
+			:form-data="formData"
+			:read-only="true"
+			ref="prizeDetailDialogRef"
+		/>
+
+		<!-- 竞价弹窗 -->
 
 		<!-- 竞价弹窗 -->
 		<BidDialog 
@@ -82,12 +68,11 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue';
 import { View, Money } from '@element-plus/icons-vue';
-import type { FormInstance } from 'element-plus';
 import { useAppStore } from '../../../store/models/app';
 import { Prize } from '../../../database/class';
 import { usePrize } from '../../../database/utils/usePrize';
-import ImageEditor from '../../../components/image-editor.vue';
 import BidDialog from './BidDialog.vue';
+import PrizeDetailDialog from './PrizeDetailDialog.vue';
 import { useStudent } from '../../../database/utils/useStudent';
 
 import {  loadImagePath, loadImageAsBase64, loadImageAsUint8Array } from '../../../database';
@@ -106,8 +91,6 @@ const pageSize = ref(10);
 
 // 弹窗相关
 const dialogVisible = ref(false);
-const isEdit = ref(false);
-const formRef = ref<FormInstance>();
 
 // 表单数据
 const formData = ref<Partial<Prize>>({
@@ -120,13 +103,12 @@ const formData = ref<Partial<Prize>>({
 	allow_grades: []
 });
 
-const imageEditorRef = ref()
+const prizeDetailDialogRef = ref()
 
 // 班级列表
 const gradeList = computed(() => appStore.database.gradeList.filter(grade => grade.delete === 0));
 
-// 弹窗标题
-const dialogTitle = computed(() => (isEdit.value ? '编辑奖品' : '新增奖品'));
+
 
 // 过滤后的奖品列表
 const filteredPrizes = computed(() => {
@@ -164,9 +146,8 @@ onMounted(async () => {
 	await loadAllImages();
 });
 
-// 编辑
+// 查看详情
 const handleEdit = async (row: Prize) => {
-	isEdit.value = true;
 	formData.value = { ...row };
 
 	// 先打开弹窗，确保组件已挂载
@@ -180,8 +161,8 @@ const handleEdit = async (row: Prize) => {
 		try {
 			const uint8Array = await loadImageAsUint8Array(row.image);
 
-			if (uint8Array && imageEditorRef.value) {
-				await imageEditorRef.value.setImage(uint8Array, row.image);
+			if (uint8Array && prizeDetailDialogRef.value?.imageEditorRef) {
+				await prizeDetailDialogRef.value.imageEditorRef.setImage(uint8Array, row.image);
 			}
 		} catch (error) {
 			console.error('Failed to load existing image:', error);
@@ -204,17 +185,6 @@ const handleBid = async (row: Prize) => {
 const handleBidSuccess = () => {
 	prizes.value = getPrizeList();
 	students.value = getStudentList();
-};
-
-// 提交表单
-const handleClose = async () => {
-	dialogVisible.value = false;
-};
-
-// 关闭弹窗
-const handleDialogClose = () => {
-	dialogVisible.value = false;
-	formRef.value?.resetFields();
 };
 
 // 分页大小变化

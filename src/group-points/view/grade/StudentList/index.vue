@@ -20,20 +20,21 @@
 		<el-table 
 			border
 			:data="filteredStudents"
-			:default-sort="{ prop: 'points', order: 'descending' }"
+			:default-sort="{ prop: 'points', order: '' }"
 			@sort-change="handleSortChange"
 		>
-			<el-table-column prop="id" label="序号" width="100" align="center" />
+			<el-table-column prop="id" label="ID" width="100" align="center" />
 			<el-table-column prop="name" label="姓名" align="center" />
-			<el-table-column prop="points" label="积分" width="100" align="center" sortable="custom"/>
+			<el-table-column prop="points" label="积分" align="center" sortable="custom"/>
 			<el-table-column label="班级" width="150" align="center">
 				<template #default="scope">
 					{{ activeGrade?.name || '' }}
 				</template>
 			</el-table-column>
-			<el-table-column label="操作" width="180" align="center">
+			<el-table-column label="操作" width="260" align="center">
 				<template #default="scope">
 					<el-button size="small" text :icon="Edit" @click="handleEdit(scope.row)">编辑</el-button>
+					<el-button size="small" text :icon="Document" @click="handleViewRecords(scope.row)">记录</el-button>
 					<el-button size="small" text type="danger" :icon="Delete" @click="handleDelete(scope.row)">删除</el-button>
 				</template>
 			</el-table-column>
@@ -77,18 +78,24 @@
 
 		<!-- 随机点名弹窗 -->
 		<RandomCallDialog v-model:visible="randomCallVisible" :students="students" />
+
+		<!-- 学生记录弹窗 -->
+		<el-dialog title="学生积分记录" v-model="recordDialogVisible" width="900px">
+			<RecordList :student-id="selectedStudentId" />
+		</el-dialog>
 	</div>
 </template>
 
 <script setup lang="ts">
 import { ref, computed } from 'vue';
-import { Plus, Edit, Delete, Pointer } from '@element-plus/icons-vue';
+import { Plus, Edit, Delete, Pointer, Document } from '@element-plus/icons-vue';
 import type { FormInstance, TableColumnCtx } from 'element-plus';
 import { useAppStore } from '../../../store/models/app';
 import { Student } from '../../../database/class';
 import { useStudent } from '../../../database/utils/useStudent';
 import MultiAddDialog from './MultiAddDialog.vue';
 import RandomCallDialog from './RandomCallDialog.vue';
+import RecordList from '../RecordList/index.vue';
 
 const { createStudent, deleteStudent, updateStudent, getStudentList, getStudentIndex } = useStudent();
 
@@ -107,7 +114,7 @@ const pageSize = ref(10);
 
 // 排序状态
 const sortProp = ref<string>('points');
-const sortOrder = ref<'ascending' | 'descending' | null>('descending');
+const sortOrder = ref<'ascending' | 'descending' | null>();
 
 // 弹窗相关
 const dialogVisible = ref(false);
@@ -118,6 +125,10 @@ const deleteStudentRef = ref<Student | null>(null);
 
 // 随机点名弹窗
 const randomCallVisible = ref(false);
+
+// 学生记录弹窗
+const recordDialogVisible = ref(false);
+const selectedStudentId = ref('');
 
 // 表单数据
 const formData = ref<Partial<Student>>({
@@ -179,6 +190,12 @@ const handleEdit = (row: Student) => {
 	dialogVisible.value = true;
 };
 
+// 查看记录
+const handleViewRecords = (row: Student) => {
+	selectedStudentId.value = row.id;
+	recordDialogVisible.value = true;
+};
+
 // 删除确认
 const handleDelete = (row: Student) => {
 	deleteStudentRef.value = row;
@@ -206,7 +223,11 @@ const handleSubmit = async () => {
 
 			if (isEdit.value) {
 				// 编辑
-				res = await updateStudent(formData.value.id!, name!, points!);
+				res = await updateStudent({
+					studentId: formData.value.id!,
+					name: name!,
+					points: points!
+				});
 			} else {
 				// 新增
 				res = await createStudent(name!, points!);

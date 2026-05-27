@@ -10,6 +10,7 @@
 			<el-tabs v-model="activeName">
 				<el-tab-pane label="分组管理" name="group"/>
 				<el-tab-pane label="学生管理" name="student"/>
+				<el-tab-pane label="记录" name="record"/>
 				<el-tab-pane label="抽奖" name="lottery"/>
 			</el-tabs>
 			<div v-if="activeName === 'student'" class="info-container">
@@ -20,6 +21,9 @@
 			</div>
 			<div v-if="activeName === 'lottery'" class="info-container">
 				<LotteryDraw></LotteryDraw>
+			</div>
+			<div v-if="activeName === 'record'" class="info-container">
+				<RecordList></RecordList>
 			</div>
 		</div>
 	</div>
@@ -33,6 +37,7 @@ import { useRouter } from 'vue-router';
 import StudentList from './StudentList/index.vue';
 import GroupList from './GroupList/index.vue';
 import LotteryDraw from './LotteryDraw/index.vue';
+import RecordList from './RecordList/index.vue';
 
 const router = useRouter();
 const appStore = useAppStore();

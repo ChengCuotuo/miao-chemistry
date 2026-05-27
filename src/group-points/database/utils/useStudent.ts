@@ -65,7 +65,8 @@ export const useStudent = () => {
 	};
 
 	// 更新学生
-	const updateStudent = async (studentId: string, name: string, points: number) => {
+	const updateStudent = async (params: { studentId: string, name: string, points: number }, updateStore: boolean = true) => {
+		const { studentId, name, points } = params;
 		try {
 			if (!activeGrade) {
 				console.error('当前没有选中的班级');
@@ -80,9 +81,10 @@ export const useStudent = () => {
 
 			student.name = name;
 			student.points = points;
-
-			// 更新班级信息到文件
-			await updateGradeInfoById(activeGrade.id, activeGrade);
+			if (updateStore) {
+				// 更新班级信息到文件
+				await updateGradeInfoById(activeGrade.id, activeGrade);
+			}
 			return true;
 		} catch (error) {
 			console.error('更新学生出错:', error);
