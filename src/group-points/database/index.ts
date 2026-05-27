@@ -123,7 +123,7 @@ export async function loadGradeInfoById(gradeId: string) {
 			recordList: [], // 奖励记录列表
 			indexMap: { group: 0, student: 0, studentGroup: 0, record: 0 }, // 索引映射
 			gradeConfig: {
-				orderByPoints: 1,
+				orderByPoints: 0,
 			}
 		}),
 	});

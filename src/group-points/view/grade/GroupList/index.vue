@@ -49,9 +49,10 @@
 		<!-- 规则选择弹窗 -->
 		<RuleSelectorModal v-model:visible="ruleSelectorVisible" :rules="rules" :target-name="ruleTargetName"
 			:type="ruleSelectorType" @confirm="handleRuleConfirm" />
-		
+
 		<!-- 调整排序弹窗 -->
-		<SortModal v-model:visible="sortModalVisible" :defaultGroupList="groupInfoList" :defaultOrderByPoints="orderByPoints" @confirm="handleSortConfirm" />
+		<SortModal v-model:visible="sortModalVisible" :defaultGroupList="groupInfoList"
+			:defaultOrderByPoints="orderByPoints" @confirm="handleSortConfirm" />
 
 		<!-- 学生记录弹窗 -->
 		<el-dialog title="学生积分记录" v-model="recordDialogVisible" width="900px">
@@ -125,12 +126,12 @@ const ruleTargetName = ref('');
 const currentStudent = ref<Student | null>(null);
 
 // 调整排序弹窗相关
-	const sortModalVisible = ref(false);
-	const orderByPoints = ref(0);
+const sortModalVisible = ref(false);
+const orderByPoints = ref(0);
 
-	// 学生记录弹窗相关
-	const recordDialogVisible = ref(false);
-	const selectedStudentId = ref('');
+// 学生记录弹窗相关
+const recordDialogVisible = ref(false);
+const selectedStudentId = ref('');
 
 const { getRuleList } = useRule();
 
@@ -151,7 +152,7 @@ const groupInfoList = computed(() => {
 		const gradeInfo = appStore.activeGrade.gradeInfo;
 		const { groupList, studentList, studentGroupList, gradeConfig } = gradeInfo;
 		orderByPoints.value = gradeConfig?.orderByPoints ?? 0;
-		
+
 		// 组装小组信息
 		const formattedGroupList = groupList.map(group => {
 			const groupId = group.id;
@@ -172,7 +173,7 @@ const groupInfoList = computed(() => {
 				return group.name.toLowerCase().includes(val) || group.studentList.some(stu => stu.name.toLowerCase().includes(val));
 			});
 
-		if(orderByPoints.value === 1) {
+		if (orderByPoints.value === 1) {
 			// 默认排序根据总积分 
 			return (formattedGroupList || []).sort((a, b) => b.points - a.points);
 		}
@@ -273,8 +274,8 @@ const handleDelete = (group: Partial<GroupInfo>) => {
 	})
 };
 
-const handleRuleRecord = (params: {stu_id: string, points: number, rule_id?: string}) => {
-// 记录积分变化
+const handleRuleRecord = (params: { stu_id: string, points: number, rule_id?: string }) => {
+	// 记录积分变化
 	if (appStore.activeGrade) {
 		const { stu_id, points, rule_id } = params;
 		const recordIndex = appStore.activeGrade.gradeInfo.indexMap.record;
@@ -395,13 +396,13 @@ const handleViewRecords = (student: Student) => {
 	recordDialogVisible.value = true;
 };
 
-const handleSortConfirm = async (prams: {orderByPoints: number, groupList: string[]}) => {
-	const {orderByPoints: orderByPointsValue, groupList} = prams;
-	if(appStore.activeGrade) {
+const handleSortConfirm = async (prams: { orderByPoints: number, groupList: string[] }) => {
+	const { orderByPoints: orderByPointsValue, groupList } = prams;
+	if (appStore.activeGrade) {
 		const gradeInfo = appStore.activeGrade.gradeInfo;
 		gradeInfo.gradeConfig.orderByPoints = orderByPointsValue;
 		orderByPoints.value = orderByPointsValue
-		if(orderByPointsValue === 0) {
+		if (orderByPointsValue === 0) {
 			gradeInfo.groupList.forEach(group => {
 				group.order = groupList.indexOf(group.id) + 1;
 			});

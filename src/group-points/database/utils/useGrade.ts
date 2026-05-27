@@ -25,7 +25,7 @@ export const useGrade = () => {
 						record: 0,
 					},
 					gradeConfig: {
-						orderByPoints: 1,
+						orderByPoints: 0,
 					},
 				},
 			})
