@@ -1,0 +1,254 @@
+[
+	{
+		"id": "A001",
+		"name": "课堂主动举手发言",
+		"description": "单日最多5分",
+		"points": 1,
+		"allow_grades": []
+	},
+	{
+		"id": "A002",
+		"name": "回答问题准确完整",
+		"description": "",
+		"points": 2,
+		"allow_grades": []
+	},
+	{
+		"id": "A003",
+		"name": "积极参与小组讨论",
+		"description": "每节课",
+		"points": 1,
+		"allow_grades": []
+	},
+	{
+		"id": "A004",
+		"name": "主动上台展示/演讲",
+		"description": "",
+		"points": 3,
+		"allow_grades": []
+	},
+	{
+		"id": "A005",
+		"name": "被老师当众表扬",
+		"description": "",
+		"points": 2,
+		"allow_grades": []
+	},
+	{
+		"id": "A006",
+		"name": "作业按时保质完成",
+		"description": "每科每次",
+		"points": 2,
+		"allow_grades": []
+	},
+	{
+		"id": "A007",
+		"name": "作业评为优秀",
+		"description": "书写工整、质量优秀",
+		"points": 1,
+		"allow_grades": []
+	},
+	{
+		"id": "A008",
+		"name": "文明行为被认可",
+		"description": "",
+		"points": 1,
+		"allow_grades": []
+	},
+	{
+		"id": "A009",
+		"name": "主动制止不文明行为",
+		"description": "",
+		"points": 2,
+		"allow_grades": []
+	},
+	{
+		"id": "A010",
+		"name": "协助他人打扫卫生",
+		"description": "",
+		"points": 1,
+		"allow_grades": []
+	},
+	{
+		"id": "A011",
+		"name": "主动清理公共垃圾",
+		"description": "",
+		"points": 1,
+		"allow_grades": []
+	},
+	{
+		"id": "A012",
+		"name": "参加班级/文体活动",
+		"description": "",
+		"points": 3,
+		"allow_grades": []
+	},
+	{
+		"id": "A013",
+		"name": "参加校级活动",
+		"description": "",
+		"points": 5,
+		"allow_grades": []
+	},
+	{
+		"id": "A014",
+		"name": "校级比赛三等奖",
+		"description": "",
+		"points": 5,
+		"allow_grades": []
+	},
+	{
+		"id": "A015",
+		"name": "校级比赛二等奖",
+		"description": "",
+		"points": 8,
+		"allow_grades": []
+	},
+	{
+		"id": "A016",
+		"name": "校级比赛一等奖",
+		"description": "",
+		"points": 12,
+		"allow_grades": []
+	},
+	{
+		"id": "A017",
+		"name": "帮助同学补习功课",
+		"description": "",
+		"points": 1,
+		"allow_grades": []
+	},
+	{
+		"id": "A018",
+		"name": "拾金不昧",
+		"description": "可调整3-5分",
+		"points": 3,
+		"allow_grades": []
+	},
+	{
+		"id": "A019",
+		"name": "考试进步1-5名",
+		"description": "",
+		"points": 3,
+		"allow_grades": []
+	},
+	{
+		"id": "A020",
+		"name": "考试进步6-10名",
+		"description": "",
+		"points": 5,
+		"allow_grades": []
+	},
+	{
+		"id": "A021",
+		"name": "考试进步10名以上",
+		"description": "",
+		"points": 8,
+		"allow_grades": []
+	},
+	{
+		"id": "A022",
+		"name": "单科成绩满分",
+		"description": "",
+		"points": 5,
+		"allow_grades": []
+	},
+	{
+		"id": "A023",
+		"name": "单科班级前10名",
+		"description": "",
+		"points": 4,
+		"allow_grades": []
+	},
+	{
+		"id": "D001",
+		"name": "迟到/早退5分钟内",
+		"description": "",
+		"points": -1,
+		"allow_grades": []
+	},
+	{
+		"id": "D002",
+		"name": "迟到/早退5-15分钟",
+		"description": "",
+		"points": -2,
+		"allow_grades": []
+	},
+	{
+		"id": "D003",
+		"name": "迟到/早退超15分钟",
+		"description": "",
+		"points": -4,
+		"allow_grades": []
+	},
+	{
+		"id": "D004",
+		"name": "课堂交头接耳",
+		"description": "",
+		"points": -1,
+		"allow_grades": []
+	},
+	{
+		"id": "D005",
+		"name": "上课做与学习无关事情",
+		"description": "玩手机、看闲书等",
+		"points": -3,
+		"allow_grades": []
+	},
+	{
+		"id": "D006",
+		"name": "扰乱课堂、顶撞老师",
+		"description": "",
+		"points": -8,
+		"allow_grades": []
+	},
+	{
+		"id": "D007",
+		"name": "作业未按时上交",
+		"description": "每科每次",
+		"points": -2,
+		"allow_grades": []
+	},
+	{
+		"id": "D008",
+		"name": "作业敷衍潦草",
+		"description": "",
+		"points": -2,
+		"allow_grades": []
+	},
+	{
+		"id": "D009",
+		"name": "抄袭作业/试卷",
+		"description": "",
+		"points": -5,
+		"allow_grades": []
+	},
+	{
+		"id": "D010",
+		"name": "多次漏做作业",
+		"description": "可叠加",
+		"points": -3,
+		"allow_grades": []
+	},
+	{
+		"id": "D011",
+		"name": "说脏话、不文明用语",
+		"description": "",
+		"points": -2,
+		"allow_grades": []
+	},
+	{
+		"id": "D012",
+		"name": "追逐打闹、喧哗",
+		"description": "",
+		"points": -3,
+		"allow_grades": []
+	},
+	{
+		"id": "D013",
+		"name": "与同学冲突、欺凌",
+		"description": "",
+		"points": -6,
+		"allow_grades": []
+	}
+]

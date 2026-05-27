@@ -8,6 +8,8 @@ import {
 	StudentGroup
 } from './class';
 import { Basic } from './class/main/Basic';
+import ruleConfigJson from './defaultRule.json';
+
 export interface DatabaseInfoType {
 	gradeList: {
 		gradeInfo: {
@@ -49,7 +51,6 @@ export const GroupPointsConfig = {
 	statics: "statics", // 静态资源路径
 	defaultTables: [ // 默认配置（全局数据）
 		DEFAULT_TABLE_NAME.grade, // 年级配置
-		DEFAULT_TABLE_NAME.rule, // 规则配置
 		DEFAULT_TABLE_NAME.prize, // 奖励配置
 	],
 	suffix: '.json', // 文件后缀
@@ -59,12 +60,20 @@ export const GroupPointsConfig = {
 
 export async function loadGroupPointsConfig() {
 	try {
-		// 加载默认配置
+		// 加载年级和奖励配置
 		const mainConfig = await curWindow.electronAPI.loadConfigFromFile({
 			mainPath: GroupPointsConfig.database,
 			fileList: GroupPointsConfig.defaultTables,
 			suffix: GroupPointsConfig.suffix,
 			defaultContent: '[]'
+		});
+
+		// 加载规则配置
+		const ruleConfig = await curWindow.electronAPI.loadFile({
+			mainPath: GroupPointsConfig.database,
+			fileName: DEFAULT_TABLE_NAME.rule,
+			suffix: GroupPointsConfig.suffix,
+			defaultContent: JSON.stringify(ruleConfigJson)
 		});
 
 		const basicConfig = await curWindow.electronAPI.loadFile({
@@ -75,9 +84,9 @@ export async function loadGroupPointsConfig() {
 		});
 
 		// 解析信息
-		const { grade, rule, prize } = mainConfig;
+		const { grade, prize } = mainConfig;
 		const gradeList: Grade[] = JSON.parse(grade) || [];
-		const ruleList: Rule[] = JSON.parse(rule) || [];
+		const ruleList: Rule[] = JSON.parse(ruleConfig) || [];
 		const prizeList: Prize[] = JSON.parse(prize) || [];
 		const basicConfigData = JSON.parse(basicConfig) || { step: "1" };
 
