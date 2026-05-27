@@ -38,7 +38,7 @@ const isCollapse = computed(() => appStore.isCollapse);
 		}
 
 		.content {
-			height: 100%;
+			height: calc(100% - 20px);
 			background-color: #f6f7fa;
 			padding: 10px;
 		}

@@ -1,5 +1,5 @@
 <template>
-	<div style="height: 100%; width: 100%; padding: 10px; display: flex; flex-direction: column; align-items: center;">
+	<div style="height: calc(100% - 20px); width: calc(100% - 20px); padding: 10px; display: flex; flex-direction: column; align-items: center;">
 		<div :style="{ width: `${widthRef}px` }" style="display: flex; justify-content: space-between;">
 			<el-space>
 				<div style="min-width: 80px;">计时: {{ timeCount }}s</div>

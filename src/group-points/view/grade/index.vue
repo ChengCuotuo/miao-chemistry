@@ -53,8 +53,8 @@ const handleBack = () => {
 
 <style scoped>
 .grade-container {
-	height: 100%;
-	width: 100%;
+	height: calc(100% - 20px);
+	width: calc(100% - 20px);
 	background-color: #fff;
 	padding: 10px;
 
