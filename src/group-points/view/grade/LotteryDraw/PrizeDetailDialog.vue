@@ -17,9 +17,6 @@
 				<el-input :disabled="props.readOnly" v-model="props.formData.description" type="textarea" :rows="3" placeholder="请输入奖品描述" />
 			</el-form-item>
 		</el-form>
-		<template #footer>
-			<el-button type="primary" @click="handleClose">关闭</el-button>
-		</template>
 	</el-dialog>
 </template>
 
