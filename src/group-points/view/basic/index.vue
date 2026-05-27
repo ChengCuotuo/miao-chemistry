@@ -1,25 +1,31 @@
 <template>
 	<div class="global-setting-container">
-		<el-row>
-			<el-col :span="24">
-				<el-space>
-					<span>步长设置：</span>
-					<el-input-number
-						v-model="basicConfig.step"
-						:min="1"
-						:max="10"
-						controls-position="right"
-						@change="handleChangeStep"
-					/>
-				</el-space>
-			</el-col>
-		</el-row>
+		<el-space>
+			<span>步长设置：</span>
+			<el-input-number v-model="basicConfig.step" :min="1" :max="10" controls-position="right"
+				@change="handleChangeStep" />
+		</el-space>
+		<el-space style="margin-top: 10px;">
+			<span>密码：</span>
+			<el-input disabled :password="true" v-model="basicConfig.password" type="password" placeholder="请输入密码" />
+			<el-button type="primary" text :icon="Edit" @click="showPasswordDialog" />
+		</el-space>
 	</div>
+
+	<!-- 密码修改弹窗组件 -->
+	<PasswordChangeDialog
+		v-model:visible="passwordDialogVisible"
+		:current-password="basicConfig.password"
+		@password-changed="handlePasswordChanged"
+	/>
 </template>
 
 <script setup lang="ts">
 import { useAppStore } from '../../store/models/app';
 import { useBasic } from '../../database/utils/useBasic';
+import { Edit } from '@element-plus/icons-vue';
+import { ref } from 'vue';
+import PasswordChangeDialog from './PasswordChangeDialog.vue';
 
 const { updateBasicConfig } = useBasic()
 
@@ -34,11 +40,24 @@ const handleChangeStep = (val: number) => {
 	if (debounceTimer) {
 		clearTimeout(debounceTimer)
 	}
-	
+
 	// 防抖处理，延迟300ms执行
 	debounceTimer = setTimeout(async () => {
-		await updateBasicConfig(val)
+		basicConfig.step = val
+		await updateBasicConfig({ ...basicConfig})
 	}, 300)
+}
+
+// 密码修改相关
+const passwordDialogVisible = ref(false)
+
+const showPasswordDialog = () => {
+	passwordDialogVisible.value = true
+}
+
+const handlePasswordChanged = async (newPassword: string) => {
+	basicConfig.password = newPassword
+	await updateBasicConfig({ ...basicConfig })
 }
 </script>
 

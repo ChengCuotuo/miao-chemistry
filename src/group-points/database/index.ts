@@ -80,7 +80,7 @@ export async function loadGroupPointsConfig() {
 			mainPath: GroupPointsConfig.database,
 			fileName: DEFAULT_TABLE_NAME.basic,
 			suffix: GroupPointsConfig.suffix,
-			defaultContent: JSON.stringify({ step: "1" }), // 设置步长为 1
+			defaultContent: JSON.stringify({ step: "1", password: "123456" }), // 设置步长为 1
 		});
 
 		// 解析信息
@@ -88,7 +88,7 @@ export async function loadGroupPointsConfig() {
 		const gradeList: Grade[] = JSON.parse(grade) || [];
 		const ruleList: Rule[] = JSON.parse(ruleConfig) || [];
 		const prizeList: Prize[] = JSON.parse(prize) || [];
-		const basicConfigData = JSON.parse(basicConfig) || { step: "1" };
+		const basicConfigData = JSON.parse(basicConfig) || { step: "1", password: "123456" };
 
 		const data: DatabaseInfoType = {
 			gradeList,

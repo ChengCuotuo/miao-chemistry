@@ -1,11 +1,12 @@
 import { appendBasicConfig } from "..";
 import { useAppStore } from "../../store/models/app";
+import { Basic } from "../class";
 
 export const useBasic = () => {
 	const appStore = useAppStore();
 
-	const updateBasicConfig = async (step: number) => {
-		appStore.database.basicConfig.step = step
+	const updateBasicConfig = async (config: Basic) => {
+		appStore.database.basicConfig = config
 		await appendBasicConfig(JSON.stringify(appStore.database.basicConfig));
 	}
 

@@ -1,18 +1,40 @@
 <template>
   <div class="main-back">
     <div style="position: absolute; left: 24px; top: 12px; z-index: 1;">
-      <el-button type="success" circle :icon="Menu" @click="$props.onMenu('menu')" /> 
+      <el-button type="success" circle :icon="Menu" @click="handleMenuClick" /> 
     </div>
     <div class="clock-container">
       <div class="clock">{{ currentTime }}</div>
       <div class="date">{{ currentDate }}</div>
     </div>
+
+    <!-- 密码验证弹窗 -->
+    <el-dialog
+      v-model="passwordDialogVisible"
+      title="请输入密码"
+      width="400px"
+      :close-on-click-modal="false"
+    >
+      <el-input
+        v-model="inputPassword"
+        type="password"
+        placeholder="请输入密码"
+        show-password
+        @keyup.enter="verifyPassword"
+      />
+      <template #footer>
+        <el-button @click="passwordDialogVisible = false">取消</el-button>
+        <el-button type="primary" @click="verifyPassword">确认</el-button>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
 <script lang="ts" setup>
 import { Menu } from '@element-plus/icons-vue'
 import { ref, onMounted, onUnmounted } from 'vue'
+import { ElMessage } from 'element-plus'
+import { useAppStore } from '../../group-points/store/models/app'
 
 const props = defineProps({
   onMenu: {
@@ -20,6 +42,9 @@ const props = defineProps({
     default: (type: string) => {}
   }
 })
+
+const appStore = useAppStore()
+const currentPassword = appStore.database.basicConfig?.password || ''
 
 const currentTime = ref('')
 const currentDate = ref('')
@@ -39,6 +64,27 @@ const updateTime = () => {
     day: '2-digit',
     weekday: 'long'
   })
+}
+
+const handleMenuClick = () => {
+  if (!currentPassword) {
+    props.onMenu('menu')
+    return
+  }
+  passwordDialogVisible.value = true
+}
+
+const passwordDialogVisible = ref(false)
+const inputPassword = ref('')
+
+const verifyPassword = () => {
+  if (inputPassword.value === currentPassword) {
+    props.onMenu('menu')
+    passwordDialogVisible.value = false
+    inputPassword.value = ''
+  } else {
+    ElMessage.error('密码错误')
+  }
 }
 
 onMounted(() => {
