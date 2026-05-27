@@ -13,4 +13,11 @@ export default defineConfig({
     },
   },
   assetsInclude: ['**/*.xlsx'],
+  build: {
+    rollupOptions: {
+      input: {
+        main: path.resolve(__dirname, 'index.html'),
+      },
+    },
+  },
 });

@@ -3,25 +3,50 @@ const { FuseV1Options, FuseVersion } = require('@electron/fuses');
 
 module.exports = {
   packagerConfig: {
-    asar: true,
+    asar: true, // 代码加密打包
+    appVersion: process.env.npm_package_version,
+    name: 'Miao Chemistry App',
+    icon: './build/icon', // 自动找 icon.icns / icon.ico
+    osxSign: false, // 开发阶段先不签名
+    osxNotarize: false,
   },
   rebuildConfig: {},
   makers: [
+    // Windows：exe + msi + zip
     {
-      name: '@electron-forge/maker-squirrel',
-      config: {},
+      name: '@electron-forge/maker-squirrel', // exe 安装包
+      platforms: ['win32'],
+      config: {
+        name: 'student-score-system',
+        productName: 'Miao Chemistry App',
+        iconUrl: './build/icon.ico',
+        setupIcon: './build/icon.ico',
+      },
     },
     {
-      name: '@electron-forge/maker-zip',
+      name: '@electron-forge/maker-wix', // msi 安装包
+      platforms: ['win32'],
+      config: {
+        icon: './build/icon.ico',
+      },
+    },
+    {
+      name: '@electron-forge/maker-zip', // Windows 绿色 zip
+      platforms: ['win32'],
+    },
+
+    // macOS：dmg + zip
+    {
+      name: '@electron-forge/maker-dmg', // dmg 安装包
       platforms: ['darwin'],
+      config: {
+        icon: './build/icon.icns',
+        format: 'UDZO',
+      },
     },
     {
-      name: '@electron-forge/maker-deb',
-      config: {},
-    },
-    {
-      name: '@electron-forge/maker-rpm',
-      config: {},
+      name: '@electron-forge/maker-zip', // macOS zip
+      platforms: ['darwin'],
     },
   ],
   plugins: [
