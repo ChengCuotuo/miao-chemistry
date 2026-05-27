@@ -1,4 +1,3 @@
-<!-- StickyNav.vue -->
 <template>
   <div 
     class="sticky-nav"

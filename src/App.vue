@@ -2,7 +2,7 @@
   <div style="height: 100%;">
     <StickyNav :visible="activeKey !== 'lock'" :menuItems="menuItems" :menuCallback="handleMenuClick" />
     <MainBack v-if="activeKey === 'lock'" :onMenu="handleMenuClick" />
-    <div style="height: calc(100% - 58px);">
+    <div style="height: calc(100% - 58px);" v-show="activeKey !== 'lock'">
       <!-- <SystemConfig /> -->
       <!-- 中和反应与pH曲线模拟实验 -->
       <!-- <AcidBase v-if="activeKey === 'ph'" /> -->
@@ -33,7 +33,6 @@ const menuItems = ref([
 
 const handleMenuClick = (key: string) => {
   if (key === 'menu') {
-    // TODO: 点击菜单后，默认展开第一个子项，后续可以做权限控制
     activeKey.value = menuItems.value[0].key;
   } else {
     activeKey.value = key;
