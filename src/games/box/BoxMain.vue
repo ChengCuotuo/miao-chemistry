@@ -7,7 +7,7 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, onUnmounted, reactive, ref, watch } from 'vue';
+import { onMounted, onUnmounted, reactive, ref } from 'vue';
 import Box from './Box.vue';
 import { BOX_TYPE, META_SIZE } from './const';
 import { gameInfo } from './config';
