@@ -20,6 +20,9 @@
          </el-button>
         </el-pace>
       </div>
+      <div class="nav-right">
+        <el-button type="success" circle :icon="isFullscreen ? Crop: FullScreen" @click="toggleFullscreen" />
+      </div>
     </div>
 
     <!-- 下拉内容区域 -->
@@ -43,12 +46,13 @@
           </div>
       </div>
     </transition>
+    <!-- 全屏按钮 -->
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref } from 'vue'
-import { ArrowDown, Lock } from '@element-plus/icons-vue'
+import { ArrowDown, Lock, FullScreen, Crop } from '@element-plus/icons-vue'
 
 const props = defineProps({
   visible: {
@@ -64,9 +68,6 @@ const props = defineProps({
     default: (key: string) => {}
   }
 })
-
-// 吸顶状态
-const navRef = ref(null)
 
 // 下拉菜单显示状态
 const isDropdownVisible = ref(false)
@@ -100,6 +101,35 @@ const isHoveringDropdown = ref(false)
 const toggleDropdown = () => {
   isDropdownVisible.value = !isDropdownVisible.value
 }
+
+// 全屏状态
+const isFullscreen = ref(false)
+
+// 切换全屏
+const toggleFullscreen = async () => {
+  if (!document.fullscreenElement) {
+    // 进入全屏
+    try {
+      await document.documentElement.requestFullscreen()
+      isFullscreen.value = true
+    } catch (err) {
+      console.error('进入全屏失败:', err)
+    }
+  } else {
+    // 退出全屏
+    try {
+      await document.exitFullscreen()
+      isFullscreen.value = false
+    } catch (err) {
+      console.error('退出全屏失败:', err)
+    }
+  }
+}
+
+// 监听全屏状态变化
+document.addEventListener('fullscreenchange', () => {
+  isFullscreen.value = !!document.fullscreenElement
+})
 </script>
 
 <style scoped>
@@ -121,6 +151,12 @@ const toggleDropdown = () => {
 }
 
 .nav-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.nav-right {
   display: flex;
   align-items: center;
   gap: 12px;
