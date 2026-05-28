@@ -3,7 +3,7 @@
 		<div class="left">
 			<Menu style="height: 100%;"></Menu>
 		</div>
-		<div class="right" :style="{ width: isCollapse ? 'calc(100% - 64px)' : 'calc(100% - 160px)' }">
+		<div class="right" :style="{ minWidth: '730px', width: isCollapse ? 'calc(100% - 64px)' : 'calc(100% - 150px)' }">
 			<div class="content">
 				<router-view></router-view>
 			</div>
