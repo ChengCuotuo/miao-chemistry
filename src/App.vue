@@ -14,15 +14,17 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue';
+import { onMounted, ref } from 'vue';
 import MainBack from './components/main-back/MainBack.vue';
 // import SystemConfig from './components/system-config.vue';
 import BoxGame from './games/box/index.vue';
 // import AcidBase from './chemistry/acid-base/index.vue';
 import GroupPoints from './group-points/index.vue';
 import StickyNav from './components/StickyNav.vue';
+import { useAppStore } from './group-points/store/models/app';
+import { loadGroupPointsConfig } from './group-points/database';
 
-const activeKey = ref('points');
+const activeKey = ref('lock');
 
 // 菜单项数据
 const menuItems = ref([
@@ -38,6 +40,16 @@ const handleMenuClick = (key: string) => {
     activeKey.value = key;
   }
 }
+
+const appStore = useAppStore();
+
+onMounted(async () => {
+  const data = await loadGroupPointsConfig()
+		if (data) {
+			appStore.setDatabase(data);
+		}
+});
+
 
 console.log('👋 This message is being logged by "App.vue", included via Vite');
 </script>

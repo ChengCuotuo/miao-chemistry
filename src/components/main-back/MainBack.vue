@@ -32,9 +32,10 @@
 
 <script lang="ts" setup>
 import { Menu } from '@element-plus/icons-vue'
-import { ref, onMounted, onUnmounted } from 'vue'
+import { ref, onMounted, onUnmounted, computed } from 'vue'
 import { ElMessage } from 'element-plus'
 import { useAppStore } from '../../group-points/store/models/app'
+import md5 from 'blueimp-md5'
 
 const props = defineProps({
   onMenu: {
@@ -44,7 +45,7 @@ const props = defineProps({
 })
 
 const appStore = useAppStore()
-const currentPassword = appStore.database.basicConfig?.password || ''
+const currentPassword = computed(() => appStore.database.basicConfig?.password || '')
 
 const currentTime = ref('')
 const currentDate = ref('')
@@ -67,7 +68,7 @@ const updateTime = () => {
 }
 
 const handleMenuClick = () => {
-  if (!currentPassword) {
+  if (!currentPassword.value) {
     props.onMenu('menu')
     return
   }
@@ -78,7 +79,7 @@ const passwordDialogVisible = ref(false)
 const inputPassword = ref('')
 
 const verifyPassword = () => {
-  if (inputPassword.value === currentPassword) {
+  if (md5(inputPassword.value) === currentPassword.value) {
     props.onMenu('menu')
     passwordDialogVisible.value = false
     inputPassword.value = ''

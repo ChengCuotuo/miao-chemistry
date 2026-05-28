@@ -9,6 +9,7 @@ import {
 } from './class';
 import { Basic } from './class/main/Basic';
 import ruleConfigJson from './defaultRule.json';
+import md5 from 'blueimp-md5'
 
 export interface DatabaseInfoType {
 	gradeList: {
@@ -60,6 +61,7 @@ export const GroupPointsConfig = {
 
 export async function loadGroupPointsConfig() {
 	try {
+		const password = md5("123456");
 		// 加载年级和奖励配置
 		const mainConfig = await curWindow.electronAPI.loadConfigFromFile({
 			mainPath: GroupPointsConfig.database,
@@ -80,7 +82,7 @@ export async function loadGroupPointsConfig() {
 			mainPath: GroupPointsConfig.database,
 			fileName: DEFAULT_TABLE_NAME.basic,
 			suffix: GroupPointsConfig.suffix,
-			defaultContent: JSON.stringify({ step: "1", password: "123456" }), // 设置步长为 1
+			defaultContent: JSON.stringify({ step: "1", password }),
 		});
 
 		// 解析信息
@@ -88,7 +90,7 @@ export async function loadGroupPointsConfig() {
 		const gradeList: Grade[] = JSON.parse(grade) || [];
 		const ruleList: Rule[] = JSON.parse(ruleConfig) || [];
 		const prizeList: Prize[] = JSON.parse(prize) || [];
-		const basicConfigData = JSON.parse(basicConfig) || { step: "1", password: "123456" };
+		const basicConfigData = JSON.parse(basicConfig) || { step: "1", password };
 
 		const data: DatabaseInfoType = {
 			gradeList,

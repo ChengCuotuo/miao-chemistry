@@ -21,6 +21,7 @@
 <script setup lang="ts">
 import { ref, reactive, watch } from 'vue';
 import { ElMessage, FormInstance, FormRules } from 'element-plus';
+import md5 from 'blueimp-md5'
 
 interface Props {
 	visible: boolean;
@@ -54,7 +55,7 @@ watch(dialogVisible, (newVal) => {
 const validateOldPassword = (rule: any, value: any, callback: any) => {
 	if (!value) {
 		callback(new Error('请输入旧密码'))
-	} else if (value !== props.currentPassword) {
+	} else if (md5(value) !== props.currentPassword) {
 		callback(new Error('旧密码不正确'))
 	} else {
 		callback()

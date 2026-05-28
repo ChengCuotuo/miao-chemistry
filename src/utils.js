@@ -1,4 +1,3 @@
-// crypto-service.ts
 // 固定密码（建议设置一个强密码，可以硬编码或从环境变量读取）
 const MASTER_PASSWORD = '@miaomiao@!@#$%^&*';
 const FIXED_SALT = new Uint8Array([

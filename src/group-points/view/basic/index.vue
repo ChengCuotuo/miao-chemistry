@@ -26,6 +26,7 @@ import { useBasic } from '../../database/utils/useBasic';
 import { Edit } from '@element-plus/icons-vue';
 import { ref } from 'vue';
 import PasswordChangeDialog from './PasswordChangeDialog.vue';
+import md5 from 'blueimp-md5'
 
 const { updateBasicConfig } = useBasic()
 
@@ -56,7 +57,7 @@ const showPasswordDialog = () => {
 }
 
 const handlePasswordChanged = async (newPassword: string) => {
-	basicConfig.password = newPassword
+	basicConfig.password = md5(newPassword)
 	await updateBasicConfig({ ...basicConfig })
 }
 </script>
