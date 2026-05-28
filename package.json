@@ -52,7 +52,6 @@
     "postprocessing": "^6.38.0",
     "sortablejs": "^1.15.7",
     "tailwindcss": "^4.1.18",
-    "three": "^0.182.0",
     "uuid": "^13.0.0",
     "vue": "^3.5.25",
     "vue-router": "^4.6.4",
