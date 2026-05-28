@@ -1,5 +1,5 @@
 <template>
-	<el-dialog :title="'奖品竞价'" v-model="props.visible" width="800px" :before-close="handleClose">
+	<el-dialog :title="'奖品兑换'" v-model="props.visible" width="800px" :before-close="handleClose">
 		<div v-if="!prize" class="empty-state">
 			<p>未选择奖品</p>
 		</div>

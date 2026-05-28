@@ -10,8 +10,8 @@
 			<el-tabs v-model="activeName">
 				<el-tab-pane label="分组管理" name="group"/>
 				<el-tab-pane label="学生管理" name="student"/>
-				<el-tab-pane label="记录" name="record"/>
-				<el-tab-pane label="抽奖" name="lottery"/>
+				<el-tab-pane label="积分记录" name="record"/>
+				<el-tab-pane label="积分兑换" name="lottery"/>
 			</el-tabs>
 			<div v-if="activeName === 'student'" class="info-container">
 				<StudentList></StudentList>

@@ -109,9 +109,9 @@ const getstudent_name = (stuId: string): string => {
 
 // 获取规则名称
 const getrule_name = (ruleId: string): string => {
-	// 如果是 BID_RECORD_PREFIX 开头的是竞价扣除的
+	// 如果是 BID_RECORD_PREFIX 开头的是积分兑换扣除规则
 	if(ruleId.startsWith(BID_RECORD_PREFIX)){
-		return '抽奖扣除';
+		return '积分兑换';
 	}
 	const rule = appStore.database.ruleList.find(r => r.id === ruleId);
 	return rule?.name || '主动执行';

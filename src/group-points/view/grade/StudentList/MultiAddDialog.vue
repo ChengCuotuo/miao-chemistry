@@ -10,7 +10,7 @@
 	<el-dialog title="批量新增学生" v-model="visible" width="600px">
 		<el-alert type="warning" show-icon :closable="false" style="margin-bottom: 10px;" title="">
 			<p> 支持两种快速添加方式：</p>
-			<p>1.上传 TXT 文件，内容以中文 **，或；** 分隔名称即可批量导入；</p>
+			<p>1.上传 TXT 文件，内容以中文 ，或 ；分隔名称即可批量导入；</p>
 			<p>2.下载 <el-button link type="success" text="success" @click="downloadTemp">Excel
 					模板</el-button>，按模板填好信息后上传，一键批量添加。</p>
 		</el-alert>
@@ -260,7 +260,7 @@ const downloadTemp = async () => {
 		XLSX.utils.book_append_sheet(workbook, worksheet, "积分榜"); // 将工作表添加到工作簿，命名为“积分榜”
 		//导出并触发下载
 		XLSX.writeFile(workbook, "students.xlsx");
-		ElMessage.success('模板下载成功');
+		ElMessage.warning('开始下载模板');
 	} catch (error) {
 		console.error('下载模板失败:', error);
 		ElMessage.error('模板下载失败');

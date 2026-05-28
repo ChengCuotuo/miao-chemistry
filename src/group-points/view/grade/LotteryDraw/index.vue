@@ -32,7 +32,7 @@
 			<el-table-column prop="description" label="奖品描述" align="center" min-width="200" show-overflow-tooltip />
 			<el-table-column label="操作" width="180" align="center" fixed="right">
 				<template #default="{ row }">
-					<el-button type="primary" v-if="row.quantity > 0" size="small" text :icon="Money" @click="handleBid(row)">竞价</el-button>
+					<el-button type="primary" v-if="row.quantity > 0" size="small" text :icon="Money" @click="handleBid(row)">兑换</el-button>
 					<el-button size="small" text :icon="View" @click="handleEdit(row)">详情</el-button>
 				</template>
 			</el-table-column>
@@ -53,9 +53,9 @@
 			ref="prizeDetailDialogRef"
 		/>
 
-		<!-- 竞价弹窗 -->
+		<!-- 积分兑换弹窗 -->
 
-		<!-- 竞价弹窗 -->
+		<!-- 积分兑换弹窗 -->
 		<BidDialog 
 			v-model:visible="bidDialogVisible" 
 			:prize="currentBidPrize" 
@@ -170,18 +170,18 @@ const handleEdit = async (row: Prize) => {
 	}
 };
 
-// 竞价弹窗
+// 积分兑换弹窗
 const bidDialogVisible = ref(false);
 const currentBidPrize = ref<Prize | null>(null);
 
-// 竞价
+// 兑换
 const handleBid = async (row: Prize) => {
 	currentBidPrize.value = row;
 	students.value = getStudentList();
 	bidDialogVisible.value = true;
 };
 
-// 竞价成功回调
+// 兑换成功回调
 const handleBidSuccess = () => {
 	prizes.value = getPrizeList();
 	students.value = getStudentList();
