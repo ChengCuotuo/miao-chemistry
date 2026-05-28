@@ -10,6 +10,8 @@ import {
 import { Basic } from './class/main/Basic';
 import ruleConfigJson from './defaultRule.json';
 import md5 from 'blueimp-md5'
+import { generateRandom6Digit } from './utils';
+import dayjs from 'dayjs';
 
 export interface DatabaseInfoType {
 	gradeList: {
@@ -34,6 +36,7 @@ export interface DatabaseInfoType {
 	ruleList: Rule[];
 	prizeList: Prize[];
 	basicConfig: Basic;
+	password: string;
 }
 export const curWindow = window as any;
 
@@ -47,6 +50,12 @@ export const DEFAULT_TABLE_NAME = {
 	prize: 'prize',
 	basic: 'basic',
 }
+
+export const BUILD_TYPE = {
+	trial: 'trial',
+	official: 'official',
+}
+
 export const GroupPointsConfig = {
 	database: "group-points", // 数据库路径
 	statics: "statics", // 静态资源路径
@@ -61,7 +70,18 @@ export const GroupPointsConfig = {
 
 export async function loadGroupPointsConfig() {
 	try {
-		const password = md5("123456");
+		// 使用构建时注入的环境变量
+		const buildType = import.meta.env.BUILD_TYPE;
+
+		let password: string = '';
+		if (buildType === BUILD_TYPE.official) {
+			password = generateRandom6Digit();
+		} else {
+			password = '123456';
+		}
+
+		const startTime = dayjs().startOf('day').unix();
+
 		// 加载年级和奖励配置
 		const mainConfig = await curWindow.electronAPI.loadConfigFromFile({
 			mainPath: GroupPointsConfig.database,
@@ -82,7 +102,7 @@ export async function loadGroupPointsConfig() {
 			mainPath: GroupPointsConfig.database,
 			fileName: DEFAULT_TABLE_NAME.basic,
 			suffix: GroupPointsConfig.suffix,
-			defaultContent: JSON.stringify({ step: "1", password }),
+			defaultContent: JSON.stringify({ step: "1", buildType, password: md5(password), firstRun: 1, startTime, }),
 		});
 
 		// 解析信息
@@ -90,13 +110,14 @@ export async function loadGroupPointsConfig() {
 		const gradeList: Grade[] = JSON.parse(grade) || [];
 		const ruleList: Rule[] = JSON.parse(ruleConfig) || [];
 		const prizeList: Prize[] = JSON.parse(prize) || [];
-		const basicConfigData = JSON.parse(basicConfig) || { step: "1", password };
+		const basicConfigData = JSON.parse(basicConfig) || { step: "1", buildType, password: md5(password), firstRun: 1, startTime, };
 
 		const data: DatabaseInfoType = {
 			gradeList,
 			ruleList,
 			prizeList,
-			basicConfig: basicConfigData
+			basicConfig: basicConfigData,
+			password,
 		}
 		return data
 	} catch (error) {

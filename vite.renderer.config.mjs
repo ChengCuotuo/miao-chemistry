@@ -12,6 +12,9 @@ export default defineConfig({
       '@': path.resolve(__dirname, './src'),
     },
   },
+  define: {
+    'import.meta.env.BUILD_TYPE': JSON.stringify(process.env.BUILD_TYPE),
+  },
   assetsInclude: ['**/*.xlsx'],
   build: {
     rollupOptions: {

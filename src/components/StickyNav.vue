@@ -8,16 +8,17 @@
     <!-- 导航栏主体 -->
     <div class="nav-main">
       <div class="nav-left">
-        <el-pace>
+        <el-space>
           <el-button type="success" circle :icon="Lock" @click="$props.menuCallback('lock')"/>
           <el-button 
-           type="success" 
-           :icon="ArrowDown"
-           @click="toggleDropdown"
-         >
-           所有
-         </el-button>
-        </el-pace>
+          type="success" 
+          :icon="ArrowDown"
+          @click="toggleDropdown"
+          >
+          所有
+        </el-button>
+        <el-tag v-if="buildType === 'trial'" type="warning">试用版</el-tag>
+        </el-space>
       </div>
       <div class="nav-right">
         <el-button type="success" circle :icon="isFullscreen ? Crop: FullScreen" @click="toggleFullscreen" />
@@ -50,8 +51,12 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { computed, ref } from 'vue'
 import { ArrowDown, Lock, FullScreen, Crop } from '@element-plus/icons-vue'
+import { useAppStore } from '../group-points/store/models/app';
+
+const appStore = useAppStore();
+const buildType = computed(() => appStore.database.basicConfig?.buildType || '')
 
 const props = defineProps({
   visible: {

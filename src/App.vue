@@ -8,7 +8,7 @@
       <!-- <AcidBase v-if="activeKey === 'ph'" /> -->
       <!-- 推箱子 -->
       <BoxGame v-if="activeKey === 'box'" />
-      <GroupPoints v-if="activeKey === 'points'"/>
+      <GroupPoints v-if="activeKey === 'points'" />
     </div>
   </div>
 </template>
@@ -23,8 +23,12 @@ import GroupPoints from './group-points/index.vue';
 import StickyNav from './components/StickyNav.vue';
 import { useAppStore } from './group-points/store/models/app';
 import { loadGroupPointsConfig } from './group-points/database';
+import { ElMessage, ElMessageBox } from 'element-plus';
+import { useBasic } from './group-points/database/utils/useBasic';
 
 const activeKey = ref('lock');
+const appStore = useAppStore();
+const { updateBasicConfig } = useBasic()
 
 // 菜单项数据
 const menuItems = ref([
@@ -41,13 +45,23 @@ const handleMenuClick = (key: string) => {
   }
 }
 
-const appStore = useAppStore();
-
 onMounted(async () => {
   const data = await loadGroupPointsConfig()
-		if (data) {
-			appStore.setDatabase(data);
-		}
+  if (data) {
+    appStore.setDatabase(data);
+    if (data.basicConfig.firstRun === 1) {
+      // 第一次运行，提示用户设置密码 
+      ElMessageBox.alert(`当前密码为：${data?.password}，只显示一次，请记下密码`, '提示', {
+        confirmButtonText: '确认',
+        callback: async () => {
+          await navigator.clipboard.writeText(data?.password);
+          ElMessage.success('密码已复制到剪贴板')
+          appStore.database.basicConfig.firstRun = 0
+          await updateBasicConfig({ ...appStore.database.basicConfig })
+        },
+      })
+    }
+  }
 });
 
 
