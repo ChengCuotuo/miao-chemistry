@@ -1,7 +1,7 @@
 <template>
   <div style="width: 100%;" @click="handleClick(!appStore.isCollapse)">
-    <el-button v-if="appStore.isCollapse" style="font-size: 20px; color: #fff; position: absolute; left: 16px;" link :icon="Expand"/>
-    <el-button v-else style="font-size: 20px; color: #fff; position: absolute; right: 10px;" link :icon="Fold"/>
+    <el-button v-if="appStore.isCollapse" style="font-size: 20px; position: absolute; left: 16px;" link :icon="Expand"/>
+    <el-button v-else style="font-size: 20px; position: absolute; right: 10px;" link :icon="Fold"/>
   </div>
 </template>
 

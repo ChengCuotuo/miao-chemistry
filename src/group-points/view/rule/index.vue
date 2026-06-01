@@ -27,7 +27,7 @@
 			<el-table-column prop="id" label="序号" width="120" align="center" fixed="left">
 				<template #default="{ row }">
 					<el-tooltip effect="light" :content="row.id">
-						<span class="rule-id">{{ row.id.slice(0, 8) }}...</span>
+						<span class="rule-id">{{ row.id.length > 8 ? `${row.id.slice(0, 8)}...` : row.id }}</span>
 					</el-tooltip>
 				</template>
 			</el-table-column>
