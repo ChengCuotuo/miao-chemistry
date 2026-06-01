@@ -1,49 +1,40 @@
 <template>
-  <div 
-    class="sticky-nav"
-    ref="navRef"
-    :style="{ display: visible ? 'block' : 'none' }"
-    @mouseleave="handleMouseLeave"
-  >
+  <div class="sticky-nav" ref="navRef" :style="{ display: visible ? 'block' : 'none' }" @mouseleave="handleMouseLeave">
     <!-- 导航栏主体 -->
     <div class="nav-main">
       <div class="nav-left">
         <el-space>
-          <el-button type="primary" circle :icon="Lock" @click="$props.menuCallback('lock')"/>
-          <el-button 
-          type="primary" 
-          :icon="ArrowDown"
-          @click="toggleDropdown"
-          >
-        应用
-        </el-button>
-        <el-tag v-if="buildType === 'trial'" type="danger">试用版</el-tag>
+          <el-image src="../build/logo.png" alt="logo" style="width: 32px; height: 32px;" />
+          <el-tag v-if="buildType === 'trial'" type="danger">试用版</el-tag>
+          <el-tag v-else-if="buildType === 'official'" type="success">正式版</el-tag>
+          
+          <el-button type="text" circle :icon="Lock" @click="$props.menuCallback('lock')" />
+          <el-button type="text" circle :icon="Connection" @click="toggleDropdown"/>
         </el-space>
       </div>
       <div class="nav-right">
-        <el-button type="primary" circle :icon="isFullscreen ? Crop: FullScreen" @click="toggleFullscreen" />
+        <el-button type="primary" circle :icon="isFullscreen ? Crop : FullScreen" @click="toggleFullscreen" />
       </div>
     </div>
 
     <!-- 下拉内容区域 -->
     <transition>
-      <div 
-        v-show="isDropdownVisible"
-        class="dropdown-content"
-        @mouseenter="handleDropdownEnter"
-        @mouseleave="handleDropdownLeave"
-      >
-          <div style="display: flex; flex-wrap: wrap; gap: 10px;">
-            <el-card v-for="item in props.menuItems" :key="item.key" :body-style="{ padding: '0px' }" class="menu-card" @click="$props.menuCallback(item.key)">
-              <div class="menu-item">
-                <el-icon class="menu-icon"><component :is="item.icon" /></el-icon>
-                <div class="menu-info">
-                  <h4>{{ item.title }}</h4>
-                  <p style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{ item.desc }}</p>
-                </div>
+      <div v-show="isDropdownVisible" class="dropdown-content" @mouseenter="handleDropdownEnter"
+        @mouseleave="handleDropdownLeave">
+        <div style="display: flex; flex-wrap: wrap; gap: 10px;">
+          <el-card v-for="item in props.menuItems" :key="item.key" :body-style="{ padding: '0px' }" class="menu-card"
+            @click="$props.menuCallback(item.key)">
+            <div class="menu-item">
+              <el-icon class="menu-icon">
+                <component :is="item.icon" />
+              </el-icon>
+              <div class="menu-info">
+                <h4>{{ item.title }}</h4>
+                <p style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{ item.desc }}</p>
               </div>
-            </el-card>
-          </div>
+            </div>
+          </el-card>
+        </div>
       </div>
     </transition>
     <!-- 全屏按钮 -->
@@ -52,7 +43,7 @@
 
 <script setup lang="ts">
 import { computed, ref } from 'vue'
-import { ArrowDown, Lock, FullScreen, Crop } from '@element-plus/icons-vue'
+import { Lock, FullScreen, Crop, Connection } from '@element-plus/icons-vue'
 import { useAppStore } from '../group-points/store/models/app';
 
 const appStore = useAppStore();
@@ -69,7 +60,7 @@ const props = defineProps({
   },
   menuCallback: {
     type: Function,
-    default: (key: string) => {}
+    default: (key: string) => { }
   }
 })
 
