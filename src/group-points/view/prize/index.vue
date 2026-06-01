@@ -96,8 +96,8 @@
 				</el-form-item>
 			</el-form>
 			<template #footer>
-				<el-button @click="handleDialogClose">取消</el-button>
-				<el-button type="primary" @click="handleSubmit">确定</el-button>
+				<el-button @click="handleDialogClose" :disabled="submitLoading">取消</el-button>
+				<el-button type="primary" @click="handleSubmit" :loading="submitLoading" :disabled="submitLoading">确定</el-button>
 			</template>
 		</el-dialog>
 
@@ -143,6 +143,7 @@ const deleteConfirmVisible = ref(false);
 const isEdit = ref(false);
 const formRef = ref<FormInstance>();
 const deletePrizeRef = ref<Prize | null>(null);
+const submitLoading = ref(false);
 
 // 表单数据
 const formData = ref<Partial<Prize>>({
@@ -270,45 +271,50 @@ const confirmDelete = async () => {
 const handleSubmit = async () => {
 	formRef.value?.validate(async (valid) => {
 		if (valid) {
-			const { name, description, points, quantity, allow_grades } = formData.value;
-			let imageName = ''
-			const params = await imageEditorRef.value.getImage()
-			if (params) {
-				const { name: fileName, content } = params
-				const [namePart, ext] = fileName?.split(".") || []
-				imageName = `${namePart.startsWith(GroupPointsConfig.prizePrefix) ? '' : GroupPointsConfig.prizePrefix}${namePart.substring(0, 10)}_${uuidv4().slice(0, 16)}.${ext}`
-				await saveStaticFile(imageName, content)
-			}
+			submitLoading.value = true;
+			try {
+				const { name, description, points, quantity, allow_grades } = formData.value;
+				let imageName = ''
+				const params = await imageEditorRef.value.getImage()
+				if (params) {
+					const { name: fileName, content } = params
+					const [namePart, ext] = fileName?.split(".") || []
+					imageName = `${namePart.startsWith(GroupPointsConfig.prizePrefix) ? '' : GroupPointsConfig.prizePrefix}${namePart.substring(0, 10)}_${uuidv4().slice(0, 16)}.${ext}`
+					await saveStaticFile(imageName, content)
+				}
 
-			let res;
+				let res;
 
-			if (isEdit.value) {
-				// 编辑
-				res = await updatePrize({
-					id: formData.value.id!,
-					name: name!,
-					description: description!,
-					points: points!,
-					image: imageName,
-					quantity: quantity!,
-					allow_grades: allow_grades || []
-				});
-			} else {
-				// 新增
-				res = await createPrize({
-					name: name!,
-					description: description!,
-					points: points!,
-					quantity: quantity!,
-					image: imageName,
-					allow_grades: allow_grades || []
-				});
-			}
+				if (isEdit.value) {
+					// 编辑
+					res = await updatePrize({
+						id: formData.value.id!,
+						name: name!,
+						description: description!,
+						points: points!,
+						image: imageName,
+						quantity: quantity!,
+						allow_grades: allow_grades || []
+					});
+				} else {
+					// 新增
+					res = await createPrize({
+						name: name!,
+						description: description!,
+						points: points!,
+						quantity: quantity!,
+						image: imageName,
+						allow_grades: allow_grades || []
+					});
+				}
 
-			if (res) {
-				prizes.value = getPrizeList();
-				dialogVisible.value = false;
-				formRef.value?.resetFields();
+				if (res) {
+					prizes.value = getPrizeList();
+					dialogVisible.value = false;
+					formRef.value?.resetFields();
+				}
+			} finally {
+				submitLoading.value = false;
 			}
 		}
 	});
