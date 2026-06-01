@@ -3,7 +3,7 @@
     <div style="position: absolute; left: 24px; top: 12px; z-index: 1;">
       <el-space>
         <el-button type="primary" circle :icon="Menu" @click="handleMenuClick" /> 
-        <el-tag v-if="buildType === 'trial'" type="danger">试用版</el-tag>  
+        <CurVersion />
       </el-space>
     </div>
     <div class="clock-container">
@@ -71,9 +71,10 @@
 import { Menu, Message, Platform } from '@element-plus/icons-vue'
 import { ref, onMounted, onUnmounted, computed } from 'vue'
 import { ElMessage, dayjs } from 'element-plus'
-import { useAppStore } from '../../group-points/store/models/app'
+import { useAppStore } from '../group-points/store/models/app'
 import md5 from 'blueimp-md5'
-import { BUILD_TYPE } from '../../group-points/database'
+import { BUILD_TYPE } from '../group-points/database'
+import CurVersion from './CurVersion.vue'
 
 const props = defineProps({
   onMenu: {
@@ -84,7 +85,6 @@ const props = defineProps({
 
 const appStore = useAppStore()
 const currentPassword = computed(() => appStore.database.basicConfig?.password || '')
-const buildType = computed(() => appStore.database.basicConfig?.buildType || '')
 
 const currentTime = ref('')
 const currentDate = ref('')

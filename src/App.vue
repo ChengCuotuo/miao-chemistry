@@ -15,7 +15,7 @@
 
 <script setup lang="ts">
 import { onMounted, ref } from 'vue';
-import MainBack from './components/main-back/MainBack.vue';
+import MainBack from './components/MainBack.vue';
 // import SystemConfig from './components/system-config.vue';
 import BoxGame from './games/box/index.vue';
 // import AcidBase from './chemistry/acid-base/index.vue';

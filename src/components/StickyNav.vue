@@ -5,9 +5,7 @@
       <div class="nav-left">
         <el-space>
           <el-image src="../build/logo.png" alt="logo" style="width: 32px; height: 32px;" />
-          <el-tag v-if="buildType === 'trial'" type="danger">试用版</el-tag>
-          <el-tag v-else-if="buildType === 'official'" type="success">正式版</el-tag>
-          
+          <cur-version />
           <el-button type="text" circle :icon="Lock" @click="$props.menuCallback('lock')" />
           <el-button type="text" circle :icon="Connection" @click="toggleDropdown"/>
         </el-space>
@@ -42,12 +40,9 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { ref } from 'vue'
 import { Lock, FullScreen, Crop, Connection } from '@element-plus/icons-vue'
-import { useAppStore } from '../group-points/store/models/app';
-
-const appStore = useAppStore();
-const buildType = computed(() => appStore.database.basicConfig?.buildType || '')
+import CurVersion from './CurVersion.vue';
 
 const props = defineProps({
   visible: {

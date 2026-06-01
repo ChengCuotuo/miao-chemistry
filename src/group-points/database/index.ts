@@ -72,6 +72,7 @@ export async function loadGroupPointsConfig() {
 	try {
 		// 使用构建时注入的环境变量
 		const buildType = import.meta.env.BUILD_TYPE;
+		const duration = Number(import.meta.env.DURATION) * 24 * 60 * 60; // 天转换为秒
 
 		let password: string = '';
 		if (buildType === BUILD_TYPE.official) {
@@ -102,7 +103,7 @@ export async function loadGroupPointsConfig() {
 			mainPath: GroupPointsConfig.database,
 			fileName: DEFAULT_TABLE_NAME.basic,
 			suffix: GroupPointsConfig.suffix,
-			defaultContent: JSON.stringify({ step: "1", buildType, password: md5(password), firstRun: 1, startTime, }),
+			defaultContent: JSON.stringify({ step: "1", buildType, password: md5(password), firstRun: 1, startTime, duration }),
 		});
 
 		// 解析信息
@@ -110,7 +111,7 @@ export async function loadGroupPointsConfig() {
 		const gradeList: Grade[] = JSON.parse(grade) || [];
 		const ruleList: Rule[] = JSON.parse(ruleConfig) || [];
 		const prizeList: Prize[] = JSON.parse(prize) || [];
-		const basicConfigData = JSON.parse(basicConfig) || { step: "1", buildType, password: md5(password), firstRun: 1, startTime, };
+		const basicConfigData = JSON.parse(basicConfig) || { step: "1", buildType, password: md5(password), firstRun: 1, startTime, duration };
 
 		const data: DatabaseInfoType = {
 			gradeList,

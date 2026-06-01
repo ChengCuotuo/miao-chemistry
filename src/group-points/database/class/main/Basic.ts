@@ -6,13 +6,15 @@ export class Basic {
 	password: string;
 	firstRun: number;
 	startTime: number;
+	duration: number;
 
-	constructor(params: { step: number, buildType: string, password: string, firstRun: number, startTime: number, }) {
+	constructor(params: { step: number, buildType: string, password: string, firstRun: number, startTime: number, duration: number }) {
 		this.step = params.step;
 		this.buildType = params.buildType;
 		this.password = params.password;
 		this.firstRun = params.firstRun;
 		this.startTime = params.startTime;
+		this.duration = params.duration;
 	}
 
 	toJSON() {

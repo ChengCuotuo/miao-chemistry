@@ -5,11 +5,11 @@
   "description": "Miao积分管理",
   "main": ".vite/build/main.js",
   "scripts": {
-    "start": "cross-env BUILD_TYPE=trial electron-forge start",
+    "start": "cross-env BUILD_TYPE=trial DURATION=7 electron-forge start",
     "start:official": "cross-env BUILD_TYPE=official electron-forge start",
     "package": "cross-env BUILD_TYPE=trial electron-forge package",
-    "build:all-basic": "cross-env BUILD_TYPE=trial LIMIT=7 electron-forge make --platform=win32,darwin",
-    "build:all-trial": "cross-env BUILD_TYPE=trial LIMIT=30 electron-forge make --platform=win32,darwin",
+    "build:all-basic": "cross-env BUILD_TYPE=trial DURATION=7 electron-forge make --platform=win32,darwin",
+    "build:all-trial": "cross-env BUILD_TYPE=trial DURATION=30 electron-forge make --platform=win32,darwin",
     "build:all-official": "cross-env BUILD_TYPE=official electron-forge make --platform=win32,darwin"
   },
   "keywords": [],

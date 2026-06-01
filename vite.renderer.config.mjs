@@ -14,6 +14,7 @@ export default defineConfig({
   },
   define: {
     'import.meta.env.BUILD_TYPE': JSON.stringify(process.env.BUILD_TYPE),
+    'import.meta.env.DURATION': JSON.stringify(process.env.DURATION),
   },
   assetsInclude: ['**/*.xlsx'],
   build: {
