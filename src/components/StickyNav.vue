@@ -9,19 +9,19 @@
     <div class="nav-main">
       <div class="nav-left">
         <el-space>
-          <el-button type="success" circle :icon="Lock" @click="$props.menuCallback('lock')"/>
+          <el-button type="primary" circle :icon="Lock" @click="$props.menuCallback('lock')"/>
           <el-button 
-          type="success" 
+          type="primary" 
           :icon="ArrowDown"
           @click="toggleDropdown"
           >
-          所有
+        应用
         </el-button>
-        <el-tag v-if="buildType === 'trial'" type="warning">试用版</el-tag>
+        <el-tag v-if="buildType === 'trial'" type="danger">试用版</el-tag>
         </el-space>
       </div>
       <div class="nav-right">
-        <el-button type="success" circle :icon="isFullscreen ? Crop: FullScreen" @click="toggleFullscreen" />
+        <el-button type="primary" circle :icon="isFullscreen ? Crop: FullScreen" @click="toggleFullscreen" />
       </div>
     </div>
 

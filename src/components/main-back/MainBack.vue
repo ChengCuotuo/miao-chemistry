@@ -2,8 +2,8 @@
   <div class="main-back">
     <div style="position: absolute; left: 24px; top: 12px; z-index: 1;">
       <el-space>
-        <el-button type="success" circle :icon="Menu" @click="handleMenuClick" /> 
-        <el-tag v-if="buildType === 'trial'" type="warning">试用版</el-tag>
+        <el-button type="primary" circle :icon="Menu" @click="handleMenuClick" /> 
+        <el-tag v-if="buildType === 'trial'" type="danger">试用版</el-tag>  
       </el-space>
     </div>
     <div class="clock-container">

@@ -1,5 +1,5 @@
 <template>
-  <el-menu default-active="home" class="el-menu" :collapse="appStore.isCollapse">
+  <el-menu default-active="home" class="el-menu" text-color="#616266" :collapse="appStore.isCollapse">
     <template v-for="route in routes" :key="route.name">
       <template v-if="!route.meta.hide"> <!-- 隐藏路由 -->
         <template v-if="Array.isArray(route.children) && route.children.length > 0">

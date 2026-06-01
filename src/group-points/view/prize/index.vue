@@ -19,9 +19,10 @@
 		<el-table :data="filteredPrizes" border>
 			<el-table-column prop="id" label="序号" width="120" align="center" fixed="left">
 				<template #default="{ row }">
-					<el-tooltip effect="light" :content="row.id">
-						<span class="prize-id">{{ row.id.length > 8 ? `${row.id.slice(0, 8)}...` : row.id }}</span>
+					<el-tooltip v-if="row.id.length > 8" effect="light" :content="row.id">
+						<span class="rule-id">{{ `${row.id.slice(0, 8)}...` }}</span>
 					</el-tooltip>
+					<span v-else class="rule-id">{{ row.id }}</span>
 				</template>
 			</el-table-column>
 			<el-table-column prop="name" label="奖品名称" align="center" min-width="150" fixed="left" />
