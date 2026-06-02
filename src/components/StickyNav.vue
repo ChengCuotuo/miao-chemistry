@@ -5,7 +5,7 @@
       <div class="nav-left">
         <el-space>
           <el-image src="../build/logo.png" alt="logo" style="width: 32px; height: 32px;" />
-          <!-- <cur-version /> -->
+          <cur-version />
           <el-button type="text" :icon="Lock" @click="$props.menuCallback('lock')" />
           <el-button type="text" :icon="Connection" @click="toggleDropdown"/>
         </el-space>
