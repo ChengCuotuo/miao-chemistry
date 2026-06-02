@@ -1,13 +1,13 @@
 <template>
 	<div class="global-setting-container">
 		<el-space>
-			<span>步长设置：</span>
-			<el-input-number v-model="basicConfig.step" :min="1" :max="10" controls-position="right"
+			<span>设置步长：</span>
+			<el-input-number v-model="basicConfig.step" :min="1" :max="10" controls-position="right" style="width: 160px;"
 				@change="handleChangeStep" />
 		</el-space>
 		<el-space style="margin-top: 10px;">
-			<span>密码：</span>
-			<el-input disabled :password="true" v-model="basicConfig.password" type="password" placeholder="请输入密码" />
+			<span>修改密码：</span>
+			<el-input disabled :password="true" v-model="basicConfig.password" type="password" style="width: 160px;" placeholder="请输入密码" />
 			<el-button type="primary" text :icon="Edit" @click="showPasswordDialog" />
 		</el-space>
 	</div>
@@ -68,6 +68,8 @@ const handlePasswordChanged = async (newPassword: string) => {
 	width: calc(100% - 20px);
 	background-color: #fff;
 	padding: 10px;
+
+	font-size: 14px;
 
 	display: flex;
 	flex-direction: column;
