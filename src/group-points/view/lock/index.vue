@@ -16,21 +16,21 @@
             <Message />
           </el-icon>
           <span class="contact-label">邮箱：</span>
-          <span class="contact-value">support@example.com</span>
+          <span class="contact-value">lei021191@163.com</span>
         </div>
         <div class="contact-item">
           <el-icon :size="20" color="#ff6b6b">
             <ChatDotRound />
           </el-icon>
           <span class="contact-label">小红书：</span>
-          <span class="contact-value">@Miao积分管理</span>
+          <span class="contact-value">232875531</span>
         </div>
         <div class="contact-item">
           <el-icon :size="20" color="#12b7f5">
             <ChatLineRound />
           </el-icon>
           <span class="contact-label">QQ：</span>
-          <span class="contact-value">123456789</span>
+          <span class="contact-value">1433893622</span>
         </div>
       </div>
     </div>

@@ -23,12 +23,14 @@ import GroupPoints from './group-points/index.vue';
 import StickyNav from './components/StickyNav.vue';
 import { useAppStore } from './group-points/store/models/app';
 import { loadGroupPointsConfig } from './group-points/database';
-import { ElMessage, ElMessageBox } from 'element-plus';
+import { ElMessage, ElMessageBox, dayjs } from 'element-plus';
 import { useBasic } from './group-points/database/utils/useBasic';
+import { useRouter } from 'vue-router'
 
 const activeKey = ref('lock');
 const appStore = useAppStore();
 const { updateBasicConfig } = useBasic()
+const router = useRouter()
 
 // 菜单项数据
 const menuItems = ref([
@@ -40,6 +42,15 @@ const menuItems = ref([
 const handleMenuClick = (key: string) => {
   if (key === 'menu') {
     activeKey.value = menuItems.value[0].key;
+
+    const { buildType, duration, startTime } = appStore.database.basicConfig
+    if (buildType === 'trial') {
+      const endTime = startTime + duration
+      if (dayjs().unix() > endTime) {
+	      appStore.setIsCollapse(true);
+        router.push({ name: 'lock' })
+      }
+    }
   } else {
     activeKey.value = key;
   }
