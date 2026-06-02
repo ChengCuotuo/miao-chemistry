@@ -36,4 +36,10 @@ export const routes = [
 		name: 'grade',
 		meta: { hide: true },
 	},
+	{
+		path: '/lock',
+		component: () => import('../view/lock/index.vue'),
+		name: 'lock',
+		meta: { hide: true },
+	},
 ];

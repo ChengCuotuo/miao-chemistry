@@ -1,5 +1,8 @@
 import { createRouter, createWebHashHistory } from "vue-router";
 import { routes } from "./routes";
+import { useAppStore } from "../store/models/app";
+import { dayjs } from "element-plus";
+
 
 const router = createRouter({
 	strict: true,
@@ -9,7 +12,15 @@ const router = createRouter({
 })
 
 router.beforeEach((to, from, next) => {
-	// TODO 检查是否过期，过期跳转到首页锁住路由
+	const appStore = useAppStore()
+	const { buildType, duration, startTime } = appStore.database.basicConfig
+	if (to.name !== 'lock' && buildType === 'trial') {
+		const endTime = startTime + duration
+		if (dayjs().unix() > endTime) {
+			next({ name: 'lock' })
+		}
+	}
+
 	next()
 })
 
