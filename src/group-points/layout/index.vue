@@ -41,6 +41,7 @@ const isCollapse = computed(() => appStore.isCollapse);
 			height: calc(100% - 20px);
 			background-color: #f6f7fa;
 			padding: 10px;
+			overflow-y: auto;
 		}
 	}
 }
