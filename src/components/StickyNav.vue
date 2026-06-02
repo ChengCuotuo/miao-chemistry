@@ -4,7 +4,7 @@
     <div class="nav-main">
       <div class="nav-left">
         <el-space>
-          <el-image src="../build/logo.png" alt="logo" style="width: 32px; height: 32px;" />
+          <el-image :src="logoImage" alt="logo" style="width: 32px; height: 32px;" />
           <cur-version />
           <el-button type="text" :icon="Lock" @click="$props.menuCallback('lock')" />
           <el-button type="text" :icon="Connection" @click="toggleDropdown"/>
@@ -43,6 +43,7 @@
 import { ref } from 'vue'
 import { Lock, FullScreen, Crop, Connection } from '@element-plus/icons-vue'
 import CurVersion from './CurVersion.vue';
+import logoImage from '/src/statics/logo.png'
 
 const props = defineProps({
   visible: {
