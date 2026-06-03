@@ -102,7 +102,6 @@ app.on('window-all-closed', () => {
 
 // ===============================================================================================
 const userDataPath = app.getPath('userData');
-const PASS_KEY = '@miao@';
 
 // 确保文件存在，不存在则创建
 async function ensureFileExists(filePath, defaultContent = '') {
