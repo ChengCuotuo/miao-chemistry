@@ -1,4 +1,4 @@
-import { app, BrowserWindow, ipcMain, dialog } from 'electron';
+import { app, BrowserWindow, ipcMain, dialog, Menu } from 'electron';
 import path from 'node:path';
 import started from 'electron-squirrel-startup';
 import { encryptJSON, decryptJSON } from './utils.js';
@@ -50,6 +50,24 @@ const createWindow = () => {
   });
 };
 
+// 在菜单中触发
+const menuTemplate = [
+  {
+    label: '帮助',
+    submenu: [
+      {
+        label: '关于',
+        click: () => {
+          app.showAboutPanel();
+        },
+      },
+    ],
+  },
+];
+
+const menu = Menu.buildFromTemplate(menuTemplate);
+Menu.setApplicationMenu(menu);
+
 // This method will be called when Electron has finished
 // initialization and is ready to create browser windows.
 // Some APIs can only be used after this event occurs.
@@ -62,6 +80,14 @@ app.whenReady().then(() => {
     if (BrowserWindow.getAllWindows().length === 0) {
       createWindow();
     }
+  });
+
+  // 设置关于面板内容
+  app.setAboutPanelOptions({
+    applicationName: 'Miao积分管理',
+    applicationVersion: '1.0.0',
+    copyright: 'Copyright © 2025 Miao积分管理',
+    credits: '小红书：232875531；QQ：1433893622',
   });
 });
 
