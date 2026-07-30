@@ -34,9 +34,12 @@ import 'element-plus/dist/index.css';
 import * as ElementPlusIconsVue from '@element-plus/icons-vue';
 import router from './group-points/router';
 import { pinia } from './group-points/store';
+import zhCn from 'element-plus/es/locale/lang/zh-cn';
 
 const app = createApp(App);
-app.use(ElementPlus);
+app.use(ElementPlus, {
+  locale: zhCn,
+});
 app.use(router);
 app.use(pinia);
 for (const [key, component] of Object.entries(ElementPlusIconsVue)) {
