@@ -236,7 +236,7 @@ jobs:
 
           TAG_NAME="${GITHUB_REF_NAME}"
           API_BASE="https://gitee.com/api/v5/repos/${GITEE_OWNER}/${GITEE_REPO}"
-          echo "=== 同步到 Gitee Release: ${TAG_NAME} ==="
+          echo "=== 同步到 Gitee Release: ${API_BASE} ${TAG_NAME} ==="
           echo "API: ${API_BASE}"
 
           # 0. 检查 Gitee 上是否存在该 Tag，不存在则创建
