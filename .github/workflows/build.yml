@@ -61,6 +61,9 @@ jobs:
             npm run build:trial-mac
           fi
 
+      - name: List build output
+        run: find out/make -type f || echo "out/make 目录不存在或为空"
+
       - name: Upload macOS Artifacts
         uses: actions/upload-artifact@v4
         with:
@@ -68,7 +71,7 @@ jobs:
           path: |
             out/make/**/*.dmg
             out/make/**/*.zip
-          if-no-files-found: warn
+          if-no-files-found: error
 
   build-windows:
     name: Build Windows
@@ -103,6 +106,10 @@ jobs:
             npm run build:trial-win
           }
 
+      - name: List build output
+        run: |
+          if (Test-Path out/make) { Get-ChildItem -Path out/make -Recurse -File } else { Write-Host "out/make 目录不存在或为空" }
+
       - name: Upload Windows Artifacts
         uses: actions/upload-artifact@v4
         with:
@@ -111,7 +118,7 @@ jobs:
             out/make/**/*.exe
             out/make/**/*.msi
             out/make/**/*.zip
-          if-no-files-found: warn
+          if-no-files-found: error
 
   release:
     name: Create Release
@@ -123,23 +130,44 @@ jobs:
       needs.build-windows.result != 'failure'
     runs-on: ubuntu-latest
     steps:
-      - name: Download All Artifacts
+      - name: Prepare release directory
+        run: mkdir -p release
+
+      - name: Download macOS artifacts
+        if: needs.build-macos.result == 'success'
         uses: actions/download-artifact@v4
         with:
-          path: artifacts
-          merge-multiple: true
+          name: macos-release
+          path: macos-artifacts
 
-      - name: List Artifacts
-        run: find artifacts -type f
+      - name: Download Windows artifacts
+        if: needs.build-windows.result == 'success'
+        uses: actions/download-artifact@v4
+        with:
+          name: windows-release
+          path: windows-artifacts
+
+      - name: Flatten artifacts for release
+        run: |
+          find macos-artifacts windows-artifacts -type f 2>/dev/null | while read f; do
+            cp "$f" release/
+          done
+          echo "=== Release 文件列表 ==="
+          ls -lh release/ || echo "release 目录为空"
+
+      - name: Verify release assets exist
+        run: |
+          count=$(find release -type f | wc -l)
+          if [ "$count" -eq 0 ]; then
+            echo "没有可用的构建产物，请检查上游构建日志"
+            exit 1
+          fi
+          echo "共 $count 个文件待上传"
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
-          files: |
-            artifacts/**/*.dmg
-            artifacts/**/*.zip
-            artifacts/**/*.exe
-            artifacts/**/*.msi
+          files: release/*
           generate_release_notes: true
           draft: false
           prerelease: ${{ contains(github.ref_name, '-') }}
