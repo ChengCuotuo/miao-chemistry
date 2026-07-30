@@ -227,41 +227,69 @@ jobs:
           GITEE_OWNER: ${{ secrets.GITEE_OWNER }}
           GITEE_REPO: ${{ secrets.GITEE_REPO }}
         run: |
+          set +e
+
           if [ -z "$GITEE_TOKEN" ]; then
             echo "GITEE_TOKEN 未配置，跳过 Gitee 同步"
             exit 0
           fi
 
           TAG_NAME="${GITHUB_REF_NAME}"
+          API_BASE="https://gitee.com/api/v5/repos/${GITEE_OWNER}/${GITEE_REPO}"
           echo "=== 同步到 Gitee Release: ${TAG_NAME} ==="
+          echo "API: ${API_BASE}"
 
-          # 1. 创建 Gitee Release
-          RELEASE_RESPONSE=$(curl -s -X POST \
-            "https://gitee.com/api/v5/repos/${GITEE_OWNER}/${GITEE_REPO}/releases" \
-            -H "Content-Type: application/json" \
-            -d "{
-              \"access_token\": \"${GITEE_TOKEN}\",
-              \"tag_name\": \"${TAG_NAME}\",
-              \"name\": \"${TAG_NAME}\",
-              \"body\": \"macOS: 下载 .dmg 后执行 xattr -cr \\\"/Applications/Miao积分管理.app\\\"\\nWindows: 下载 .exe 直接安装\",
-              \"target_commitish\": \"master\"
-            }")
+          # 0. 检查 Gitee 上是否存在该 Tag，不存在则创建
+          TAG_CHECK=$(curl -s "${API_BASE}/tags?access_token=${GITEE_TOKEN}&name=${TAG_NAME}" | jq -r '.[0].name // empty')
+          if [ "$TAG_CHECK" != "$TAG_NAME" ]; then
+            echo "Gitee 上不存在 Tag ${TAG_NAME}，尝试创建..."
+            # 获取默认分支
+            DEFAULT_BRANCH=$(curl -s "${API_BASE}?access_token=${GITEE_TOKEN}" | jq -r '.default_branch // "master"')
+            echo "默认分支: ${DEFAULT_BRANCH}"
+            TAG_CREATE=$(curl -s -X POST "${API_BASE}/tags" \
+              -H "Content-Type: application/json" \
+              -d "{\"access_token\": \"${GITEE_TOKEN}\", \"tag_name\": \"${TAG_NAME}\", \"refs\": \"${DEFAULT_BRANCH}\"}")
+            TAG_CREATE_NAME=$(echo "$TAG_CREATE" | jq -r '.name // empty')
+            if [ "$TAG_CREATE_NAME" != "$TAG_NAME" ]; then
+              echo "::warning::Gitee Tag 创建失败: $TAG_CREATE"
+              echo "请先手动推送 Tag 到 Gitee: git push gitee ${TAG_NAME}"
+              exit 0
+            fi
+            echo "Tag ${TAG_NAME} 创建成功"
+          else
+            echo "Tag ${TAG_NAME} 已存在"
+          fi
+
+          # 1. 创建 Gitee Release（用 jq 构造 JSON，避免转义问题）
+          BODY_TEXT="macOS: 下载 .dmg 后执行 xattr -cr /Applications/Miao积分管理.app。 Windows: 下载 .exe 直接安装。"
+          RELEASE_RESPONSE=$(jq -n \
+            --arg token "$GITEE_TOKEN" \
+            --arg tag "$TAG_NAME" \
+            --arg body "$BODY_TEXT" \
+            '{access_token: $token, tag_name: $tag, name: $tag, body: $body, target_commitish: "master"}' \
+            | curl -s -X POST "${API_BASE}/releases" \
+              -H "Content-Type: application/json" \
+              -d @-)
 
           RELEASE_ID=$(echo "$RELEASE_RESPONSE" | jq -r '.id // empty')
           if [ -z "$RELEASE_ID" ]; then
-            echo "::warning::Gitee Release 创建失败，响应: $RELEASE_RESPONSE"
+            echo "::warning::Gitee Release 创建失败"
+            echo "API 响应: $RELEASE_RESPONSE"
             exit 0
           fi
           echo "Gitee Release ID: $RELEASE_ID"
 
           # 2. 逐个上传产物
           for file in release/*; do
+            [ -f "$file" ] || continue
             filename=$(basename "$file")
             echo "上传: $filename"
-            curl -s -X POST \
-              "https://gitee.com/api/v5/repos/${GITEE_OWNER}/${GITEE_REPO}/releases/${RELEASE_ID}/attach_files" \
+            UPLOAD_RESP=$(curl -s -X POST \
+              "${API_BASE}/releases/${RELEASE_ID}/attach_files" \
               -F "access_token=${GITEE_TOKEN}" \
-              -F "file=@${file}" > /dev/null
+              -F "file=@${file}")
+            echo "  响应: $(echo "$UPLOAD_RESP" | jq -r '.file_name // .message // "unknown"')"
           done
 
           echo "=== Gitee Release 同步完成 ==="
+          echo "Gitee Release 地址: https://gitee.com/${GITEE_OWNER}/${GITEE_REPO}/releases/${RELEASE_ID}"
