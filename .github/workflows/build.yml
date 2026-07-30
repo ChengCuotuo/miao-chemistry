@@ -239,23 +239,25 @@ jobs:
           echo "=== 同步到 Gitee Release: ${API_BASE} ${TAG_NAME} ==="
           echo "API: ${API_BASE}"
 
-          # 0. 检查 Gitee 上是否存在该 Tag，不存在则创建
-          TAG_CHECK=$(curl -s "${API_BASE}/tags?access_token=${GITEE_TOKEN}&name=${TAG_NAME}" | jq -r '.[0].name // empty')
-          if [ "$TAG_CHECK" != "$TAG_NAME" ]; then
-            echo "Gitee 上不存在 Tag ${TAG_NAME}，尝试创建..."
-            # 获取默认分支
+          # 0. 确保 Gitee 上存在该 Tag（搜索全部 Tag，不只看第一个）
+          TAG_EXISTS=$(curl -s "${API_BASE}/tags?access_token=${GITEE_TOKEN}&per_page=100" | jq -r '.[].name' | grep -Fx "$TAG_NAME" || true)
+          if [ -z "$TAG_EXISTS" ]; then
+            echo "Gitee 上未找到 Tag ${TAG_NAME}，尝试创建..."
             DEFAULT_BRANCH=$(curl -s "${API_BASE}?access_token=${GITEE_TOKEN}" | jq -r '.default_branch // "master"')
             echo "默认分支: ${DEFAULT_BRANCH}"
             TAG_CREATE=$(curl -s -X POST "${API_BASE}/tags" \
               -H "Content-Type: application/json" \
               -d "{\"access_token\": \"${GITEE_TOKEN}\", \"tag_name\": \"${TAG_NAME}\", \"refs\": \"${DEFAULT_BRANCH}\"}")
             TAG_CREATE_NAME=$(echo "$TAG_CREATE" | jq -r '.name // empty')
-            if [ "$TAG_CREATE_NAME" != "$TAG_NAME" ]; then
+            if [ "$TAG_CREATE_NAME" = "$TAG_NAME" ]; then
+              echo "Tag ${TAG_NAME} 创建成功"
+            elif echo "$TAG_CREATE" | jq -r '.message // empty' | grep -q "已存在"; then
+              echo "Tag ${TAG_NAME} 已存在（跳过创建）"
+            else
               echo "::warning::Gitee Tag 创建失败: $TAG_CREATE"
               echo "请先手动推送 Tag 到 Gitee: git push gitee ${TAG_NAME}"
               exit 0
             fi
-            echo "Tag ${TAG_NAME} 创建成功"
           else
             echo "Tag ${TAG_NAME} 已存在"
           fi
