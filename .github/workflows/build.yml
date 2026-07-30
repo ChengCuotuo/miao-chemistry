@@ -22,6 +22,7 @@ permissions:
 # 全局构建类型：tag 推送默认 official，手动触发使用输入值
 env:
   BUILD_TYPE: ${{ github.event.inputs.build_type || 'official' }}
+  DURATION: ${{ (github.event.inputs.build_type == 'trial' && '30') || (github.event.inputs.build_type == 'basic' && '7') || '' }}
 
 # 同一 tag 的构建不并发
 concurrency:
@@ -55,9 +56,24 @@ jobs:
         if: startsWith(github.ref, 'refs/tags/v')
         run: npm version ${{ github.ref_name }} --no-git-tag-version --allow-same-version
 
-      # 执行 package.json 中对应的构建命令：npm run build:{BUILD_TYPE}-mac
+      # 构建：package → ad-hoc 签名 → make（免证书签名，将"已损坏"变为可右键打开）
       - name: Build macOS
-        run: npm run build:${BUILD_TYPE}-mac
+        run: |
+          # 1. Package
+          npx electron-forge package --platform=darwin
+
+          # 2. Ad-hoc sign（codesign -s - 无需开发者证书）
+          APP_PATH=$(find out -maxdepth 2 -name "*.app" -type d | head -1)
+          if [ -n "$APP_PATH" ]; then
+            codesign --force --deep --sign - "$APP_PATH"
+            echo "Ad-hoc signed: $APP_PATH"
+          else
+            echo "::error::未找到 .app 文件"
+            exit 1
+          fi
+
+          # 3. Make（跳过重新打包，使用已签名的 app 创建 DMG）
+          npx electron-forge make --platform=darwin --skip-package
 
       # 验证产物存在，不存在则终止
       - name: Verify build output
@@ -183,6 +199,21 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           files: release/*
+          body: |
+            ## macOS 安装说明
+
+            下载 `.dmg` 安装后，如果提示"已损坏，无法打开"：
+
+            **方式一**：终端执行（推荐）
+            ```bash
+            xattr -cr "/Applications/Miao积分管理.app"
+            ```
+
+            **方式二**：右键点击 App → 选择"打开" → 点击"确定"
+
+            ## Windows 安装说明
+
+            下载 `.exe` 安装包直接运行，如出现 SmartScreen 提示点击"仍要运行"。
           generate_release_notes: true
           prerelease: ${{ contains(github.ref_name, '-') }}
         env:
