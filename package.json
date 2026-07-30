@@ -8,13 +8,10 @@
     "start": "cross-env BUILD_TYPE=trial DURATION=7 electron-forge start",
     "start:official": "cross-env BUILD_TYPE=official electron-forge start",
     "package": "cross-env BUILD_TYPE=trial electron-forge package",
-    "build:basic-all": "cross-env BUILD_TYPE=trial DURATION=7 electron-forge make --platform=win32,darwin",
     "build:basic-mac": "cross-env BUILD_TYPE=trial DURATION=7 electron-forge make --platform=darwin",
     "build:basic-win": "cross-env BUILD_TYPE=trial DURATION=7 electron-forge make --platform=win32",
-    "build:trial-all": "cross-env BUILD_TYPE=trial DURATION=30 electron-forge make --platform=win32,darwin",
     "build:trial-mac": "cross-env BUILD_TYPE=trial DURATION=30 electron-forge make --platform=darwin",
     "build:trial-win": "cross-env BUILD_TYPE=trial DURATION=30 electron-forge make --platform=win32",
-    "build:official-all": "cross-env BUILD_TYPE=official electron-forge make --platform=win32,darwin",
     "build:official-mac": "cross-env BUILD_TYPE=official electron-forge make --platform=darwin",
     "build:official-win": "cross-env BUILD_TYPE=official electron-forge make --platform=win32"
   },
