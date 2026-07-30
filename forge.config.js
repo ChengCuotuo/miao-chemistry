@@ -1,5 +1,7 @@
 const { FusesPlugin } = require('@electron-forge/plugin-fuses');
 const { FuseV1Options, FuseVersion } = require('@electron/fuses');
+const { pathToFileURL } = require('url');
+const path = require('path');
 
 // 根据当前运行平台动态生成 makers
 // maker-squirrel / maker-wix 依赖 Windows 环境，无法在 macOS 上运行
@@ -13,7 +15,8 @@ const makers = [
     config: {
       name: 'student-score-system',
       productName: 'Miao积分管理',
-      iconUrl: './build/icon.ico',
+      // iconUrl 必须是合法 URL（NuGet nuspec 要求），用 file:// 协议转换本地路径
+      iconUrl: pathToFileURL(path.resolve('./build/icon.ico')).href,
       setupIcon: './build/icon.ico',
     },
   },
