@@ -305,9 +305,20 @@ A：下载新版安装包覆盖安装即可，本地数据自动保留。
 ## 15. 技术支持
 
 - 作者：chunlei.wang
-- 邮箱：lei021101@163.com
+- 邮箱：<lei021101@163.com>
 - 如遇到问题或有功能建议，欢迎邮件反馈
 
 ---
 
 **Miao教学管理系统** —— 让教学管理更简单，让课堂互动更有趣！
+
+## 构建命令
+
+```bash
+git tag v1.0.1
+git push github v1.0.1
+git tag -d v1.0.1
+git push github
+git push origin
+git push -u github master
+```
