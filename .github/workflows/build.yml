@@ -127,7 +127,6 @@ jobs:
           name: windows-build
           path: |
             out/make/**/*.exe
-            out/make/**/*.msi
             out/make/**/*.zip
           if-no-files-found: error
 

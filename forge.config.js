@@ -8,7 +8,7 @@ const path = require('path');
 const isMacOS = process.platform === 'darwin';
 
 const makers = [
-  // Windows：exe + msi + zip
+  // Windows：exe + zip
   {
     name: '@electron-forge/maker-squirrel', // exe 安装包
     platforms: ['win32'],
@@ -18,13 +18,6 @@ const makers = [
       // iconUrl 必须是合法 URL（NuGet nuspec 要求），用 file:// 协议转换本地路径
       iconUrl: pathToFileURL(path.resolve('./build/icon.ico')).href,
       setupIcon: './build/icon.ico',
-    },
-  },
-  {
-    name: '@electron-forge/maker-wix', // msi 安装包
-    platforms: ['win32'],
-    config: {
-      icon: './build/icon.ico',
     },
   },
   {
@@ -47,9 +40,9 @@ const makers = [
   },
 ];
 
-// macOS 上跨平台构建 win32 时，过滤掉无法运行的 maker
+// macOS 上跨平台构建 win32 时，过滤掉无法运行的 maker（maker-squirrel 依赖 Windows 环境）
 const filteredMakers = isMacOS
-  ? makers.filter((m) => m.name !== '@electron-forge/maker-squirrel' && m.name !== '@electron-forge/maker-wix')
+  ? makers.filter((m) => m.name !== '@electron-forge/maker-squirrel')
   : makers;
 
 module.exports = {
