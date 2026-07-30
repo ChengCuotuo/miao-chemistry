@@ -279,13 +279,14 @@ jobs:
           fi
           echo "Gitee Release ID: $RELEASE_ID"
 
-          # 2. 逐个上传产物
+          # 2. 逐个上传产物（带超时和重试）
           for file in release/*; do
             [ -f "$file" ] || continue
             filename=$(basename "$file")
-            echo "上传: $filename"
-            UPLOAD_RESP=$(curl -s -X POST \
-              "${API_BASE}/releases/${RELEASE_ID}/attach_files" \
+            filesize=$(du -h "$file" | cut -f1)
+            echo "上传: $filename ($filesize)"
+            UPLOAD_RESP=$(curl -s --connect-timeout 30 --max-time 600 --retry 2 \
+              -X POST "${API_BASE}/releases/${RELEASE_ID}/attach_files" \
               -F "access_token=${GITEE_TOKEN}" \
               -F "file=@${file}")
             echo "  响应: $(echo "$UPLOAD_RESP" | jq -r '.file_name // .message // "unknown"')"
