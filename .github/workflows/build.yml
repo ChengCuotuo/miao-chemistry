@@ -3,11 +3,11 @@ name: Build & Release
 on:
   push:
     tags:
-      - 'v*'
+      - "v*"
   workflow_dispatch:
     inputs:
       build_type:
-        description: '构建类型'
+        description: "构建类型"
         required: true
         type: choice
         options:
@@ -218,3 +218,50 @@ jobs:
           prerelease: ${{ contains(github.ref_name, '-') }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      # 同步 Release 产物到 Gitee（国内用户下载更快）
+      - name: Sync to Gitee Release
+        if: startsWith(github.ref, 'refs/tags/v')
+        env:
+          GITEE_TOKEN: ${{ secrets.GITEE_TOKEN }}
+          GITEE_OWNER: ${{ secrets.GITEE_OWNER }}
+          GITEE_REPO: ${{ secrets.GITEE_REPO }}
+        run: |
+          if [ -z "$GITEE_TOKEN" ]; then
+            echo "GITEE_TOKEN 未配置，跳过 Gitee 同步"
+            exit 0
+          fi
+
+          TAG_NAME="${GITHUB_REF_NAME}"
+          echo "=== 同步到 Gitee Release: ${TAG_NAME} ==="
+
+          # 1. 创建 Gitee Release
+          RELEASE_RESPONSE=$(curl -s -X POST \
+            "https://gitee.com/api/v5/repos/${GITEE_OWNER}/${GITEE_REPO}/releases" \
+            -H "Content-Type: application/json" \
+            -d "{
+              \"access_token\": \"${GITEE_TOKEN}\",
+              \"tag_name\": \"${TAG_NAME}\",
+              \"name\": \"${TAG_NAME}\",
+              \"body\": \"macOS: 下载 .dmg 后执行 xattr -cr \\\"/Applications/Miao积分管理.app\\\"\\nWindows: 下载 .exe 直接安装\",
+              \"target_commitish\": \"master\"
+            }")
+
+          RELEASE_ID=$(echo "$RELEASE_RESPONSE" | jq -r '.id // empty')
+          if [ -z "$RELEASE_ID" ]; then
+            echo "::warning::Gitee Release 创建失败，响应: $RELEASE_RESPONSE"
+            exit 0
+          fi
+          echo "Gitee Release ID: $RELEASE_ID"
+
+          # 2. 逐个上传产物
+          for file in release/*; do
+            filename=$(basename "$file")
+            echo "上传: $filename"
+            curl -s -X POST \
+              "https://gitee.com/api/v5/repos/${GITEE_OWNER}/${GITEE_REPO}/releases/${RELEASE_ID}/attach_files" \
+              -F "access_token=${GITEE_TOKEN}" \
+              -F "file=@${file}" > /dev/null
+          done
+
+          echo "=== Gitee Release 同步完成 ==="
