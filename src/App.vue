@@ -1,16 +1,18 @@
 <template>
-  <div style="height: 100%;">
-    <StickyNav :visible="activeKey !== 'lock'" :menuItems="menuItems" :menuCallback="handleMenuClick" />
-    <MainBack v-if="activeKey === 'lock'" :onMenu="handleMenuClick" />
-    <div style="height: calc(100% - 58px);" v-show="activeKey !== 'lock'">
-      <!-- <SystemConfig /> -->
-      <!-- 中和反应与pH曲线模拟实验 -->
-      <!-- <AcidBase v-if="activeKey === 'ph'" /> -->
-      <!-- 推箱子 -->
-      <BoxGame v-if="activeKey === 'box'" />
-      <GroupPoints v-if="activeKey === 'points'" />
+  <el-config-provider :locale="zhCn">
+    <div style="height: 100%;">
+      <StickyNav :visible="activeKey !== 'lock'" :menuItems="menuItems" :menuCallback="handleMenuClick" />
+      <MainBack v-if="activeKey === 'lock'" :onMenu="handleMenuClick" />
+      <div style="height: calc(100% - 58px);" v-show="activeKey !== 'lock'">
+        <!-- <SystemConfig /> -->
+        <!-- 中和反应与pH曲线模拟实验 -->
+        <!-- <AcidBase v-if="activeKey === 'ph'" /> -->
+        <!-- 推箱子 -->
+        <BoxGame v-if="activeKey === 'box'" />
+        <GroupPoints v-if="activeKey === 'points'" />
+      </div>
     </div>
-  </div>
+  </el-config-provider>
 </template>
 
 <script setup lang="ts">
@@ -26,6 +28,7 @@ import { loadGroupPointsConfig } from './group-points/database';
 import { ElMessage, ElMessageBox, dayjs } from 'element-plus';
 import { useBasic } from './group-points/database/utils/useBasic';
 import { useRouter } from 'vue-router'
+import zhCn from 'element-plus/es/locale/lang/zh-cn';
 
 const activeKey = ref('lock');
 const appStore = useAppStore();

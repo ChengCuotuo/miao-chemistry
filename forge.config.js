@@ -53,6 +53,24 @@ module.exports = {
     icon: './build/icon', // 自动找 icon.icns / icon.ico
     osxSign: false, // 开发阶段先不签名
     osxNotarize: false,
+    // 排除不需要打包的文件，减小产物体积
+    ignore: [
+      /^\/src$/,            // 源码（已编译到 .vite/）
+      /^\/build$/,           // 构建用图标（打包时已嵌入）
+      /^\/docs$/,            // 文档
+      /^\/\.github$/,        // CI 配置
+      /^\/\.vscode$/,        // 编辑器配置
+      /^\/out$/,             // 构建输出
+      /^\/\.git$/,           // Git 仓库
+      /^\/forge\.config\.js$/,
+      /^\/vite\./,           // Vite 配置文件
+      /^\/tsconfig/,         // TypeScript 配置
+      /^\/index\.html$/,    // Vite 入口（已编译）
+      /\.md$/,               // Markdown 文件
+      /\.gitignore$/,
+      /package-lock\.json$/,
+      /yarn\.lock$/,
+    ],
   },
   rebuildConfig: {},
   makers: filteredMakers,
