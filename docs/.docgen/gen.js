@@ -5,7 +5,8 @@ const { marked } = require('marked');
 const HTMLtoDOCX = require('html-to-docx');
 
 const DOCS_DIR = path.resolve(__dirname, '..');
-const MD_FILE = path.join(DOCS_DIR, '使用手册.md');
+const ROOT_DIR = path.resolve(__dirname, '../..');
+const MD_FILE = path.join(ROOT_DIR, 'README.md');
 const OUT_FILE = path.join(DOCS_DIR, '使用手册.docx');
 
 // 读取 PNG 宽高（解析 IHDR 头）
@@ -19,9 +20,9 @@ async function main() {
 
   // 将本地图片替换为 base64 内嵌，并按 620px 宽度等比缩放
   html = html.replace(
-    /<img src="(images\/[^"]+)" alt="([^"]*)"\s*\/?>/g,
+    /<img src="(docs\/images\/[^"]+)" alt="([^"]*)"\s*\/?>/g,
     (m, src, alt) => {
-      const imgPath = path.join(DOCS_DIR, src);
+      const imgPath = path.join(ROOT_DIR, src);
       const buf = fs.readFileSync(imgPath);
       const { width, height } = pngSize(buf);
       const targetW = 620;
