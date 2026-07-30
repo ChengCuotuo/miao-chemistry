@@ -1,0 +1,135 @@
+name: Build & Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      build_type:
+        description: '构建类型'
+        required: true
+        type: choice
+        options:
+          - official
+          - trial
+        default: official
+      platform:
+        description: '构建平台'
+        required: true
+        type: choice
+        options:
+          - all
+          - macos
+          - windows
+        default: all
+
+permissions:
+  contents: write
+
+jobs:
+  build-macos:
+    name: Build macOS
+    runs-on: macos-latest
+    if: >
+      github.event_name == 'push' ||
+      github.event.inputs.platform == 'all' ||
+      github.event.inputs.platform == 'macos'
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install Dependencies
+        run: npm ci
+
+      - name: Build macOS
+        run: |
+          BUILD_TYPE="${{ github.event.inputs.build_type || 'official' }}"
+          if [ "$BUILD_TYPE" = "official" ]; then
+            npm run build:official-mac
+          else
+            npm run build:trial-mac
+          fi
+
+      - name: Upload macOS Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: macos-release
+          path: |
+            out/make/**/*.dmg
+            out/make/**/*.zip
+          if-no-files-found: warn
+
+  build-windows:
+    name: Build Windows
+    runs-on: windows-latest
+    if: >
+      github.event_name == 'push' ||
+      github.event.inputs.platform == 'all' ||
+      github.event.inputs.platform == 'windows'
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install Dependencies
+        run: npm ci
+
+      - name: Build Windows
+        run: |
+          $buildType = "${{ github.event.inputs.build_type || 'official' }}"
+          if ($buildType -eq "official") {
+            npm run build:official-win
+          } else {
+            npm run build:trial-win
+          }
+
+      - name: Upload Windows Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: windows-release
+          path: |
+            out/make/**/*.exe
+            out/make/**/*.msi
+            out/make/**/*.zip
+          if-no-files-found: warn
+
+  release:
+    name: Create Release
+    needs: [build-macos, build-windows]
+    if: always() && (needs.build-macos.result == 'success' || needs.build-windows.result == 'success')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download All Artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+          merge-multiple: true
+
+      - name: List Artifacts
+        run: find artifacts -type f
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            artifacts/**/*.dmg
+            artifacts/**/*.zip
+            artifacts/**/*.exe
+            artifacts/**/*.msi
+          generate_release_notes: true
+          draft: false
+          prerelease: ${{ contains(github.ref_name, '-') }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
