@@ -14,7 +14,7 @@ on:
           - official
           - trial
           - basic
-        default: official
+        default: trial
 
 permissions:
   contents: write
