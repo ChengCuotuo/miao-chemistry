@@ -1,7 +1,7 @@
 <template>
   <div class="back-music-container">
     <audio ref="backgMusicRef" loop hidden>
-      <source src="../statics/musics/backmusic.mp3" type="audio/mpeg" />
+      <source src="../statics/musics/backmusic.m4a" type="audio/mp4" />
       您的浏览器不支持音频播放。
     </audio>
 

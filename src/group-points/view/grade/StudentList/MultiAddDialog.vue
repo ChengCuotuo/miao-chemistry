@@ -57,7 +57,7 @@ import { ElMessage, ElInput } from 'element-plus';
 import FileUpload from '../../../components/file-upload.vue';
 import { Student } from '../../../database/class';
 import { ref, withKeys } from 'vue';
-import * as XLSX from 'xlsx';
+import { read, utils, writeFile as writeExcelFile } from 'xlsx';
 import { useAppStore } from '../../../store/models/app';
 import type { FunctionalComponent } from 'vue'
 import type { Column, InputInstance } from 'element-plus'
@@ -206,13 +206,13 @@ const handleChangeFile = async (file: any) => {
 			// 解析 excel 文件
 			const data = new Uint8Array(e.target.result);
 			// 解析文件
-			const workbook = XLSX.read(data, { type: 'array' });
+			const workbook = read(data, { type: 'array' });
 			// 获取第一个工作表名称
 			const firstSheet = workbook.SheetNames[0];
 			// 获取工作表对象
 			const worksheet = workbook.Sheets[firstSheet];
 			// 将工作表转为 JSON 格式
-			const jsonData = XLSX.utils.sheet_to_json(worksheet);
+			const jsonData = utils.sheet_to_json(worksheet);
 			studentList.value = Array.from(jsonData.values()).map((item: any, index: number) => {
 				const [name, points] = Object.values(item);
 				return { name, points: points || 0, id: ((index + 1) + Number(studentCurIndex)).toString(), nameEditing: false, pointsEditing: false }
@@ -255,11 +255,11 @@ const downloadTemp = async () => {
 			["miaomiao", 0]       // 数据行
 		];
 		// 将数据转换为 SheetJS 的工作表
-		const workbook = XLSX.utils.book_new();         // 新建工作簿
-		const worksheet = XLSX.utils.aoa_to_sheet(sheetData); // 用二维数组创建工作表
-		XLSX.utils.book_append_sheet(workbook, worksheet, "积分榜"); // 将工作表添加到工作簿，命名为“积分榜”
+		const workbook = utils.book_new();         // 新建工作簿
+		const worksheet = utils.aoa_to_sheet(sheetData); // 用二维数组创建工作表
+		utils.book_append_sheet(workbook, worksheet, "积分榜"); // 将工作表添加到工作簿，命名为“积分榜”
 		//导出并触发下载
-		XLSX.writeFile(workbook, "students.xlsx");
+		writeExcelFile(workbook, "students.xlsx");
 		ElMessage.warning('开始下载模板');
 	} catch (error) {
 		console.error('下载模板失败:', error);
