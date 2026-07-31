@@ -21,7 +21,7 @@ permissions:
 
 # 全局构建类型：tag 推送默认 official，手动触发使用输入值
 env:
-  BUILD_TYPE: ${{ github.event.inputs.build_type || 'official' }}
+  BUILD_TYPE: ${{ github.event.inputs.build_type || 'trial' }}
   DURATION: ${{ (github.event.inputs.build_type == 'trial' && '30') || (github.event.inputs.build_type == 'basic' && '7') || '' }}
 
 # 同一 tag 的构建不并发
