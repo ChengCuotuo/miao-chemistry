@@ -92,7 +92,6 @@ jobs:
           name: macos-build
           path: |
             out/make/**/*.dmg
-            out/make/**/*.zip
           if-no-files-found: error
 
   # ─────────────────────────────────────────────
@@ -143,7 +142,6 @@ jobs:
           name: windows-build
           path: |
             out/make/**/*.exe
-            out/make/**/*.zip
           if-no-files-found: error
 
   # ─────────────────────────────────────────────
