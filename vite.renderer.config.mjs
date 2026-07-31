@@ -2,9 +2,6 @@ import { defineConfig } from 'vite';
 import vue from '@vitejs/plugin-vue';
 import tailwindcss from '@tailwindcss/vite';
 import vueJsx from '@vitejs/plugin-vue-jsx';
-import AutoImport from 'unplugin-auto-import/vite';
-import Components from 'unplugin-vue-components/vite';
-import { ElementPlusResolver } from 'unplugin-vue-components/resolvers';
 import path from 'path';
 
 // https://vitejs.dev/config
@@ -13,14 +10,6 @@ export default defineConfig({
     tailwindcss(),
     vue(),
     vueJsx(),
-    // Element Plus 按需导入：API（ElMessage 等）自动导入
-    AutoImport({
-      resolvers: [ElementPlusResolver()],
-    }),
-    // Element Plus 按需导入：组件（el-button 等）自动注册
-    Components({
-      resolvers: [ElementPlusResolver({ importStyle: 'css' })],
-    }),
   ],
   resolve: {
     alias: {

@@ -31,10 +31,17 @@ import { createApp } from 'vue';
 import App from './App.vue';
 import router from './group-points/router';
 import { pinia } from './group-points/store';
+import ElementPlus from 'element-plus';
+import 'element-plus/dist/index.css';
+import * as ElementPlusIconsVue from '@element-plus/icons-vue';
+import zhCn from 'element-plus/es/locale/lang/zh-cn';
 
-// Element Plus 组件和 API 由 unplugin-vue-components / unplugin-auto-import 按需导入
-// 仅需注册全局插件
 const app = createApp(App);
 app.use(router);
 app.use(pinia);
+app.use(ElementPlus, { locale: zhCn });
+// 注册所有 Element Plus 图标为全局组件
+for (const [key, component] of Object.entries(ElementPlusIconsVue)) {
+  app.component(key, component);
+}
 app.mount('#app');
