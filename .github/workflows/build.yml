@@ -264,16 +264,16 @@ jobs:
 
           # 1. 构造 Release 说明（含 GitHub 下载链接，Gitee 附件限制 100MB）
           GH_REPO="${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}"
-          BODY_LINES="## 下载地址（GitHub Release）\n\n"
+          printf -v BODY_LINES '## 下载地址（GitHub Release）\n\n'
           for file in release/*; do
             [ -f "$file" ] || continue
             filename=$(basename "$file")
             filesize=$(du -h "$file" | cut -f1)
-            BODY_LINES+="- [${filename}](${GH_REPO}/releases/download/${TAG_NAME}/${filename}) (${filesize})\n"
+            printf -v line '- [%s](%s/releases/download/%s/%s) (%s)\n' "$filename" "$GH_REPO" "$TAG_NAME" "$filename" "$filesize"
+            BODY_LINES+="$line"
           done
-          BODY_LINES+="\n## 安装说明\n\n"
-          BODY_LINES+="macOS: 下载 .dmg 后执行 xattr -cr \"/Applications/Miao积分管理.app\"\n"
-          BODY_LINES+="Windows: 下载 .exe 直接安装"
+          printf -v footer '\n## 安装说明\n\nmacOS: 下载 .dmg 后执行 xattr -cr "/Applications/Miao积分管理.app"\nWindows: 下载 .exe 直接安装'
+          BODY_LINES+="$footer"
 
           # 2. 创建 Gitee Release（信息页，文件从 GitHub 下载）
           RELEASE_RESPONSE=$(jq -n \
