@@ -269,7 +269,7 @@ jobs:
             [ -f "$file" ] || continue
             filename=$(basename "$file")
             filesize=$(du -h "$file" | cut -f1)
-            printf -v line '- [%s](%s/releases/download/%s/%s) (%s)\n' "$filename" "$GH_REPO" "$TAG_NAME" "$filename" "$filesize"
+            printf -v line -- '- [%s](%s/releases/download/%s/%s) (%s)\n' "$filename" "$GH_REPO" "$TAG_NAME" "$filename" "$filesize"
             BODY_LINES+="$line"
           done
           printf -v footer '\n## 安装说明\n\nmacOS: 下载 .dmg 后执行 xattr -cr "/Applications/Miao积分管理.app"\nWindows: 下载 .exe 直接安装'
