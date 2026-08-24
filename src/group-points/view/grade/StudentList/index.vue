@@ -13,6 +13,17 @@
 				 <!-- 批量添加学生 -->
 				<MultiAddDialog />
 				<el-button type="primary" :icon="Plus" @click="handleAdd">新增学生</el-button>
+				<!-- 全量操作 -->
+				<el-dropdown trigger="click" @command="handleBatchCommand">
+					<el-button type="warning" :icon="Operation">全量操作<el-icon class="el-icon--right"><arrow-down /></el-icon></el-button>
+					<template #dropdown>
+						<el-dropdown-menu>
+							<el-dropdown-item command="set" :icon="SetUp">全量设置积分值</el-dropdown-item>
+							<el-dropdown-item command="add" :icon="CirclePlus" divided>全量加积分</el-dropdown-item>
+							<el-dropdown-item command="sub" :icon="Remove" divided>全量减积分</el-dropdown-item>
+						</el-dropdown-menu>
+					</template>
+				</el-dropdown>
 			</el-space>
 		</div>
 
@@ -79,6 +90,22 @@
 		<!-- 随机点名弹窗 -->
 		<RandomCallDialog v-model:visible="randomCallVisible" :students="students" />
 
+		<!-- 全量操作弹窗 -->
+		<el-dialog :title="batchDialogTitle" v-model="batchDialogVisible" width="420px">
+			<el-alert type="warning" show-icon :closable="false" style="margin-bottom: 14px;">
+				<p>{{ batchDialogTip }}</p>
+			</el-alert>
+			<el-form label-width="90px" @submit.prevent>
+				<el-form-item :label="batchValueLabel">
+					<el-input-number v-model="batchValue" style="width: 100%" controls-position="right" :precision="0" />
+				</el-form-item>
+			</el-form>
+			<template #footer>
+				<el-button @click="batchDialogVisible = false">取消</el-button>
+				<el-button type="primary" :loading="batchLoading" @click="confirmBatchUpdate">确认执行</el-button>
+			</template>
+		</el-dialog>
+
 		<!-- 学生记录弹窗 -->
 		<el-dialog title="学生积分记录" v-model="recordDialogVisible" width="900px">
 			<RecordList :student-id="selectedStudentId" />
@@ -88,7 +115,8 @@
 
 <script setup lang="ts">
 import { ref, computed } from 'vue';
-import { Plus, Edit, Delete, Pointer, Document } from '@element-plus/icons-vue';
+import { Plus, Edit, Delete, Pointer, Document, Operation, SetUp, CirclePlus, Remove, ArrowDown } from '@element-plus/icons-vue';
+import { ElMessage } from 'element-plus';
 import type { FormInstance, TableColumnCtx } from 'element-plus';
 import { useAppStore } from '../../../store/models/app';
 import { Student } from '../../../database/class';
@@ -97,7 +125,7 @@ import MultiAddDialog from './MultiAddDialog.vue';
 import RandomCallDialog from './RandomCallDialog.vue';
 import RecordList from '../RecordList/index.vue';
 
-const { createStudent, deleteStudent, updateStudent, getStudentList, getStudentIndex } = useStudent();
+const { createStudent, deleteStudent, updateStudent, batchUpdatePoints, getStudentList, getStudentIndex } = useStudent();
 
 const appStore = useAppStore();
 const activeGrade = computed(() => appStore.activeGrade);
@@ -125,6 +153,60 @@ const deleteStudentRef = ref<Student | null>(null);
 
 // 随机点名弹窗
 const randomCallVisible = ref(false);
+
+// 全量操作弹窗
+type BatchMode = 'set' | 'add' | 'sub';
+const batchDialogVisible = ref(false);
+const batchMode = ref<BatchMode>('set');
+const batchValue = ref(0);
+const batchLoading = ref(false);
+
+const batchConfig: Record<BatchMode, { title: string; label: string; tip: string }> = {
+	set: {
+		title: '全量设置积分值',
+		label: '积分值',
+		tip: `将当前班级全部 ${students.value.length} 名学生的积分统一设置为该值，原积分将被覆盖，执行后不可撤销。`
+	},
+	add: {
+		title: '全量加积分',
+		label: '增加积分',
+		tip: `为当前班级全部 ${students.value.length} 名学生每人增加该积分值，支持负数。`
+	},
+	sub: {
+		title: '全量减积分',
+		label: '减少积分',
+		tip: `为当前班级全部 ${students.value.length} 名学生每人减少该积分值，支持负数。`
+	}
+};
+const batchDialogTitle = computed(() => batchConfig[batchMode.value].title);
+const batchValueLabel = computed(() => batchConfig[batchMode.value].label);
+const batchDialogTip = computed(() => batchConfig[batchMode.value].tip);
+
+const handleBatchCommand = (command: string) => {
+	const mode = command as BatchMode;
+	if (!batchConfig[mode]) return;
+	if (students.value.length === 0) {
+		ElMessage.warning('当前班级没有学生');
+		return;
+	}
+	batchMode.value = mode;
+	batchValue.value = 0;
+	batchDialogVisible.value = true;
+};
+
+const confirmBatchUpdate = async () => {
+	batchLoading.value = true;
+	const mode = batchMode.value;
+	const res = await batchUpdatePoints(mode, batchValue.value || 0);
+	batchLoading.value = false;
+	if (res) {
+		students.value = getStudentList();
+		batchDialogVisible.value = false;
+		ElMessage.success(mode === 'set' ? '已全量设置积分' : mode === 'add' ? '已全量增加积分' : '已全量减少积分');
+	} else {
+		ElMessage.error('操作失败，请重试');
+	}
+};
 
 // 学生记录弹窗
 const recordDialogVisible = ref(false);

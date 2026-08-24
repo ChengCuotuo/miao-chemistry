@@ -92,6 +92,39 @@ export const useStudent = () => {
 		}
 	};
 
+	// 批量更新全部学生积分（mode: set 全量设置 / add 全量加 / sub 全量减）
+	const batchUpdatePoints = async (mode: 'set' | 'add' | 'sub', value: number) => {
+		try {
+			if (!activeGrade) {
+				console.error('当前没有选中的班级');
+				return false;
+			}
+
+			const list = activeGrade.gradeInfo.studentList;
+			if (!list || list.length === 0) {
+				console.error('当前班级没有学生');
+				return false;
+			}
+
+			list.forEach(student => {
+				if (mode === 'set') {
+					student.points = value;
+				} else if (mode === 'add') {
+					student.points = student.points + value;
+				} else {
+					student.points = student.points - value;
+				}
+			});
+
+			// 更新班级信息到文件
+			await updateGradeInfoById(activeGrade.id, activeGrade);
+			return true;
+		} catch (error) {
+			console.error('批量更新积分出错:', error);
+			return false;
+		}
+	};
+
 	// 获取学生列表
 	const getStudentList = () => {
 		if (!activeGrade) {
@@ -112,6 +145,7 @@ export const useStudent = () => {
 		createStudent,
 		deleteStudent,
 		updateStudent,
+		batchUpdatePoints,
 		getStudentList,
 		getStudentIndex
 	};
