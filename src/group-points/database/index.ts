@@ -113,6 +113,13 @@ export async function loadGroupPointsConfig() {
 		const prizeList: Prize[] = JSON.parse(prize) || [];
 		const basicConfigData = JSON.parse(basicConfig) || { step: "1", buildType, password: md5(password), firstRun: 1, startTime, duration };
 
+		// 兼容旧版本配置：模块可见性字段缺失时默认全部展示
+		basicConfigData.moduleVisibility = {
+			groupManage: basicConfigData.moduleVisibility?.groupManage ?? true,
+			pointsManage: basicConfigData.moduleVisibility?.pointsManage ?? true,
+			pointsExchange: basicConfigData.moduleVisibility?.pointsExchange ?? true,
+		};
+
 		// 正式版构建运行时，如果持久化的配置信息还是体验版，则覆盖为正式版
 		if (buildType === BUILD_TYPE.official && basicConfigData.buildType !== BUILD_TYPE.official) {
 			basicConfigData.buildType = BUILD_TYPE.official;

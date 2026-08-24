@@ -8,10 +8,10 @@
 		<el-divider border-style="dashed" style="margin: 10px 0;" />
 		<div class="main-content">
 			<el-tabs v-model="activeName">
-				<el-tab-pane label="分组管理" name="group"/>
+				<el-tab-pane v-if="moduleVisibility.groupManage" label="分组管理" name="group"/>
 				<el-tab-pane label="学生管理" name="student"/>
-				<el-tab-pane label="积分记录" name="record"/>
-				<el-tab-pane label="积分兑换" name="lottery"/>
+				<el-tab-pane v-if="moduleVisibility.pointsManage" label="积分记录" name="record"/>
+				<el-tab-pane v-if="moduleVisibility.pointsExchange" label="积分兑换" name="lottery"/>
 			</el-tabs>
 			<div v-if="activeName === 'student'" class="info-container">
 				<StudentList></StudentList>
@@ -30,7 +30,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from 'vue';
+import { computed, ref, watch } from 'vue';
 import { useAppStore } from '../../store/models/app';
 import { Back } from '@element-plus/icons-vue';
 import { useRouter } from 'vue-router';
@@ -42,7 +42,33 @@ import RecordList from './RecordList/index.vue';
 const router = useRouter();
 const appStore = useAppStore();
 const activeGrade = computed(() => appStore.activeGrade);
-const activeName = ref('group')
+
+// 模块可见性配置（默认全部展示，兼容旧数据）
+const moduleVisibility = computed(() => appStore.database.basicConfig?.moduleVisibility || {
+	groupManage: true,
+	pointsManage: true,
+	pointsExchange: true,
+});
+
+// 按可见性取第一个可用 tab
+const getFirstVisibleName = () => {
+	if (moduleVisibility.value.groupManage) return 'group';
+	if (moduleVisibility.value.pointsManage) return 'record';
+	if (moduleVisibility.value.pointsExchange) return 'lottery';
+	return 'student';
+};
+
+const activeName = ref(getFirstVisibleName());
+
+// 配置变化时，若当前 tab 已被隐藏，自动切到第一个可见 tab
+watch(() => appStore.database.basicConfig?.moduleVisibility, () => {
+	const name = activeName.value;
+	if ((name === 'group' && !moduleVisibility.value.groupManage) ||
+		(name === 'student' && !moduleVisibility.value.pointsManage) ||
+		(name === 'lottery' && !moduleVisibility.value.pointsExchange)) {
+		activeName.value = getFirstVisibleName();
+	}
+}, { deep: true });
 
 const handleBack = () => {
 	appStore.setIsCollapse(false);
