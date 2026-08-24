@@ -91,3 +91,12 @@ typings/
 
 # Electron-Forge
 out/
+
+#ai
+config/
+AGENTS.md
+HEARTBEAT.md
+SOUL.md
+TOOLS.md
+.openclaw/
+.opencode/
