@@ -16,7 +16,7 @@
 				<el-button v-if="currentCycle" :icon="Edit" circle @click="handleEditCycle" />
 				<el-button v-if="currentCycle && currentCycle.status === 0" type="warning" plain @click="handleFinishCycle">结束周期</el-button>
 				<el-button v-if="currentCycle && currentCycle.status === 1" type="success" plain @click="handleStartCycle">重新开始</el-button>
-				<el-button v-if="currentCycle" type="danger" :icon="Delete" circle @click="handleDeleteCycle" />
+				<el-button v-if="currentCycle && currentCycle.status === 0" type="danger" :icon="Delete" circle @click="handleDeleteCycle" />
 			</el-space>
 			<el-space>
 				<el-button :icon="Document" @click="handleViewRecords">周期记录</el-button>
@@ -103,11 +103,11 @@
 				<el-form-item label="周期名称" prop="name" :rules="[{ required: true, message: '请输入周期名称', trigger: 'blur' }]">
 					<el-input v-model="cycleForm.name" placeholder="如：第一周、第二周" />
 				</el-form-item>
-				<el-form-item label="时间范围">
+				<el-form-item label="时间范围" prop="range" :rules="[{ required: true, message: '请选择周期时间范围', trigger: 'change' }]">
 					<el-date-picker v-model="cycleForm.range" type="daterange" value-format="YYYY-MM-DD"
 						range-separator="至" start-placeholder="开始日期" end-placeholder="结束日期"
 						style="width: 100%" :clearable="true" :disabled-date="disabledOverlapDate" />
-					<div class="form-tip">选填；周期时间范围不可与其他周期重叠</div>
+					<div class="form-tip">时间范围不可与其他周期重叠</div>
 				</el-form-item>
 			</el-form>
 			<template #footer>
@@ -248,7 +248,12 @@ const handleCycleSubmit = () => {
 	cycleFormRef.value?.validate(async (valid) => {
 		if (!valid) return;
 		const { id, name, range } = cycleForm.value;
-		const [startTime = '', endTime = ''] = range || [];
+		// 时间范围必填：手动校验（不依赖 el-form 对日期组件的 rules）
+		if (!range || !Array.isArray(range) || range.length !== 2 || !range[0] || !range[1]) {
+			ElMessage.warning('请选择周期时间范围');
+			return;
+		}
+		const [startTime = '', endTime = ''] = range;
 		// 周期时间范围不能重叠
 		const overlapCycle = checkRangeOverlap(id, startTime, endTime);
 		if (overlapCycle) {
@@ -295,7 +300,11 @@ const handleStartCycle = () => {
 
 const handleDeleteCycle = () => {
 	if (!currentCycle.value) return;
-	ElMessageBox.confirm(`删除周期「${currentCycle.value.name}」将同时删除该周期的所有积分记录（学生积分不回退），确认删除？`, '删除周期', {
+	if (currentCycle.value.status === 1) {
+		ElMessage.warning('已结束的周期不允许删除');
+		return;
+	}
+	ElMessageBox.confirm(`删除周期「${currentCycle.value.name}」将同时删除该周期的所有积分记录，并回退学生在周期内被调整的积分，确认删除？`, '删除周期', {
 		type: 'warning', confirmButtonText: '确认', cancelButtonText: '取消',
 	}).then(async () => {
 		if (await deleteMonitorCycle(currentCycle.value!.id)) {

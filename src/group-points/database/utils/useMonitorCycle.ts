@@ -80,11 +80,20 @@ export const useMonitorCycle = () => {
 		}
 	}
 
-	// 删除周期（连同其周期记录一并删除）
+	// 删除周期：撤销该周期内的积分调整（学生积分回退），并删除周期及其记录
 	const deleteMonitorCycle = async (id: string) => {
 		try {
 			if (!appStore.activeGrade) return false;
 			const gradeInfo = appStore.activeGrade.gradeInfo;
+			const cycleRecords = gradeInfo.recordList.filter(item => item.source === 1 && item.cycle_id === id);
+			// 1. 按记录回退每个学生的积分（记录 points 即为该次增减量，减去它即还原）
+			cycleRecords.forEach(record => {
+				const student = gradeInfo.studentList.find(s => s.id === record.stu_id);
+				if (student) {
+					student.points = Number(student.points) - record.points;
+				}
+			});
+			// 2. 删除周期与记录
 			gradeInfo.monitorCycleList = gradeInfo.monitorCycleList.filter(item => item.id !== id);
 			gradeInfo.recordList = gradeInfo.recordList.filter(item => !(item.source === 1 && item.cycle_id === id));
 			await saveGradeInfo(appStore.activeGrade.id, JSON.stringify(appStore.activeGrade));
