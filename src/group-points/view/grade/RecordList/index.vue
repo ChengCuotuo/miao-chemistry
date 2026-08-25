@@ -46,12 +46,19 @@
 					</el-space>
 				</template>
 				</el-table-column>
-			<el-table-column label="积分变化" prop="points" width="110">
+			<el-table-column label="积分变化" width="200">
 				<template #default="scope">
-					<span :class="scope.row.points > 0 ? 'text-success' : 'text-danger'">
-						{{ scope.row.points > 0 ? 	'+' : '' }}{{ scope.row.points }}
+					<span>
+						<spawn :class="singlePoints(scope.row) > 0 ? 'text-success' : 'text-danger'">{{ scope.row.points > 0 ? '+' : '' }}{{ scope.row.points }} 分</spawn>
+						<template v-if="scope.row.count > 1">
+							(
+								<span class="count-badge">
+								{{ singlePoints(scope.row) > 0 ? '+' : '' }}{{ singlePoints(scope.row) }} 分
+								</span>
+								<span class="count-badge">× {{ scope.row.count }} 次</span>
+							)
+						</template>
 					</span>
-					<span v-if="scope.row.count > 1" class="count-badge">×{{ scope.row.count }}</span>
 				</template>
 			</el-table-column>
 			<el-table-column v-if="!props.cycleId" label="周期" width="110">
@@ -127,6 +134,12 @@ const getstudent_name = (stuId: string): string => {
 	if (!appStore.activeGrade) return '';
 	const student = appStore.activeGrade.gradeInfo.studentList.find(s => s.id === stuId);
 	return student?.name || '';
+};
+
+// 单次规则分值 = 总积分 / 次数（count>=1 时 points 恒为 rule.points × count）
+const singlePoints = (record: RuleRecord): number => {
+	const count = record.count > 1 ? record.count : 1;
+	return record.points / count;
 };
 
 // 获取规则名称
@@ -320,8 +333,6 @@ watch(() => props.studentId, () => {
 }
 
 .count-badge {
-	margin-left: 4px;
-	font-size: 12px;
 	color: #909399;
 }
 

@@ -16,6 +16,10 @@
 			<el-form-item label="规则描述">
 				<el-input :value="selectedRule?.description" disabled type="textarea" :rows="2" />
 			</el-form-item>
+			<el-form-item label="记录次数">
+				<el-input-number v-model="form.count" :min="1" :max="99" controls-position="right" style="width: 160px" />
+				<span class="count-tip">积分 = 规则分值 × 次数</span>
+			</el-form-item>
 			<el-form-item label="积分变化">
 				<span class="points-preview" :class="previewPoints >= 0 ? 'text-success' : 'text-danger'">
 					{{ previewPoints >= 0 ? '+' : '' }}{{ previewPoints }} 分 / 人
@@ -45,16 +49,16 @@ const props = defineProps<{
 
 const emit = defineEmits<{
 	(e: 'update:visible', value: boolean): void;
-	(e: 'confirm', payload: { ruleId: string }): void;
+	(e: 'confirm', payload: { ruleId: string, count: number }): void;
 }>();
 
 const formRef = ref<FormInstance>();
-const form = ref({ ruleId: '' });
+const form = ref({ ruleId: '', count: 1 });
 
 const selectedRule = computed(() => props.rules.find(rule => rule.id === form.value.ruleId));
 
-// 积分预览
-const previewPoints = computed(() => selectedRule.value?.points || 0);
+// 积分预览：规则分值 × 次数
+const previewPoints = computed(() => (selectedRule.value?.points || 0) * form.value.count);
 
 const dialogTitle = computed(() => '周期规则记分');
 
@@ -65,13 +69,14 @@ const handleVisibleChange = (v: boolean) => {
 watch(() => props.visible, (v) => {
 	if (v) {
 		form.value.ruleId = '';
+		form.value.count = 1;
 	}
 });
 
 const handleSubmit = () => {
 	formRef.value?.validate((valid) => {
 		if (valid && selectedRule.value) {
-			emit('confirm', { ruleId: selectedRule.value.id });
+			emit('confirm', { ruleId: selectedRule.value.id, count: form.value.count });
 			handleVisibleChange(false);
 		}
 	});
@@ -79,6 +84,12 @@ const handleSubmit = () => {
 </script>
 
 <style scoped>
+.count-tip {
+	margin-left: 10px;
+	font-size: 12px;
+	color: #909399;
+}
+
 .count-text {
 	color: #909399;
 	font-size: 12px;

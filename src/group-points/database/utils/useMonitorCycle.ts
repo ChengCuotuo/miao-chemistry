@@ -97,10 +97,10 @@ export const useMonitorCycle = () => {
 
 	// 通过规则调整学生积分（周期内）—— 班委积分唯一入口
 	// group_id: 按组发放时记录组 id；单个发放传 ''
-	const adjustPointsByRule = async (params: { cycleId: string, ruleId: string, students: Student[], groupId?: string }) => {
+	const adjustPointsByRule = async (params: { cycleId: string, ruleId: string, students: Student[], groupId?: string, count?: number }) => {
 		try {
 			if (!appStore.activeGrade) return { success: false, message: '暂无班级信息' };
-			const { cycleId, ruleId, students, groupId = '' } = params;
+			const { cycleId, ruleId, students, groupId = '', count = 1 } = params;
 			const gradeInfo = appStore.activeGrade.gradeInfo;
 			const cycle = gradeInfo.monitorCycleList.find(item => item.id === cycleId);
 			if (!cycle) return { success: false, message: '周期不存在' };
@@ -113,17 +113,19 @@ export const useMonitorCycle = () => {
 			students.forEach(stu => {
 				const target = gradeInfo.studentList.find(item => item.id === stu.id);
 				if (!target) return;
-				target.points = Number(target.points) + rule.points;
+				const points = rule.points * count;
+				target.points = Number(target.points) + points;
 				const recordIndex = gradeInfo.indexMap.record;
 				const record = new RuleRecord({
 					id: recordIndex,
 					stu_id: stu.id,
 					rule_id: ruleId,
-					points: rule.points,
+					points,
 					time,
 					source: 1,
 					cycle_id: cycleId,
 					group_id: groupId,
+					count,
 				});
 				gradeInfo.indexMap.record++;
 				gradeInfo.recordList.push(record);

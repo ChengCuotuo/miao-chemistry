@@ -379,7 +379,7 @@ const handleModalVisibleChange = (v: boolean) => {
 	recordModalVisible.value = v;
 };
 
-const handleRecordConfirm = async (payload: { ruleId: string }) => {
+const handleRecordConfirm = async (payload: { ruleId: string, count: number }) => {
 	const target = recordTarget.value;
 	if (!currentCycle.value || !target.students.length) return;
 	const res = await adjustPointsByRule({
@@ -387,6 +387,7 @@ const handleRecordConfirm = async (payload: { ruleId: string }) => {
 		ruleId: payload.ruleId,
 		students: target.students,
 		groupId: target.groupId || '',
+		count: payload.count,
 	});
 	if (res.success) {
 		ElMessage.success(res.message);
