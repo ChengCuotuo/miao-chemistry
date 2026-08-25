@@ -2,6 +2,7 @@ import { Group } from './Group';
 import { RuleRecord } from './RuleRecord';
 import { Student } from './Student';
 import { StudentGroup } from './StudentGroup';
+import { MonitorCycle } from './MonitorCycle';
 
 export class Grade {
 	id: string;
@@ -12,10 +13,12 @@ export class Grade {
 		studentList: Student[];
 		studentGroupList: StudentGroup[];
 		recordList: RuleRecord[];
+		monitorCycleList: MonitorCycle[];
 		indexMap: {
 			group: number,
 			student: number,
 			record: number,
+			monitorCycle: number,
 		},
 		gradeConfig: {
 			orderByPoints: number,
@@ -31,10 +34,12 @@ export class Grade {
 			studentList: Student[];
 			studentGroupList: StudentGroup[];
 			recordList: RuleRecord[];
+			monitorCycleList?: MonitorCycle[];
 			indexMap: {
 				group: number,
 				student: number,
 				record: number,
+				monitorCycle?: number,
 			},
 			gradeConfig: {
 				orderByPoints: number,
@@ -44,7 +49,15 @@ export class Grade {
 		this.id = grade.id;
 		this.name = grade.name;
 		this.delete = grade.delete;
-		this.gradeInfo = grade.gradeInfo;
+		// 兼容旧数据：班委周期字段缺失时补默认值
+		this.gradeInfo = {
+			...grade.gradeInfo,
+			monitorCycleList: grade.gradeInfo.monitorCycleList || [],
+			indexMap: {
+				...grade.gradeInfo.indexMap,
+				monitorCycle: grade.gradeInfo.indexMap.monitorCycle ?? 0,
+			},
+		};
 	}
 	toJSON() {
 		return {

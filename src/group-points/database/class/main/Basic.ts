@@ -15,9 +15,15 @@ export class Basic {
 		pointsManage: boolean;
 		// 积分兑换
 		pointsExchange: boolean;
+		// 学生管理
+		studentManage: boolean;
+		// 班委积分
+		monitorManage: boolean;
 	};
+	// 班级页模块展示顺序（tab name 数组）
+	moduleOrder: string[];
 
-	constructor(params: { step: number, buildType: string, password: string, firstRun: number, startTime: number, duration: number, moduleVisibility?: Partial<Basic['moduleVisibility']> }) {
+	constructor(params: { step: number, buildType: string, password: string, firstRun: number, startTime: number, duration: number, moduleVisibility?: Partial<Basic['moduleVisibility']>, moduleOrder?: string[] }) {
 		this.step = params.step;
 		this.buildType = params.buildType;
 		this.password = params.password;
@@ -28,7 +34,10 @@ export class Basic {
 			groupManage: params.moduleVisibility?.groupManage ?? true,
 			pointsManage: params.moduleVisibility?.pointsManage ?? true,
 			pointsExchange: params.moduleVisibility?.pointsExchange ?? true,
+			studentManage: params.moduleVisibility?.studentManage ?? true,
+			monitorManage: params.moduleVisibility?.monitorManage ?? true,
 		};
+		this.moduleOrder = params.moduleOrder || [];
 	}
 
 	toJSON() {

@@ -2,6 +2,9 @@
 	<div class="record-list">
 		<!-- 筛选区域 -->
 		<div class="filter-bar">
+			<el-select v-if="!props.cycleId" v-model="filterCycleId" placeholder="周期" class="filter-select" clearable>
+				<el-option v-for="cycle in cycleList" :key="cycle.id" :label="cycle.name" :value="cycle.id" />
+			</el-select>
 			<el-input
 				v-if="!props.studentId"
 				v-model="searchStudentId"
@@ -43,11 +46,18 @@
 					</el-space>
 				</template>
 				</el-table-column>
-			<el-table-column label="积分变化" prop="points" width="120">
+			<el-table-column label="积分变化" prop="points" width="110">
 				<template #default="scope">
 					<span :class="scope.row.points > 0 ? 'text-success' : 'text-danger'">
 						{{ scope.row.points > 0 ? 	'+' : '' }}{{ scope.row.points }}
 					</span>
+					<span v-if="scope.row.count > 1" class="count-badge">×{{ scope.row.count }}</span>
+				</template>
+			</el-table-column>
+			<el-table-column v-if="!props.cycleId" label="周期" width="110">
+				<template #default="scope">
+					<span v-if="scope.row.source === 1">{{ getCycleName(scope.row.cycle_id) }}</span>
+					<span v-else class="text-muted">—</span>
 				</template>
 			</el-table-column>
 			<el-table-column label="时间" prop="time" width="180" />
@@ -82,11 +92,23 @@ import { loadImageAsUint8Array } from '../../../database';
 
 interface Props {
 	studentId?: string;
+	cycleId?: string;
 }
 
 const props = defineProps<Props>();
 
 const appStore = useAppStore();
+
+// 周期筛选：cycleId prop 优先（弹窗固定周期），否则用筛选器
+const filterCycleId = ref('');
+
+// 周期列表（仅列出班委周期）
+const cycleList = computed(() => appStore.activeGrade?.gradeInfo?.monitorCycleList || []);
+
+// 获取周期名称
+const getCycleName = (cycleId: string): string => {
+	return cycleList.value.find(item => item.id === cycleId)?.name || '';
+};
 
 // 筛选类型：all-全部, add-加分, subtract-减分
 const filterType = ref<'add' | 'subtract'>();
@@ -128,9 +150,29 @@ const studentRecords = computed<ExtendedRecord[]>(() => {
 	if (!appStore.activeGrade) return [];
 	// 筛选学生记录
 	const curRecordList = appStore.activeGrade.gradeInfo.recordList;
-	const filtered = !props.studentId ? curRecordList : curRecordList.filter(
+	let filtered = !props.studentId ? curRecordList : curRecordList.filter(
 		record => record.stu_id === props.studentId
 	);
+	// 固定周期（弹窗）或筛选器周期
+	// 1) 班委记录（source=1）：按 cycle_id 精确归属，始终显示——即使记录时间在周期范围外（如预建的末来周期、后补时间范围的周期）
+	// 2) 普通记录：周期有时间范围时，记录时间落在范围内才算；无时间范围时不匹配
+	const targetCycle = props.cycleId || filterCycleId.value;
+	if (targetCycle) {
+		const cycle = cycleList.value.find(item => item.id === targetCycle);
+		if (cycle) {
+			const hasRange = !!cycle.startTime && !!cycle.endTime;
+			filtered = filtered.filter(record => {
+				if (record.source === 1) {
+					// 班委记录：按 cycle_id 归属
+					return record.cycle_id === targetCycle;
+				}
+				// 普通记录：按时间范围匹配
+				if (!hasRange) return false;
+				const date = (record.time || '').slice(0, 10);
+				return date >= cycle.startTime && date <= cycle.endTime;
+			});
+		}
+	}
 	// 添加学生姓名和规则名称
 	return filtered.map(record => ({
 		...record,
@@ -275,6 +317,16 @@ watch(() => props.studentId, () => {
 .text-danger {
 	color: #f56c6c;
 	font-weight: 600;
+}
+
+.count-badge {
+	margin-left: 4px;
+	font-size: 12px;
+	color: #909399;
+}
+
+.text-muted {
+	color: #909399;
 }
 
 .cursor-pointer {

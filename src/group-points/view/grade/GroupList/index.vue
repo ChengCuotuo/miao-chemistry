@@ -148,7 +148,7 @@ const formData = ref<GroupInfo>({
 
 // 组装小组信息
 const groupInfoList = computed(() => {
-	if (appStore.activeGrade) {
+	if (appStore.activeGrade?.gradeInfo) {
 		const gradeInfo = appStore.activeGrade.gradeInfo;
 		const { groupList, studentList, studentGroupList, gradeConfig } = gradeInfo;
 		orderByPoints.value = gradeConfig?.orderByPoints ?? 0;

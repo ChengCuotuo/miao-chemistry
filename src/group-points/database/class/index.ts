@@ -6,6 +6,7 @@ import { Rule } from './main/Rule';
 import { Student } from './grade/Student';
 import { StudentGroup } from './grade/StudentGroup';
 import { Basic } from './main/Basic';
+import { MonitorCycle } from './grade/MonitorCycle';
 
 export {
 	Grade,
@@ -16,4 +17,5 @@ export {
 	Student,
 	StudentGroup,
 	Basic,
+	MonitorCycle,
 }

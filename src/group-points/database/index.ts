@@ -5,7 +5,8 @@ import {
 	RuleRecord,
 	Group,
 	Student,
-	StudentGroup
+	StudentGroup,
+	MonitorCycle
 } from './class';
 import { Basic } from './class/main/Basic';
 import ruleConfigJson from './defaultRule.json';
@@ -20,10 +21,12 @@ export interface DatabaseInfoType {
 			studentList: Student[];
 			studentGroupList: StudentGroup[];
 			recordList: RuleRecord[];
+			monitorCycleList: MonitorCycle[];
 			indexMap: {
 				group: number,
 				student: number,
 				record: number,
+				monitorCycle: number,
 			},
 			gradeConfig: {
 				orderByPoints: number,
@@ -118,7 +121,11 @@ export async function loadGroupPointsConfig() {
 			groupManage: basicConfigData.moduleVisibility?.groupManage ?? true,
 			pointsManage: basicConfigData.moduleVisibility?.pointsManage ?? true,
 			pointsExchange: basicConfigData.moduleVisibility?.pointsExchange ?? true,
+			studentManage: basicConfigData.moduleVisibility?.studentManage ?? true,
 		};
+		// 兼容旧版本配置：班委积分可见性默认开启；旧版本存在顶层 monitorVisibility 字段的迁入 moduleVisibility.monitorManage
+		basicConfigData.moduleVisibility.monitorManage = basicConfigData.moduleVisibility?.monitorManage
+			?? (basicConfigData as any).monitorVisibility ?? true;
 
 		// 正式版构建运行时，如果持久化的配置信息还是体验版，则覆盖为正式版
 		if (buildType === BUILD_TYPE.official && basicConfigData.buildType !== BUILD_TYPE.official) {
@@ -167,7 +174,8 @@ export async function loadGradeInfoById(gradeId: string) {
 			studentList: [], // 学生列表
 			studentGroupList: [], // 学生分组列表
 			recordList: [], // 奖励记录列表
-			indexMap: { group: 0, student: 0, studentGroup: 0, record: 0 }, // 索引映射
+			monitorCycleList: [], // 班委积分周期列表
+			indexMap: { group: 0, student: 0, studentGroup: 0, record: 0, monitorCycle: 0 }, // 索引映射
 			gradeConfig: {
 				orderByPoints: 0,
 			}

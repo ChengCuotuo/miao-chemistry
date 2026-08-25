@@ -108,8 +108,19 @@ const handleConfirm = async (formEl: FormInstance | undefined) => {
 		
 		if (!originalGradeData.value) return;
 		const newId = uuidv4();
+		// 兼容旧版本导出数据：班委周期字段缺失时补默认值
+		const oldGradeInfo = originalGradeData.value.gradeInfo || {};
+		const compatibleGradeInfo = {
+			...oldGradeInfo,
+			monitorCycleList: oldGradeInfo.monitorCycleList || [],
+			indexMap: {
+				...(oldGradeInfo.indexMap || {}),
+				monitorCycle: oldGradeInfo.indexMap?.monitorCycle ?? 0,
+			},
+		};
 		const newGrade: GradeData = {
 			...originalGradeData.value,
+			gradeInfo: compatibleGradeInfo,
 			id: newId,
 			name: form.name,
 			delete: 0

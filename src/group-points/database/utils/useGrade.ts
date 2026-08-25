@@ -19,10 +19,12 @@ export const useGrade = () => {
 					studentList: [],
 					studentGroupList: [],
 					recordList: [],
+					monitorCycleList: [],
 					indexMap: {
 						group: 0,
 						student: 0,
 						record: 0,
+						monitorCycle: 0,
 					},
 					gradeConfig: {
 						orderByPoints: 0,
@@ -93,7 +95,15 @@ export const useGrade = () => {
 			console.error('班级不存在:', gradeId);
 			return null
 		}
-		target.gradeInfo = data.gradeInfo;
+		target.gradeInfo = {
+			...data.gradeInfo,
+			// 兼容旧数据：班委周期字段缺失时补默认值
+			monitorCycleList: data.gradeInfo.monitorCycleList || [],
+			indexMap: {
+				...data.gradeInfo.indexMap,
+				monitorCycle: data.gradeInfo.indexMap?.monitorCycle ?? 0,
+			},
+		};
 		target.delete = data.delete;
 		target.name = data.name;
 		return target as DatabaseInfoType['gradeList'][0]

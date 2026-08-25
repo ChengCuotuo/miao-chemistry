@@ -8,10 +8,7 @@
 		<el-divider border-style="dashed" style="margin: 10px 0;" />
 		<div class="main-content">
 			<el-tabs v-model="activeName">
-				<el-tab-pane v-if="moduleVisibility.groupManage" label="分组管理" name="group"/>
-				<el-tab-pane label="学生管理" name="student"/>
-				<el-tab-pane v-if="moduleVisibility.pointsManage" label="积分记录" name="record"/>
-				<el-tab-pane v-if="moduleVisibility.pointsExchange" label="积分兑换" name="lottery"/>
+				<el-tab-pane v-for="tab in orderedTabs" :key="tab.name" :label="tab.label" :name="tab.name"/>
 			</el-tabs>
 			<div v-if="activeName === 'student'" class="info-container">
 				<StudentList></StudentList>
@@ -21,6 +18,9 @@
 			</div>
 			<div v-if="activeName === 'lottery'" class="info-container">
 				<LotteryDraw></LotteryDraw>
+			</div>
+			<div v-if="activeName === 'monitor'" class="info-container">
+				<MonitorList></MonitorList>
 			</div>
 			<div v-if="activeName === 'record'" class="info-container">
 				<RecordList></RecordList>
@@ -38,34 +38,65 @@ import StudentList from './StudentList/index.vue';
 import GroupList from './GroupList/index.vue';
 import LotteryDraw from './LotteryDraw/index.vue';
 import RecordList from './RecordList/index.vue';
+import MonitorList from './MonitorList/index.vue';
 
 const router = useRouter();
 const appStore = useAppStore();
 const activeGrade = computed(() => appStore.activeGrade);
 
-// 模块可见性配置（默认全部展示，兼容旧数据）
+// 模块定义（key 与路由 name 一致）与默认顺序
+const TAB_DEFS: Record<string, string> = {
+	student: '学生管理',
+	group: '分组管理',
+	monitor: '班委积分',
+	record: '积分记录',
+	lottery: '积分兑换',
+};
+const DEFAULT_TAB_ORDER = ['group', 'student', 'monitor', 'record', 'lottery'];
+
+// 各模块可见性
 const moduleVisibility = computed(() => appStore.database.basicConfig?.moduleVisibility || {
 	groupManage: true,
 	pointsManage: true,
 	pointsExchange: true,
 });
+// 各模块可见性统一从 moduleVisibility 读取
+const monitorVisible = computed(() => appStore.database.basicConfig?.moduleVisibility?.monitorManage ?? true);
+const studentVisible = computed(() => appStore.database.basicConfig?.moduleVisibility?.studentManage ?? true);
+
+const isTabVisible = (name: string): boolean => {
+	if (name === 'student') return studentVisible.value;
+	if (name === 'monitor') return monitorVisible.value;
+	if (name === 'group') return moduleVisibility.value.groupManage;
+	if (name === 'record') return moduleVisibility.value.pointsManage;
+	if (name === 'lottery') return moduleVisibility.value.pointsExchange;
+	return true;
+};
+
+// 按 moduleOrder 排序后的可见 tab 列表
+const orderedTabs = computed(() => {
+	const saved = appStore.database.basicConfig?.moduleOrder;
+	const order: string[] = Array.isArray(saved)
+		? saved.filter((k: string) => TAB_DEFS[k])
+		: DEFAULT_TAB_ORDER;
+	// 补齐缺失模块
+	const missing = DEFAULT_TAB_ORDER.filter(k => !order.includes(k));
+	return [...order, ...missing]
+		.filter(name => isTabVisible(name))
+		.map(name => ({ name, label: TAB_DEFS[name] }));
+});
 
 // 按可见性取第一个可用 tab
 const getFirstVisibleName = () => {
-	if (moduleVisibility.value.groupManage) return 'group';
-	if (moduleVisibility.value.pointsManage) return 'record';
-	if (moduleVisibility.value.pointsExchange) return 'lottery';
-	return 'student';
+	return orderedTabs.value[0]?.name || 'student';
 };
 
 const activeName = ref(getFirstVisibleName());
 
 // 配置变化时，若当前 tab 已被隐藏，自动切到第一个可见 tab
-watch(() => appStore.database.basicConfig?.moduleVisibility, () => {
+watch(() => [appStore.database.basicConfig?.moduleVisibility, appStore.database.basicConfig?.moduleOrder], () => {
 	const name = activeName.value;
-	if ((name === 'group' && !moduleVisibility.value.groupManage) ||
-		(name === 'student' && !moduleVisibility.value.pointsManage) ||
-		(name === 'lottery' && !moduleVisibility.value.pointsExchange)) {
+	if (!orderedTabs.value.some(tab => tab.name === name)) {
 		activeName.value = getFirstVisibleName();
 	}
 }, { deep: true });
@@ -96,6 +127,7 @@ const handleBack = () => {
 
 .main-content {
 	flex: 1 1;
+	min-height: 0;
 	overflow: hidden;
 
 	display: flex;
@@ -105,6 +137,7 @@ const handleBack = () => {
 .info-container {
 	position: relative;
 	flex: 1 1;
+	min-height: 0;
 	overflow: hidden;
 }
 </style>
