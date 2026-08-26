@@ -105,6 +105,7 @@ const basicConfig = appStore.database.basicConfig;
 const MODULE_DEFS: Record<string, string> = {
   student: '学生管理',
   group: '分组管理',
+  team: '独立分组',
   monitor: '周期记分',
   record: '积分记录',
   lottery: '积分兑换',
@@ -112,6 +113,7 @@ const MODULE_DEFS: Record<string, string> = {
 };
 const DEFAULT_MODULE_ORDER = [
   'group',
+  'team',
   'student',
   'monitor',
   'record',
@@ -123,6 +125,7 @@ const DEFAULT_MODULE_ORDER = [
 const MODULE_VIS_FIELD: Record<string, string> = {
   student: 'studentManage',
   group: 'groupManage',
+  team: 'teamManage',
   monitor: 'monitorManage',
   record: 'pointsManage',
   lottery: 'pointsExchange',
@@ -137,6 +140,7 @@ const getModuleVisible = (key: string): boolean => {
     studentManage: true,
     monitorManage: true,
     analysisManage: true,
+    teamManage: true,
   };
   return vis[MODULE_VIS_FIELD[key] as keyof typeof vis] ?? true;
 };
@@ -288,6 +292,7 @@ const handleModuleChange = () => {
         studentManage: true,
         monitorManage: true,
         analysisManage: true,
+        teamManage: true,
       };
     }
     moduleOrderList.value.forEach((item) => {

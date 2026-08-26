@@ -112,12 +112,13 @@ export const useMonitorCycle = () => {
 		}
 	}
 
-	// 删除周期：撤销该周期内的积分调整（学生积分回退），并删除周期及其记录
+	// 删除周期：撤销该周期内的积分调整（学生/独立小组积分回退），并删除周期及其记录
 	const deleteMonitorCycle = async (id: string) => {
 		try {
 			if (!appStore.activeGrade) return false;
 			const gradeInfo = appStore.activeGrade.gradeInfo;
 			const cycleRecords = gradeInfo.recordList.filter(item => item.source === 1 && item.cycle_id === id);
+			const teamCycleRecords = (gradeInfo.teamRecordList || []).filter(item => item.source === 1 && item.cycle_id === id);
 			// 1. 按记录回退每个学生的积分（记录 points 即为该次增减量，减去它即还原）
 			cycleRecords.forEach(record => {
 				const student = gradeInfo.studentList.find(s => s.id === record.stu_id);
@@ -125,9 +126,17 @@ export const useMonitorCycle = () => {
 					student.points = Number(student.points) - record.points;
 				}
 			});
+			// 1.1 按记录回退每个独立小组的积分
+			teamCycleRecords.forEach(record => {
+				const team = (gradeInfo.teamList || []).find(t => t.id === record.team_id);
+				if (team) {
+					team.points = Number(team.points) - record.points;
+				}
+			});
 			// 2. 删除周期与记录
 			gradeInfo.monitorCycleList = gradeInfo.monitorCycleList.filter(item => item.id !== id);
 			gradeInfo.recordList = gradeInfo.recordList.filter(item => !(item.source === 1 && item.cycle_id === id));
+			gradeInfo.teamRecordList = (gradeInfo.teamRecordList || []).filter(item => !(item.source === 1 && item.cycle_id === id));
 			await saveGradeInfo(appStore.activeGrade.id, JSON.stringify(appStore.activeGrade));
 			return true;
 		} catch (error) {

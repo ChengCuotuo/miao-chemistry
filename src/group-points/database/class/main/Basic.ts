@@ -11,6 +11,8 @@ export class Basic {
 	moduleVisibility: {
 		// 分组管理
 		groupManage: boolean;
+		// 独立分组
+		teamManage: boolean;
 		// 积分管理（学生管理）
 		pointsManage: boolean;
 		// 积分兑换
@@ -45,6 +47,7 @@ export class Basic {
 		this.duration = params.duration;
 		this.moduleVisibility = {
 			groupManage: params.moduleVisibility?.groupManage ?? true,
+			teamManage: params.moduleVisibility?.teamManage ?? true,
 			pointsManage: params.moduleVisibility?.pointsManage ?? true,
 			pointsExchange: params.moduleVisibility?.pointsExchange ?? true,
 			studentManage: params.moduleVisibility?.studentManage ?? true,

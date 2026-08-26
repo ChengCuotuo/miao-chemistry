@@ -19,6 +19,9 @@
 			<div v-if="activeName === 'group'" class="info-container">
 				<GroupList></GroupList>
 			</div>
+			<div v-if="activeName === 'team'" class="info-container">
+				<TeamList></TeamList>
+			</div>
 			<div v-if="activeName === 'lottery'" class="info-container">
 				<LotteryDraw></LotteryDraw>
 			</div>
@@ -43,6 +46,7 @@ import { useRouter } from 'vue-router';
 import { ElMessageBox } from 'element-plus';
 import StudentList from './StudentList/index.vue';
 import GroupList from './GroupList/index.vue';
+import TeamList from './TeamList/index.vue';
 import LotteryDraw from './LotteryDraw/index.vue';
 import RecordList from './RecordList/index.vue';
 import MonitorList from './MonitorList/index.vue';
@@ -56,12 +60,13 @@ const activeGrade = computed(() => appStore.activeGrade);
 const TAB_DEFS: Record<string, string> = {
 	student: '学生管理',
 	group: '分组管理',
+	team: '独立分组',
 	monitor: '周期记分',
 	record: '积分记录',
 	lottery: '积分兑换',
 	analysis: '数据分析',
 };
-const DEFAULT_TAB_ORDER = ['group', 'student', 'monitor', 'record', 'lottery', 'analysis'];
+const DEFAULT_TAB_ORDER = ['group', 'team', 'student', 'monitor', 'record', 'lottery', 'analysis'];
 
 // 当前角色：班委仅显示「周期记分」tab
 const isMonitor = computed(() => appStore.currentRole === 'monitor');
@@ -69,6 +74,7 @@ const isMonitor = computed(() => appStore.currentRole === 'monitor');
 // 各模块可见性
 const moduleVisibility = computed(() => appStore.database.basicConfig?.moduleVisibility || {
 	groupManage: true,
+	teamManage: true,
 	pointsManage: true,
 	pointsExchange: true,
 });
@@ -82,6 +88,7 @@ const isTabVisible = (name: string): boolean => {
 	if (name === 'student') return studentVisible.value;
 	if (name === 'monitor') return monitorVisible.value;
 	if (name === 'group') return moduleVisibility.value.groupManage;
+	if (name === 'team') return moduleVisibility.value.teamManage ?? true;
 	if (name === 'record') return moduleVisibility.value.pointsManage;
 	if (name === 'lottery') return moduleVisibility.value.pointsExchange;
 	// 数据分析依赖周期记分开启：未开启周期记分时自动隐藏数据分析

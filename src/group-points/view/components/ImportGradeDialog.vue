@@ -108,14 +108,18 @@ const handleConfirm = async (formEl: FormInstance | undefined) => {
 		
 		if (!originalGradeData.value) return;
 		const newId = uuidv4();
-		// 兼容旧版本导出数据：班委周期字段缺失时补默认值
+		// 兼容旧版本导出数据：班委周期/独立分组字段缺失时补默认值
 		const oldGradeInfo = originalGradeData.value.gradeInfo || {};
 		const compatibleGradeInfo = {
 			...oldGradeInfo,
 			monitorCycleList: oldGradeInfo.monitorCycleList || [],
+			teamList: oldGradeInfo.teamList || [],
+			teamRecordList: oldGradeInfo.teamRecordList || [],
 			indexMap: {
 				...(oldGradeInfo.indexMap || {}),
 				monitorCycle: oldGradeInfo.indexMap?.monitorCycle ?? 0,
+				team: oldGradeInfo.indexMap?.team ?? 0,
+				teamRecord: oldGradeInfo.indexMap?.teamRecord ?? 0,
 			},
 		};
 		const newGrade: GradeData = {

@@ -8,6 +8,8 @@ import { StudentGroup } from './grade/StudentGroup';
 import { Basic } from './main/Basic';
 import { MonitorCycle } from './grade/MonitorCycle';
 import { MonitorAccount } from './grade/MonitorAccount';
+import { Team } from './grade/Team';
+import { TeamRecord } from './grade/TeamRecord';
 
 export {
 	Grade,
@@ -20,4 +22,6 @@ export {
 	Basic,
 	MonitorCycle,
 	MonitorAccount,
+	Team,
+	TeamRecord,
 }
