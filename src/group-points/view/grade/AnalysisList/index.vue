@@ -1,16 +1,5 @@
 <template>
 	<div class="analysis-container">
-		<!-- 顶部筛选 -->
-		<div class="filter-bar">
-			<el-space>
-				<span class="label-text">统计范围：</span>
-				<el-select v-model="selectedCycleId" placeholder="全部周期" clearable style="width: 200px">
-					<el-option v-for="cycle in cycleList" :key="cycle.id" :label="cycle.name" :value="cycle.id" />
-				</el-select>
-				<span class="muted-text" v-if="recordCount > 0">共 {{ recordCount }} 条记录</span>
-			</el-space>
-		</div>
-
 		<!-- 空态 -->
 		<div v-if="studentList.length === 0" class="empty-wrap">
 			<el-empty description="暂无学生，无法分析" />
@@ -26,15 +15,29 @@
 
 			<!-- 2. 行为画像（规则维度） -->
 			<section class="chart-card" v-if="isChartVisible('rule')" :style="{ order: chartOrderIndex('rule') }">
-				<div class="card-title">行为画像（规则维度）</div>
-				<div class="card-sub">各规则触发次数与积分贡献</div>
+				<div class="card-header">
+					<div>
+						<div class="card-title">行为画像（规则维度）</div>
+						<div class="card-sub">各规则触发次数与积分贡献</div>
+					</div>
+					<el-select v-model="ruleCycleId" placeholder="全部周期" clearable style="width: 160px">
+						<el-option v-for="cycle in cycleList" :key="cycle.id" :label="cycle.name" :value="cycle.id" />
+					</el-select>
+				</div>
 				<AnalysisChart :option="ruleOption" height="340px" />
 			</section>
 
 			<!-- 3. 规则健康度（规则库维度） -->
 			<section class="chart-card" v-if="isChartVisible('ruleHealth')" :style="{ order: chartOrderIndex('ruleHealth') }">
-				<div class="card-title">规则健康度（规则库维度）</div>
-				<div class="card-sub">规则触发次数，识别形同虚设的规则</div>
+				<div class="card-header">
+					<div>
+						<div class="card-title">规则健康度（规则库维度）</div>
+						<div class="card-sub">规则触发次数，识别形同虚设的规则</div>
+					</div>
+					<el-select v-model="ruleHealthCycleId" placeholder="全部周期" clearable style="width: 160px">
+						<el-option v-for="cycle in cycleList" :key="cycle.id" :label="cycle.name" :value="cycle.id" />
+					</el-select>
+				</div>
 				<el-table :data="ruleHealth" size="small" max-height="300">
 					<el-table-column prop="name" label="规则名称" min-width="100" show-overflow-tooltip />
 					<el-table-column prop="points" label="分值" width="90" align="center">
@@ -71,17 +74,28 @@
 
 			<!-- 5. 个体诊断（学生维度） -->
 			<section class="chart-card" v-if="isChartVisible('student')" :style="{ order: chartOrderIndex('student') }">
-				<div class="card-title">个体诊断（学生维度）</div>
-				<div class="card-sub">学生加减分构成与净变化</div>
+				<div class="card-header">
+					<div>
+						<div class="card-title">个体诊断（学生维度）</div>
+						<div class="card-sub">学生加减分构成与净变化（不受统计范围影响）</div>
+					</div>
+					<el-input v-model="studentSearch" placeholder="按学生名称搜索" clearable prefix-icon="Search" class="card-search" />
+				</div>
 				<AnalysisChart :option="studentOption" height="340px" />
 			</section>
 
-			
-
 			<!-- 6. 积分变化明细（学生 × 周期） -->
 			<section class="chart-card" v-if="isChartVisible('matrix') && cycleList.length > 0" :style="{ order: chartOrderIndex('matrix') }">
-				<div class="card-title">积分变化明细（学生 × 周期）</div>
-				<div class="card-sub">热力图观察整体分布与个体趋势，下方表格可精确读数</div>
+				<div class="card-header">
+					<div>
+						<div class="card-title">积分变化明细（学生 × 周期）</div>
+						<div class="card-sub">每个学生在各周期的积分净变化（不受统计范围影响）</div>
+					</div>
+					<div class="card-tools">
+						<el-input v-model="matrixSearch" placeholder="按学生名称搜索" clearable prefix-icon="Search" class="card-search" />
+						<el-button type="primary" plain :icon="Download" @click="handleExport">导出 Excel</el-button>
+					</div>
+				</div>
 				<el-table :data="matrixData" size="small" max-height="420" border>
 					<el-table-column prop="name" label="学生" width="110" fixed align="center" />
 					<el-table-column v-for="cycle in cycleList" :key="cycle.id" :label="cycle.name" align="center" min-width="90">
@@ -115,13 +129,16 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue';
+import { computed, ref } from 'vue';
 import { useAppStore } from '../../../store/models/app';
 import AnalysisChart from './AnalysisChart.vue';
-import { TrendCharts } from '@element-plus/icons-vue';
+import { TrendCharts, Download, Search } from '@element-plus/icons-vue';
+import { utils, writeFile as writeExcelFile } from 'xlsx';
+import { ElMessage } from 'element-plus';
 
 const appStore = useAppStore();
-const selectedCycleId = ref('');
+const ruleCycleId = ref('');
+const ruleHealthCycleId = ref('');
 
 const studentList = computed(() => appStore.activeGrade?.gradeInfo?.studentList || []);
 const groupList = computed(() => appStore.activeGrade?.gradeInfo?.groupList || []);
@@ -164,17 +181,6 @@ const recordInCycle = (record: { source?: number, cycle_id?: string, time?: stri
 	return date >= cycle.startTime && date <= cycle.endTime;
 };
 
-// 参与统计的记录（可选周期过滤）
-const scopedRecords = computed(() => {
-	const records = recordList.value;
-	if (!selectedCycleId.value) return records;
-	const cycle = cycleList.value.find(c => c.id === selectedCycleId.value);
-	if (!cycle) return records;
-	return records.filter(r => recordInCycle(r, cycle));
-});
-
-const recordCount = computed(() => scopedRecords.value.length);
-
 // 记录的实际积分 = points（已经是规则分值 × 次数后的总量）
 const sumPoints = (records: typeof recordList.value) => records.reduce((acc, r) => acc + r.points, 0);
 
@@ -209,10 +215,16 @@ const trendOption = computed(() => {
 	};
 });
 
-// ---------- 2. 行为画像：规则触发次数（Top 12） ----------
+// ---------- 2. 行为画像：规则触发次数（Top 12，独立周期筛选） ----------
+const ruleRecords = computed(() => {
+	if (!ruleCycleId.value) return recordList.value;
+	const cycle = cycleList.value.find(c => c.id === ruleCycleId.value);
+	if (!cycle) return recordList.value;
+	return recordList.value.filter(r => recordInCycle(r, cycle));
+});
 const ruleOption = computed(() => {
 	const map = new Map<string, { name: string, count: number, total: number }>();
-	scopedRecords.value.forEach(r => {
+	ruleRecords.value.forEach(r => {
 		const key = r.rule_id;
 		const name = getRuleName(r.rule_id);
 		if (!map.has(key)) map.set(key, { name, count: 0, total: 0 });
@@ -245,14 +257,19 @@ const ruleOption = computed(() => {
 	};
 });
 
-// ---------- 3. 个体诊断：学生加减分构成（Top 15） ----------
-const studentOption = computed(() => {
-	const list = studentList.value.map(s => {
-		const recs = scopedRecords.value.filter(r => r.stu_id === s.id);
+// ---------- 3. 个体诊断：学生加减分构成（Top 15，独立搜索，不受统计范围影响） ----------
+const studentSearch = ref('');
+const studentStats = computed(() => {
+	return studentList.value.map(s => {
+		const recs = recordList.value.filter(r => r.stu_id === s.id);
 		const add = recs.filter(r => r.points > 0).reduce((a, r) => a + r.points, 0);
 		const sub = recs.filter(r => r.points < 0).reduce((a, r) => a + r.points, 0);
 		return { name: s.name, add, sub: Math.abs(sub), net: add + sub };
-	}).sort((a, b) => (b.add + b.net) - (a.add + a.net)).slice(0, 15).reverse();
+	}).filter(s => !studentSearch.value || s.name.toLowerCase().includes(studentSearch.value.toLowerCase()))
+		.sort((a, b) => b.net - a.net);
+});
+const studentOption = computed(() => {
+	const list = studentStats.value.slice(0, 15).reverse();
 	return {
 		tooltip: { trigger: 'axis', axisPointer: { type: 'shadow' } },
 		legend: { data: ['加分', '减分'], top: 0 },
@@ -292,10 +309,16 @@ const groupOption = computed(() => {
 	};
 });
 
-// ---------- 5. 规则健康度：触发次数表 ----------
+// ---------- 5. 规则健康度：触发次数表（独立周期筛选） ----------
+const ruleHealthRecords = computed(() => {
+	if (!ruleHealthCycleId.value) return recordList.value;
+	const cycle = cycleList.value.find(c => c.id === ruleHealthCycleId.value);
+	if (!cycle) return recordList.value;
+	return recordList.value.filter(r => recordInCycle(r, cycle));
+});
 const ruleHealth = computed(() => {
 	return ruleList.value.map(r => {
-		const recs = scopedRecords.value.filter(rec => rec.rule_id === r.id);
+		const recs = ruleHealthRecords.value.filter(rec => rec.rule_id === r.id);
 		return {
 			name: r.name,
 			points: r.points,
@@ -305,7 +328,8 @@ const ruleHealth = computed(() => {
 	}).sort((a, b) => b.count - a.count);
 });
 
-// ---------- 6. 积分变化明细：学生 × 周期 净变化矩阵 ----------
+// ---------- 6. 积分变化明细：学生 × 周期 净变化矩阵（独立搜索，不受统计范围影响） ----------
+const matrixSearch = ref('');
 const matrixData = computed(() => {
 	return studentList.value.map(s => {
 		const cyclePoints: Record<string, number> = {};
@@ -317,8 +341,37 @@ const matrixData = computed(() => {
 			total += net;
 		});
 		return { name: s.name, cyclePoints, total };
-	});
+	}).filter(s => !matrixSearch.value || s.name.toLowerCase().includes(matrixSearch.value.toLowerCase()))
+		.sort((a, b) => b.total - a.total);
 });
+
+// ---------- 导出：个体诊断 + 积分变化明细 → 同一 Excel 两个 sheet ----------
+const handleExport = () => {
+	try {
+		const workbook = utils.book_new();
+
+		// sheet1：个体诊断（学生维度）
+		const diagRows: (string | number)[][] = [['学生姓名', '加分', '减分', '净变化']];
+		studentStats.value.forEach(s => diagRows.push([s.name, s.add, -s.sub, s.net]));
+		utils.book_append_sheet(workbook, utils.aoa_to_sheet(diagRows), '个体诊断');
+
+		// sheet2：积分变化明细（学生 × 周期）
+		const matrixRows: (string | number)[][] = [['学生姓名', ...cycleList.value.map(c => c.name), '合计']];
+		matrixData.value.forEach(s => {
+			const row: (string | number)[] = [s.name];
+			cycleList.value.forEach(c => row.push(s.cyclePoints[c.id] || 0));
+			row.push(s.total);
+			matrixRows.push(row);
+		});
+		utils.book_append_sheet(workbook, utils.aoa_to_sheet(matrixRows), '积分变化明细');
+
+		writeExcelFile(workbook, '数据分析导出.xlsx');
+		ElMessage.success('已导出：个体诊断 + 积分变化明细');
+	} catch (error) {
+		console.error('导出失败:', error);
+		ElMessage.error('导出失败');
+	}
+};
 
 // ---------- 6c. 学生周期趋势弹窗 ----------
 const trendDialogVisible = ref(false);
@@ -352,13 +405,6 @@ const studentTrendOption = computed(() => {
 			markPoint: { data: [{ type: 'max', name: '峰值' }, { type: 'min', name: '谷值' }] },
 		}],
 	};
-});
-
-// 周期删除后，若选中的周期消失则重置
-watch(cycleList, (list) => {
-	if (selectedCycleId.value && !list.some(c => c.id === selectedCycleId.value)) {
-		selectedCycleId.value = '';
-	}
 });
 </script>
 
@@ -419,6 +465,25 @@ watch(cycleList, (list) => {
 	font-size: 12px;
 	color: #909399;
 	margin-bottom: 8px;
+}
+
+.card-header {
+	display: flex;
+	justify-content: space-between;
+	align-items: flex-start;
+	gap: 12px;
+	margin-bottom: 8px;
+}
+
+.card-tools {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	flex: none;
+}
+
+.card-search {
+	width: 200px;
 }
 
 .text-success {

@@ -33,6 +33,7 @@ import router from './group-points/router';
 import { pinia } from './group-points/store';
 import ElementPlus from 'element-plus';
 import 'element-plus/dist/index.css';
+import './group-points/styles/animal-theme.css';
 import * as ElementPlusIconsVue from '@element-plus/icons-vue';
 import zhCn from 'element-plus/es/locale/lang/zh-cn';
 

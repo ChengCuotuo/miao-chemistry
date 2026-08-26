@@ -1,0 +1,189 @@
+/* ============================================================
+   Animal Island 主题 —— 动森风：圆角 / 暖色 / 柔阴影
+   基于 Element Plus CSS 变量覆盖，全局生效，无需改动任何组件代码
+   ============================================================ */
+
+:root {
+  /* ---------- 主色：动森草地绿 ---------- */
+  --el-color-primary: #7fb069;
+  --el-color-primary-light-1: #8cb87a;
+  --el-color-primary-light-2: #99c18a;
+  --el-color-primary-light-3: #a6ca9b;
+  --el-color-primary-light-4: #b3d3ab;
+  --el-color-primary-light-5: #c0dcbc;
+  --el-color-primary-light-6: #cde5cd;
+  --el-color-primary-light-7: #daeede;
+  --el-color-primary-light-8: #e7f7ef;
+  --el-color-primary-light-9: #f4fbf7;
+  --el-color-primary-dark-2: #669d54;
+
+  /* ---------- 功能色：暖调 ---------- */
+  --el-color-success: #4a90d9;        /* 天蓝，与主色草地绿彻底区分 */
+  --el-color-success-light-3: #85b8e6;
+  --el-color-success-light-5: #b5d2ef;
+  --el-color-success-light-7: #d7e7f6;
+  --el-color-success-light-8: #e7f0fa;
+  --el-color-success-light-9: #f3f8fd;
+  --el-color-success-dark-2: #3b73ad;
+
+  --el-color-warning: #f4a259;        /* 暖橙 */
+  --el-color-warning-light-3: #f8c48b;
+  --el-color-warning-light-5: #fbdbb8;
+  --el-color-warning-light-7: #fdeed9;
+  --el-color-warning-light-8: #fef5e9;
+  --el-color-warning-light-9: #fefaf4;
+  --el-color-warning-dark-2: #c38247;
+
+  --el-color-danger: #e76f51;         /* 陶土红 */
+  --el-color-danger-light-3: #f09a85;
+  --el-color-danger-light-5: #f5bdad;
+  --el-color-danger-light-7: #fadbd3;
+  --el-color-danger-light-8: #fceae5;
+  --el-color-danger-light-9: #fdf4f2;
+  --el-color-danger-dark-2: #b95941;
+
+  --el-color-error: #e76f51;
+  --el-color-error-light-3: #f09a85;
+  --el-color-error-light-5: #f5bdad;
+  --el-color-error-light-7: #fadbd3;
+  --el-color-error-light-8: #fceae5;
+  --el-color-error-light-9: #fdf4f2;
+  --el-color-error-dark-2: #b95941;
+
+  --el-color-info: #8f9b8f;           /* 灰绿 */
+  --el-color-info-light-3: #b3bcb3;
+  --el-color-info-light-5: #cdd4cd;
+  --el-color-info-light-7: #e3e7e3;
+  --el-color-info-light-8: #eef0ee;
+  --el-color-info-light-9: #f6f8f6;
+  --el-color-info-dark-2: #727c72;
+
+  /* ---------- 文本色：暖褐 ---------- */
+  --el-text-color-primary: #4a4035;
+  --el-text-color-regular: #5f554a;
+  --el-text-color-secondary: #8a8177;
+  --el-text-color-placeholder: #b5ada2;
+  --el-text-color-disabled: #cfc9c0;
+
+  /* ---------- 边框：暖灰 ---------- */
+  --el-border-color: #e2ddd4;
+  --el-border-color-light: #ece8e0;
+  --el-border-color-lighter: #f2eee8;
+  --el-border-color-extra-light: #f8f5f0;
+  --el-border-color-dark: #d5cfc4;
+  --el-border-color-darker: #c5beb2;
+
+  /* ---------- 填充 ---------- */
+  --el-fill-color: #f4f1ea;
+  --el-fill-color-light: #f8f5f0;
+  --el-fill-color-lighter: #fbf9f5;
+  --el-fill-color-extra-light: #fdfcfa;
+  --el-fill-color-dark: #eae6de;
+  --el-fill-color-darker: #e0dbd1;
+  --el-fill-color-blank: #ffffff;
+
+  /* ---------- 背景 ---------- */
+  --el-bg-color: #ffffff;
+  --el-bg-color-page: #f7f4ee;
+  --el-bg-color-overlay: #ffffff;
+
+  /* ---------- 圆角：动森的大圆角 ---------- */
+  --el-border-radius-base: 10px;
+  --el-border-radius-small: 8px;
+  --el-border-radius-round: 20px;
+  --el-border-radius-circle: 100%;
+
+  /* ---------- 阴影：柔和 ---------- */
+  --el-box-shadow: 0 4px 14px 0 rgba(90, 78, 60, 0.08);
+  --el-box-shadow-light: 0 2px 10px 0 rgba(90, 78, 60, 0.06);
+  --el-box-shadow-lighter: 0 1px 6px 0 rgba(90, 78, 60, 0.04);
+  --el-box-shadow-dark: 0 8px 24px 0 rgba(90, 78, 60, 0.12);
+}
+
+/* ============================================================
+   组件级细节打磨：让动森风更完整
+   ============================================================ */
+
+/* 按钮：更圆润、加一点内收的手感 */
+.el-button {
+  --el-button-border-radius: 10px;
+  font-weight: 500;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+.el-button:not(.is-disabled):active {
+  transform: translateY(1px);
+}
+
+/* 卡片：柔和阴影 + 圆角 */
+.el-card {
+  --el-card-border-radius: 14px;
+  border: 1px solid var(--el-border-color-lighter);
+  box-shadow: var(--el-box-shadow-light);
+}
+.el-card.is-hover-shadow:hover {
+  box-shadow: var(--el-box-shadow);
+}
+
+/* 对话框：大圆角 + 柔阴影 */
+.el-dialog {
+  --el-dialog-border-radius: 16px;
+  border-radius: 16px;
+  box-shadow: var(--el-box-shadow-dark);
+}
+.el-dialog__header {
+  border-bottom: 1px solid var(--el-border-color-lighter);
+}
+
+/* 表格：表头暖灰底、去掉生硬边框感 */
+.el-table {
+  --el-table-border-color: var(--el-border-color-lighter);
+  --el-table-header-bg-color: #f6f3ec;
+  --el-table-header-text-color: #5f554a;
+  --el-table-row-hover-bg-color: #f9f7f1;
+}
+.el-table th.el-table__cell {
+  font-weight: 600;
+}
+
+/* 标签：更圆 */
+.el-tag {
+  --el-tag-border-radius: 6px;
+  border-radius: 6px;
+}
+
+/* 输入框/选择器：圆角 + hover 柔边框 */
+.el-input__wrapper,
+.el-select__wrapper,
+.el-textarea__inner {
+  border-radius: 10px;
+  transition: box-shadow 0.2s ease;
+}
+
+/* 下拉面板：圆角 */
+.el-popper.is-light,
+.el-select-dropdown,
+.el-dropdown__popper {
+  border-radius: 12px;
+  box-shadow: var(--el-box-shadow);
+}
+
+/* 分页按钮圆润 */
+.el-pagination .el-pager li,
+.el-pagination button {
+  border-radius: 8px;
+}
+
+/* 弹出消息圆角 */
+.el-message {
+  border-radius: 12px;
+}
+
+/* 开关圆润 */
+.el-switch__core {
+  border-radius: 20px;
+}
+
+/* 空态/骨架屏底色微调 */
+.el-empty__description p {
+  color: var(--el-text-color-secondary);
+}
