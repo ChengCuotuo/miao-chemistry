@@ -3,6 +3,7 @@ import { RuleRecord } from './RuleRecord';
 import { Student } from './Student';
 import { StudentGroup } from './StudentGroup';
 import { MonitorCycle } from './MonitorCycle';
+import { MonitorAccount } from './MonitorAccount';
 
 export class Grade {
 	id: string;
@@ -14,11 +15,13 @@ export class Grade {
 		studentGroupList: StudentGroup[];
 		recordList: RuleRecord[];
 		monitorCycleList: MonitorCycle[];
+		monitorAccountList: MonitorAccount[];
 		indexMap: {
 			group: number,
 			student: number,
 			record: number,
 			monitorCycle: number,
+			monitorAccount: number,
 		},
 		gradeConfig: {
 			orderByPoints: number,
@@ -35,11 +38,13 @@ export class Grade {
 			studentGroupList: StudentGroup[];
 			recordList: RuleRecord[];
 			monitorCycleList?: MonitorCycle[];
+			monitorAccountList?: MonitorAccount[];
 			indexMap: {
 				group: number,
 				student: number,
 				record: number,
 				monitorCycle?: number,
+				monitorAccount?: number,
 			},
 			gradeConfig: {
 				orderByPoints: number,
@@ -53,9 +58,11 @@ export class Grade {
 		this.gradeInfo = {
 			...grade.gradeInfo,
 			monitorCycleList: grade.gradeInfo.monitorCycleList || [],
+			monitorAccountList: grade.gradeInfo.monitorAccountList || [],
 			indexMap: {
 				...grade.gradeInfo.indexMap,
 				monitorCycle: grade.gradeInfo.indexMap.monitorCycle ?? 0,
+				monitorAccount: grade.gradeInfo.indexMap.monitorAccount ?? 0,
 			},
 		};
 	}

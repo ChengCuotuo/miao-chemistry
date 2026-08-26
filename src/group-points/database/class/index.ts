@@ -7,6 +7,7 @@ import { Student } from './grade/Student';
 import { StudentGroup } from './grade/StudentGroup';
 import { Basic } from './main/Basic';
 import { MonitorCycle } from './grade/MonitorCycle';
+import { MonitorAccount } from './grade/MonitorAccount';
 
 export {
 	Grade,
@@ -18,4 +19,5 @@ export {
 	StudentGroup,
 	Basic,
 	MonitorCycle,
+	MonitorAccount,
 }

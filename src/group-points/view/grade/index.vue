@@ -1,8 +1,11 @@
 <template>
 	<div class="grade-container">
 		<div class="header-content">
-			<div><el-button type="primary" :icon="Back" circle @click="handleBack"></el-button></div>
-			<div style="font-size: 16px; font-weight: bold;">{{ activeGrade?.name }}</div>
+			<div>
+				<el-button v-if="!isMonitor" type="primary" :icon="Back" circle @click="handleBack"></el-button>
+				<el-button v-else type="warning" plain :icon="SwitchButton" @click="handleMonitorLogout">退出登录</el-button>
+			</div>
+			<div style="font-size: 16px; font-weight: bold;">{{ activeGrade?.name }}<span v-if="isMonitor" class="role-badge">班委</span></div>
 			<div></div>
 		</div>
 		<el-divider border-style="dashed" style="margin: 10px 0;" />
@@ -35,8 +38,9 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue';
 import { useAppStore } from '../../store/models/app';
-import { Back } from '@element-plus/icons-vue';
+import { Back, SwitchButton } from '@element-plus/icons-vue';
 import { useRouter } from 'vue-router';
+import { ElMessageBox } from 'element-plus';
 import StudentList from './StudentList/index.vue';
 import GroupList from './GroupList/index.vue';
 import LotteryDraw from './LotteryDraw/index.vue';
@@ -59,6 +63,9 @@ const TAB_DEFS: Record<string, string> = {
 };
 const DEFAULT_TAB_ORDER = ['group', 'student', 'monitor', 'record', 'lottery', 'analysis'];
 
+// 当前角色：班委仅显示「周期记分」tab
+const isMonitor = computed(() => appStore.currentRole === 'monitor');
+
 // 各模块可见性
 const moduleVisibility = computed(() => appStore.database.basicConfig?.moduleVisibility || {
 	groupManage: true,
@@ -70,6 +77,8 @@ const monitorVisible = computed(() => appStore.database.basicConfig?.moduleVisib
 const studentVisible = computed(() => appStore.database.basicConfig?.moduleVisibility?.studentManage ?? true);
 
 const isTabVisible = (name: string): boolean => {
+	// 班委角色：仅周期记分 tab 可见
+	if (isMonitor.value) return name === 'monitor';
 	if (name === 'student') return studentVisible.value;
 	if (name === 'monitor') return monitorVisible.value;
 	if (name === 'group') return moduleVisibility.value.groupManage;
@@ -109,8 +118,21 @@ watch(() => [appStore.database.basicConfig?.moduleVisibility, appStore.database.
 
 const handleBack = () => {
 	appStore.setIsCollapse(false);
+	appStore.setCurrentRole('teacher');
 	router.back();
 }
+
+// 班委退出登录：回锁屏
+const handleMonitorLogout = () => {
+	ElMessageBox.confirm('确认退出班委登录？', '退出登录', {
+		type: 'warning', confirmButtonText: '退出', cancelButtonText: '取消',
+	}).then(() => {
+		appStore.setCurrentRole('teacher');
+		appStore.setActiveGrade(undefined);
+		appStore.setIsCollapse(false);
+		appStore.setNeedLock(true);
+	}).catch(() => { });
+};
 
 </script>
 
@@ -145,5 +167,14 @@ const handleBack = () => {
 	flex: 1 1;
 	min-height: 0;
 	overflow: hidden;
+}
+
+.role-badge {
+	margin-left: 8px;
+	font-size: 12px;
+	color: #67c23a;
+	border: 1px solid #67c23a;
+	border-radius: 4px;
+	padding: 1px 6px;
 }
 </style>

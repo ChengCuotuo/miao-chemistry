@@ -12,19 +12,20 @@
 						</span>
 					</el-option>
 				</el-select>
-				<el-button type="primary" :icon="Plus" @click="handleAddCycle">新增周期</el-button>
-				<el-button v-if="currentCycle" :icon="Edit" circle @click="handleEditCycle" />
-				<el-button v-if="currentCycle && currentCycle.status === 0" type="warning" plain @click="handleFinishCycle">结束周期</el-button>
-				<el-button v-if="currentCycle && currentCycle.status === 1" type="success" plain @click="handleStartCycle">重新开始</el-button>
-				<el-button v-if="currentCycle && currentCycle.status === 0" type="danger" :icon="Delete" circle @click="handleDeleteCycle" />
+				<el-button v-if="!isMonitor" type="primary" :icon="Plus" @click="handleAddCycle">新增周期</el-button>
+				<el-button v-if="!isMonitor && currentCycle" :icon="Edit" circle @click="handleEditCycle" />
+				<el-button v-if="!isMonitor && currentCycle && currentCycle.status === 0" type="warning" plain @click="handleFinishCycle">结束周期</el-button>
+				<el-button v-if="!isMonitor && currentCycle && currentCycle.status === 1" type="success" plain @click="handleStartCycle">重新开始</el-button>
+				<el-button v-if="!isMonitor && currentCycle && currentCycle.status === 0" type="danger" :icon="Delete" circle @click="handleDeleteCycle" />
 			</el-space>
 			<el-space>
 				<el-button :icon="Document" @click="handleViewRecords">周期记录</el-button>
+				<el-button v-if="!isMonitor" :icon="UserFilled" type="success" @click="handleManageAccounts">班委账号</el-button>
 			</el-space>
 		</div>
 
 		<div v-if="cycleList.length === 0" class="empty-wrap">
-			<el-empty description="暂无周期，请先新增周期（如：第一周、第二周）" />
+			<el-empty :description="isMonitor ? '暂无进行中的周期' : '暂无周期，请先新增周期（如：第一周、第二周）'" />
 		</div>
 
 		<template v-else>
@@ -143,6 +144,26 @@
 			</el-table>
 			<el-empty v-if="detailStats.length === 0" description="当前周期暂无规则记录" :image-size="60" />
 		</el-dialog>
+
+		<!-- 班委账号管理弹窗（仅教师） -->
+		<el-dialog title="班委账号管理" v-model="accountDialogVisible" width="600px" destroy-on-close>
+			<div class="account-toolbar">
+				<el-button type="primary" :icon="Plus" size="small" @click="handleAddAccount">新增账号</el-button>
+			</div>
+			<el-table :data="accountList" border size="small" max-height="360">
+				<el-table-column prop="name" label="账号名" min-width="120" />
+				<el-table-column label="操作" width="160" align="center">
+					<template #default="scope">
+						<el-button size="small" type="warning" text @click="handleResetAccountPassword(scope.row)">改密码</el-button>
+						<el-button size="small" type="danger" text @click="handleDeleteAccount(scope.row)">删除</el-button>
+					</template>
+				</el-table-column>
+			</el-table>
+			<el-empty v-if="accountList.length === 0" description="暂无班委账号，请先新增" :image-size="60" />
+		</el-dialog>
+
+		<MonitorAccountDialog v-model:visible="accountFormVisible" :mode="accountFormMode"
+			:account="accountFormTarget" @confirm="handleAccountConfirm" />
 	</div>
 </template>
 
@@ -152,9 +173,11 @@ import { useAppStore } from '../../../store/models/app';
 import { useMonitorCycle } from '../../../database/utils/useMonitorCycle';
 import { useRule } from '../../../database/utils/useRule';
 import { ElMessage, ElMessageBox, dayjs, type FormInstance } from 'element-plus';
-import { Plus, Edit, Delete, Ticket, Search, Document, View } from '@element-plus/icons-vue';
+import { Plus, Edit, Delete, Ticket, Search, Document, View, UserFilled } from '@element-plus/icons-vue';
 import { Student } from '../../../database/class';
+import { useMonitorAccount } from '../../../database/utils/useMonitorAccount';
 import MonitorRecordModal from './MonitorRecordModal.vue';
+import MonitorAccountDialog from './MonitorAccountDialog.vue';
 import RecordList from '../RecordList/index.vue';
 
 const appStore = useAppStore();
@@ -163,9 +186,13 @@ const {
 	startMonitorCycle, finishMonitorCycle, deleteMonitorCycle, adjustPointsByRule,
 } = useMonitorCycle();
 const { getRuleList } = useRule();
+const { getMonitorAccountList, createMonitorAccount, updateMonitorAccountPassword, deleteMonitorAccount } = useMonitorAccount();
 
 const rules = computed(() => getRuleList(appStore.activeGrade?.id) || []);
-const cycleList = computed(() => getMonitorCycleList());
+const isMonitor = computed(() => appStore.currentRole === 'monitor');
+// 班委仅可见未结束周期；教师可见全部
+const allCycleList = computed(() => getMonitorCycleList());
+const cycleList = computed(() => isMonitor.value ? allCycleList.value.filter(c => c.status === 0) : allCycleList.value);
 const selectedCycleId = ref('');
 const currentCycle = computed(() => cycleList.value.find(item => item.id === selectedCycleId.value));
 
@@ -409,6 +436,49 @@ const handleRecordConfirm = async (payload: { ruleId: string, count: number }) =
 const recordDialogVisible = ref(false);
 const handleViewRecords = () => { recordDialogVisible.value = true; };
 
+// ---------- 班委账号管理（仅教师） ----------
+const accountDialogVisible = ref(false);
+const accountFormVisible = ref(false);
+const accountFormMode = ref<'add' | 'edit'>('add');
+const accountFormTarget = ref<{ id: string, name: string, password: string } | undefined>(undefined);
+
+const accountList = computed(() => getMonitorAccountList());
+
+const handleManageAccounts = () => {
+	accountDialogVisible.value = true;
+};
+
+const handleAddAccount = () => {
+	accountFormMode.value = 'add';
+	accountFormTarget.value = undefined;
+	accountFormVisible.value = true;
+};
+
+const handleResetAccountPassword = (account: { id: string, name: string, password: string }) => {
+	accountFormMode.value = 'edit';
+	accountFormTarget.value = account;
+	accountFormVisible.value = true;
+};
+
+const handleDeleteAccount = (account: { id: string, name: string }) => {
+	ElMessageBox.confirm(`确认删除班委账号「${account.name}」？`, '删除确认', {
+		type: 'warning', confirmButtonText: '确认', cancelButtonText: '取消',
+	}).then(async () => {
+		const res = await deleteMonitorAccount(account.id);
+		ElMessage[res.success ? 'success' : 'warning'](res.message);
+	}).catch(() => { });
+};
+
+const handleAccountConfirm = async (payload: { name: string, password: string }) => {
+	if (accountFormMode.value === 'add') {
+		const res = await createMonitorAccount(payload.name, payload.password);
+		ElMessage[res.success ? 'success' : 'warning'](res.message);
+	} else if (accountFormTarget.value) {
+		const res = await updateMonitorAccountPassword(accountFormTarget.value.id, payload.password);
+		ElMessage[res.success ? 'success' : 'warning'](res.message);
+	}
+};
+
 // ---------- 学生周期详情 ----------
 const detailDialogVisible = ref(false);
 const detailStudent = ref<Student | null>(null);
@@ -464,6 +534,12 @@ const detailStats = computed(() => {
 }
 
 .detail-tip {
+	margin-bottom: 10px;
+}
+
+.account-toolbar {
+	display: flex;
+	justify-content: flex-end;
 	margin-bottom: 10px;
 }
 

@@ -20,11 +20,13 @@ export const useGrade = () => {
 					studentGroupList: [],
 					recordList: [],
 					monitorCycleList: [],
+					monitorAccountList: [],
 					indexMap: {
 						group: 0,
 						student: 0,
 						record: 0,
 						monitorCycle: 0,
+						monitorAccount: 0,
 					},
 					gradeConfig: {
 						orderByPoints: 0,
@@ -97,11 +99,13 @@ export const useGrade = () => {
 		}
 		target.gradeInfo = {
 			...data.gradeInfo,
-			// 兼容旧数据：班委周期字段缺失时补默认值
+			// 兼容旧数据：班委周期/账号字段缺失时补默认值
 			monitorCycleList: data.gradeInfo.monitorCycleList || [],
+			monitorAccountList: data.gradeInfo.monitorAccountList || [],
 			indexMap: {
 				...data.gradeInfo.indexMap,
 				monitorCycle: data.gradeInfo.indexMap?.monitorCycle ?? 0,
+				monitorAccount: data.gradeInfo.indexMap?.monitorAccount ?? 0,
 			},
 		};
 		target.delete = data.delete;

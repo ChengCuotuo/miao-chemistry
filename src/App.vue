@@ -14,7 +14,7 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, ref } from 'vue';
+import { onMounted, ref, watch } from 'vue';
 import MainBack from './components/MainBack.vue';
 // import SystemConfig from './components/system-config.vue';
 import BoxGame from './games/box/index.vue';
@@ -55,6 +55,14 @@ const handleMenuClick = (key: string) => {
     activeKey.value = key;
   }
 }
+
+// 班委退出登录：切回锁屏并复位
+watch(() => appStore.needLock, (v) => {
+  if (v) {
+    appStore.setNeedLock(false);
+    activeKey.value = 'lock';
+  }
+});
 
 onMounted(async () => {
   const data = await loadGroupPointsConfig()

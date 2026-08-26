@@ -11,23 +11,67 @@
       <div class="date">{{ currentDate }}</div>
     </div>
 
-    <!-- 密码验证弹窗 -->
+    <!-- 选择登录角色弹窗 -->
+    <el-dialog
+      v-model="roleDialogVisible"
+      title="选择登录角色"
+      width="380px"
+      :close-on-click-modal="false"
+    >
+      <div class="role-select">
+        <el-button type="primary" size="large" @click="handleAdminLogin">
+          <el-icon style="margin-right: 6px;"><Avatar /></el-icon>管理员登录
+        </el-button>
+        <el-button type="success" size="large" @click="handleMonitorLoginClick">
+          <el-icon style="margin-right: 6px;"><User /></el-icon>班委登录
+        </el-button>
+      </div>
+    </el-dialog>
+
+    <!-- 管理员密码验证弹窗 -->
     <el-dialog
       v-model="passwordDialogVisible"
-      title="请输入密码"
+      title="管理员登录"
       width="400px"
       :close-on-click-modal="false"
     >
       <el-input
         v-model="inputPassword"
         type="password"
-        placeholder="请输入密码"
+        placeholder="请输入管理员密码"
         show-password
         @keyup.enter="verifyPassword"
       />
       <template #footer>
         <el-button @click="passwordDialogVisible = false">取消</el-button>
         <el-button type="primary" @click="verifyPassword">确认</el-button>
+      </template>
+    </el-dialog>
+
+    <!-- 班委登录弹窗 -->
+    <el-dialog
+      v-model="monitorLoginVisible"
+      title="班委登录"
+      width="420px"
+      :close-on-click-modal="false"
+    >
+      <el-form label-width="60px" @submit.prevent>
+        <el-form-item label="班级">
+          <el-select v-model="monitorGradeId" placeholder="请选择班级" style="width: 100%">
+            <el-option v-for="g in gradeList" :key="g.id" :label="g.name" :value="g.id" />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="账号">
+          <el-input v-model="monitorName" placeholder="请输入班委账号" />
+        </el-form-item>
+        <el-form-item label="密码">
+          <el-input v-model="monitorPassword" type="password" show-password placeholder="请输入密码"
+            @keyup.enter="handleMonitorLoginSubmit" />
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <el-button @click="monitorLoginVisible = false">取消</el-button>
+        <el-button type="primary" :loading="monitorLoginLoading" @click="handleMonitorLoginSubmit">登录</el-button>
       </template>
     </el-dialog>
 
@@ -68,12 +112,15 @@
 </template>
 
 <script lang="ts" setup>
-import { Menu, Message, Platform } from '@element-plus/icons-vue'
+import { Menu, Message, Platform, Avatar, User } from '@element-plus/icons-vue'
 import { ref, onMounted, onUnmounted, computed } from 'vue'
 import { ElMessage, dayjs } from 'element-plus'
 import { useAppStore } from '../group-points/store/models/app'
 import md5 from 'blueimp-md5'
 import { BUILD_TYPE } from '../group-points/database'
+import { useGrade } from '../group-points/database/utils/useGrade'
+import { useMonitorAccount } from '../group-points/database/utils/useMonitorAccount'
+import { useRouter } from 'vue-router'
 import CurVersion from './CurVersion.vue'
 
 const props = defineProps({
@@ -84,7 +131,13 @@ const props = defineProps({
 })
 
 const appStore = useAppStore()
+const router = useRouter()
+const { getGradeInfoById } = useGrade()
+const { verifyMonitorAccount } = useMonitorAccount()
 const currentPassword = computed(() => appStore.database.basicConfig?.password || '')
+
+// 未删除的班级列表
+const gradeList = computed(() => appStore.database.gradeList.filter(item => item.delete === 0))
 
 const currentTime = ref('')
 const currentDate = ref('')
@@ -130,20 +183,84 @@ const handleMenuClick = () => {
       return
     }
   }
+  // 已设置密码：弹出角色选择
+  roleDialogVisible.value = true
+}
+
+// ---------- 角色选择 ----------
+const roleDialogVisible = ref(false)
+
+const handleAdminLogin = () => {
+  roleDialogVisible.value = false
   passwordDialogVisible.value = true
 }
 
+const handleMonitorLoginClick = () => {
+  roleDialogVisible.value = false
+  monitorLoginVisible.value = true
+  // 重置班委登录表单
+  monitorGradeId.value = '';
+  monitorName.value = '';
+  monitorPassword.value = '';
+}
+
+// ---------- 管理员登录 ----------
 const passwordDialogVisible = ref(false)
 const inputPassword = ref('')
 const expiredDialogVisible = ref(false)
 
 const verifyPassword = () => {
   if (md5(inputPassword.value) === currentPassword.value) {
+    appStore.setCurrentRole('teacher')
     props.onMenu('menu')
     passwordDialogVisible.value = false
     inputPassword.value = ''
   } else {
     ElMessage.error('密码错误')
+  }
+}
+
+// ---------- 班委登录 ----------
+const monitorLoginVisible = ref(false)
+const monitorLoginLoading = ref(false)
+const monitorGradeId = ref('')
+const monitorName = ref('')
+const monitorPassword = ref('')
+
+const handleMonitorLoginSubmit = async () => {
+  if (!monitorGradeId.value) {
+    ElMessage.warning('请选择班级');
+    return;
+  }
+  if (!monitorName.value || !monitorPassword.value) {
+    ElMessage.warning('请输入账号和密码');
+    return;
+  }
+  monitorLoginLoading.value = true;
+  try {
+    // 先加载班级信息，供账号校验使用
+    const gradeInfo = await getGradeInfoById(monitorGradeId.value);
+    if (!gradeInfo) {
+      ElMessage.error('班级信息加载失败');
+      return;
+    }
+    appStore.setActiveGrade(gradeInfo);
+    const res = verifyMonitorAccount(monitorName.value, monitorPassword.value);
+    if (res.success) {
+      appStore.setCurrentRole('monitor');
+      appStore.setIsCollapse(true);
+      monitorLoginVisible.value = false;
+      // 先切到积分管理，再进入班级页（跳过 HomeView，避免其 onMounted 清空 activeGrade）
+      router.push({ name: 'grade' });
+      props.onMenu('menu');
+    } else {
+      ElMessage.warning(res.message || '登录失败');
+    }
+  } catch (error) {
+    console.error('班委登录出错:', error);
+    ElMessage.error('登录失败，请重试');
+  } finally {
+    monitorLoginLoading.value = false;
   }
 }
 
@@ -191,6 +308,18 @@ onUnmounted(() => {
   color: #666;
   margin-top: 16px;
   font-weight: 500;
+}
+
+.role-select {
+  display: flex;
+  padding: 12px 0;
+}
+
+.role-select .el-button {
+  width: 100%;
+  height: 56px;
+  font-size: 16px;
+  justify-content: center;
 }
 
 .expired-content {

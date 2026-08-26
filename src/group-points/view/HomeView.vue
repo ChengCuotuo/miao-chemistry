@@ -95,6 +95,7 @@ const handleClick = async (grade: DatabaseInfoType['gradeList'][0]) => {
 	const gradeInfo = await getGradeInfoById(grade.id);
 	if (gradeInfo) {
 		appStore.setActiveGrade(gradeInfo);
+		appStore.setCurrentRole('teacher');
 		appStore.setIsCollapse(true);
 		router.push({ name: 'grade' });
 	}

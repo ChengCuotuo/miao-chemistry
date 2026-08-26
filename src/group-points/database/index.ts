@@ -6,7 +6,8 @@ import {
 	Group,
 	Student,
 	StudentGroup,
-	MonitorCycle
+	MonitorCycle,
+	MonitorAccount
 } from './class';
 import { Basic } from './class/main/Basic';
 import ruleConfigJson from './defaultRule.json';
@@ -22,11 +23,13 @@ export interface DatabaseInfoType {
 			studentGroupList: StudentGroup[];
 			recordList: RuleRecord[];
 			monitorCycleList: MonitorCycle[];
+			monitorAccountList: MonitorAccount[];
 			indexMap: {
 				group: number,
 				student: number,
 				record: number,
 				monitorCycle: number,
+				monitorAccount: number,
 			},
 			gradeConfig: {
 				orderByPoints: number,
@@ -188,7 +191,8 @@ export async function loadGradeInfoById(gradeId: string) {
 			studentGroupList: [], // 学生分组列表
 			recordList: [], // 奖励记录列表
 			monitorCycleList: [], // 周期记分周期列表
-			indexMap: { group: 0, student: 0, studentGroup: 0, record: 0, monitorCycle: 0 }, // 索引映射
+			monitorAccountList: [], // 班委账号列表
+			indexMap: { group: 0, student: 0, studentGroup: 0, record: 0, monitorCycle: 0, monitorAccount: 0 }, // 索引映射
 			gradeConfig: {
 				orderByPoints: 0,
 			}
