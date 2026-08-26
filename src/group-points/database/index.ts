@@ -39,6 +39,7 @@ export interface DatabaseInfoType {
 			},
 			gradeConfig: {
 				orderByPoints: number,
+				teamOrderByPoints?: number,
 			}
 		};
 		id: string;
@@ -211,6 +212,7 @@ export async function loadGradeInfoById(gradeId: string) {
 			indexMap: { group: 0, student: 0, studentGroup: 0, record: 0, monitorCycle: 0, monitorAccount: 0, team: 0, teamRecord: 0 }, // 索引映射
 			gradeConfig: {
 				orderByPoints: 0,
+				teamOrderByPoints: 0,
 			}
 		}),
 	});

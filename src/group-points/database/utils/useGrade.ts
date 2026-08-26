@@ -34,6 +34,7 @@ export const useGrade = () => {
 					},
 					gradeConfig: {
 						orderByPoints: 0,
+						teamOrderByPoints: 0,
 					},
 				},
 			})

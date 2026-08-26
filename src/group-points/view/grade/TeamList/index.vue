@@ -5,6 +5,7 @@
 				<el-space>
 					<el-input v-model="searchQuery" placeholder="请输入小组名或成员名搜索" class="search-input" prefix-icon="Search" />
 					<el-button type="info" @click="handleReset">重置</el-button>
+					<el-button type="success" :icon="Sort" @click="handleSort">调整排序</el-button>
 					<el-button type="primary" :icon="Plus" @click="handleAdd">新增小组</el-button>
 				</el-space>
 			</div>
@@ -35,7 +36,9 @@
 		<div class="team-list-content">
 			<TeamCard v-for="team in teamInfoList || []" :key="team.id" :team="team" @edit="handleEdit"
 				@delete="handleDelete" @add-points="handleAddPoints" @subtract-points="handleSubtractPoints"
-				@adjust-points="handleAdjustPoints" @view-records="handleViewRecords" />
+				@adjust-points="handleAdjustPoints" @view-records="handleViewRecords"
+				@member-add-points="handleMemberAddPoints" @member-subtract-points="handleMemberSubtractPoints"
+				@member-adjust-points="handleMemberAdjustPoints" @member-view-records="handleStudentViewRecords" />
 		</div>
 
 		<!-- 新增/编辑小组弹窗 -->
@@ -54,7 +57,7 @@
 							<span>{{ option.id }} - {{ option.name }}</span>
 						</template>
 					</el-transfer>
-					<div class="form-tip">成员仅用于展示分组构成，不影响小组分数，也不可给成员单独加减分</div>
+					<div class="form-tip">成员仅用于展示分组构成；成员的加减分只影响个人积分，不影响小组分数</div>
 				</el-form-item>
 			</el-form>
 			<template #footer>
@@ -112,6 +115,19 @@
 			</el-table>
 		</el-dialog>
 
+		<!-- 成员按规则调整弹窗（复用分组管理的规则选择） -->
+		<RuleSelectorModal v-model:visible="memberRuleVisible" :rules="rules" :target-name="memberRuleTargetName"
+			type="single" @confirm="handleMemberRuleConfirm" />
+
+		<!-- 成员个人积分记录弹窗 -->
+		<el-dialog title="学生积分记录" v-model="studentRecordDialogVisible" width="900px">
+			<RecordList :student-id="selectedStudentId" />
+		</el-dialog>
+
+		<!-- 调整排序弹窗 -->
+		<SortModal v-model:visible="sortModalVisible" :defaultGroupList="teamInfoList"
+			:defaultOrderByPoints="teamOrderByPoints" @confirm="handleSortConfirm" />
+
 		<!-- 周期新增/编辑弹窗 -->
 		<el-dialog :title="isEditCycle ? '编辑周期' : '新增周期'" v-model="cycleDialogVisible" width="440px">
 			<el-form ref="cycleFormRef" :model="cycleForm" label-width="90px">
@@ -136,13 +152,16 @@
 <script setup lang="ts">
 import { computed, ref, watch, onMounted } from 'vue';
 import { useAppStore } from '../../../store/models/app';
-import { Plus, Edit, Delete } from '@element-plus/icons-vue';
-import { Team, TeamRecord, Student } from '../../../database/class';
+import { Plus, Edit, Delete, Sort } from '@element-plus/icons-vue';
+import { Team, TeamRecord, Student, RuleRecord, Rule } from '../../../database/class';
 import { dayjs, ElMessage, ElMessageBox, FormInstance } from 'element-plus';
 import { useGrade } from '../../../database/utils/useGrade';
 import { useRule } from '../../../database/utils/useRule';
 import { useMonitorCycle } from '../../../database/utils/useMonitorCycle';
-import TeamCard from './teamcard.vue';
+import TeamCard from './TeamCard.vue';
+import SortModal from '../GroupList/SortModal.vue';
+import RuleSelectorModal from '../GroupList/RuleSelectorModal.vue';
+import RecordList from '../RecordList/index.vue';
 
 export interface TeamInfo {
 	id: string;
@@ -175,6 +194,10 @@ const dialogTitle = computed(() => (isEdit.value ? '编辑小组' : '新增小�
 
 const rules = computed(() => getRuleList(appStore.activeGrade?.id) || []);
 
+// 调整排序弹窗相关
+const sortModalVisible = ref(false);
+const teamOrderByPoints = ref(0);
+
 const formData = ref<TeamInfo>({
 	id: '',
 	name: '',
@@ -202,6 +225,7 @@ const studentTransferList = computed(() => {
 const teamInfoList = computed(() => {
 	if (appStore.activeGrade?.gradeInfo) {
 		const { teamList, studentList } = appStore.activeGrade.gradeInfo;
+		teamOrderByPoints.value = appStore.activeGrade.gradeInfo.gradeConfig?.teamOrderByPoints ?? 0;
 		const list = teamList.map(team => {
 			const memberList = team.memberIdList
 				.map(id => studentList.find(student => student.id === id))
@@ -216,10 +240,14 @@ const teamInfoList = computed(() => {
 			} as TeamInfo;
 		});
 		const val = searchQuery.value.toLowerCase();
-		return list
+		const filtered = list
 			.filter(team => team.name.toLowerCase().includes(val)
-				|| team.memberList.some(member => member.name.toLowerCase().includes(val)))
-			.sort((a, b) => a.order - b.order);
+				|| team.memberList.some(member => member.name.toLowerCase().includes(val)));
+		// 根据总积分排序，否则根据排序字段
+		if (teamOrderByPoints.value === 1) {
+			return filtered.sort((a, b) => b.points - a.points);
+		}
+		return filtered.sort((a, b) => a.order - b.order);
 	}
 	return [];
 });
@@ -257,6 +285,28 @@ const handleTeamRecord = (params: { team_id: string, points: number, rule_id?: s
 		appStore.activeGrade.gradeInfo.indexMap.teamRecord++;
 		appStore.activeGrade.gradeInfo.teamRecordList.push(record);
 		appStore.activeGrade.gradeInfo.teamRecordList = appStore.activeGrade.gradeInfo.teamRecordList.slice(-1000);
+	}
+};
+
+// 记录学生积分变化（成员个人积分，写 recordList，与分组管理一致）
+const handleStudentRecord = (params: { stu_id: string, points: number, rule_id?: string, count?: number }) => {
+	if (appStore.activeGrade) {
+		const { stu_id, points, rule_id, count = 1 } = params;
+		const recordIndex = appStore.activeGrade.gradeInfo.indexMap.record;
+		const cycle = monitorEnabled.value ? currentCycle.value : null;
+		const ruleRecord = new RuleRecord({
+			id: recordIndex,
+			stu_id,
+			rule_id,
+			points,
+			time: dayjs().format('YYYY-MM-DD HH:mm:ss'),
+			source: cycle ? 1 : 0,
+			cycle_id: cycle ? cycle.id : '',
+			count,
+		});
+		appStore.activeGrade.gradeInfo.indexMap.record++;
+		appStore.activeGrade.gradeInfo.recordList.push(ruleRecord);
+		appStore.activeGrade.gradeInfo.recordList = appStore.activeGrade.gradeInfo.recordList.slice(-1000);
 	}
 };
 
@@ -321,6 +371,27 @@ const handleDelete = (team: TeamInfo) => {
 			ElMessage({ type: 'success', message: '删除成功' });
 		}
 	}).catch(() => { });
+};
+
+// 调整排序
+const handleSort = () => {
+	sortModalVisible.value = true;
+};
+
+const handleSortConfirm = async (params: { orderByPoints: number, groupList: string[] }) => {
+	const { orderByPoints: orderByPointsValue, groupList } = params;
+	if (appStore.activeGrade) {
+		const gradeInfo = appStore.activeGrade.gradeInfo;
+		gradeInfo.gradeConfig.teamOrderByPoints = orderByPointsValue;
+		teamOrderByPoints.value = orderByPointsValue;
+		if (orderByPointsValue === 0) {
+			gradeInfo.teamList.forEach(team => {
+				team.order = groupList.indexOf(team.id) + 1;
+			});
+		}
+		await handleUpdateGradeInfo();
+	}
+	ElMessage.success('成功调整排序');
 };
 
 // ---------- 周期选择（与分组管理共用同一份周期数据） ----------
@@ -489,6 +560,7 @@ const handleAddPoints = async (team: TeamInfo) => {
 	target.points = Number(target.points) + stepNum;
 	handleTeamRecord({ team_id: team.id, points: stepNum, rule_id: 'ACTIVE_ADD' });
 	await handleUpdateGradeInfo();
+	ElMessage.success(`小组「${team.name}」加 ${stepNum} 分（仅影响小组积分，不影响成员）`);
 };
 
 const handleSubtractPoints = async (team: TeamInfo) => {
@@ -499,6 +571,7 @@ const handleSubtractPoints = async (team: TeamInfo) => {
 	target.points = Number(target.points) - stepNum;
 	handleTeamRecord({ team_id: team.id, points: -stepNum, rule_id: 'ACTIVE_SUB' });
 	await handleUpdateGradeInfo();
+	ElMessage.success(`小组「${team.name}」减 ${stepNum} 分（仅影响小组积分，不影响成员）`);
 };
 
 // 按规则调整
@@ -526,7 +599,7 @@ const handleRuleConfirm = async () => {
 	target.points = Number(target.points) + points;
 	handleTeamRecord({ team_id: target.id, points, rule_id: rule.id, count: ruleForm.value.count });
 	await handleUpdateGradeInfo();
-	ElMessage.success(points > 0 ? `小组加分 ${points} 分` : `小组减分 ${Math.abs(points)} 分`);
+	ElMessage.success(points > 0 ? `小组加分 ${points} 分（仅影响小组积分，不影响成员）` : `小组减分 ${Math.abs(points)} 分（仅影响小组积分，不影响成员）`);
 	ruleDialogVisible.value = false;
 	currentTeam.value = null;
 };
@@ -569,6 +642,53 @@ const teamRecords = computed(() => {
 const handleViewRecords = (team: TeamInfo) => {
 	recordTeamId.value = team.id;
 	recordDialogVisible.value = true;
+};
+
+// ---------- 成员个人积分操作（与分组管理一致，只影响个人，不影响小组） ----------
+const memberRuleVisible = ref(false);
+const memberRuleTargetName = ref('');
+const currentStudent = ref<Student | null>(null);
+
+const handleMemberAddPoints = async (student: Student) => {
+	if (!canChangePoints.value) { ElMessage.warning('请先选择未结束的积分周期'); return; }
+	student.points = Number(student.points) + Number(step.value);
+	handleStudentRecord({ stu_id: student.id, points: Number(step.value), rule_id: 'ACTIVE_ADD' });
+	await handleUpdateGradeInfo();
+	ElMessage.success(`已为「${student.name}」加 ${Number(step.value)} 分（不影响小组积分）`);
+};
+
+const handleMemberSubtractPoints = async (student: Student) => {
+	if (!canChangePoints.value) { ElMessage.warning('请先选择未结束的积分周期'); return; }
+	student.points = Number(student.points) - Number(step.value);
+	handleStudentRecord({ stu_id: student.id, points: -Number(step.value), rule_id: 'ACTIVE_SUB' });
+	await handleUpdateGradeInfo();
+	ElMessage.success(`已为「${student.name}」减 ${Number(step.value)} 分（不影响小组积分）`);
+};
+
+const handleMemberAdjustPoints = (student: Student) => {
+	if (!canChangePoints.value) { ElMessage.warning('请先选择未结束的积分周期'); return; }
+	memberRuleTargetName.value = student.name;
+	currentStudent.value = student;
+	memberRuleVisible.value = true;
+};
+
+const handleMemberRuleConfirm = async (rule: Rule, count = 1) => {
+	if (!currentStudent.value) return;
+	const points = rule.points * count;
+	currentStudent.value.points = Number(currentStudent.value.points) + points;
+	handleStudentRecord({ stu_id: currentStudent.value.id, points, rule_id: rule.id, count });
+	await handleUpdateGradeInfo();
+	ElMessage.success(points > 0 ? `${currentStudent.value.name} 加分 ${points} 分（不影响小组积分）` : `${currentStudent.value.name} 减分 ${Math.abs(points)} 分（不影响小组积分）`);
+	currentStudent.value = null;
+};
+
+// 成员个人积分记录弹窗
+const studentRecordDialogVisible = ref(false);
+const selectedStudentId = ref('');
+
+const handleStudentViewRecords = (student: Student) => {
+	selectedStudentId.value = student.id;
+	studentRecordDialogVisible.value = true;
 };
 </script>
 

@@ -13,7 +13,6 @@
 			</div>
 		</template>
 		<div class="member-list">
-			<div class="member-tip">小组成员（仅展示，不影响小组分数）</div>
 			<el-input
 				v-model="searchQuery"
 				placeholder="搜索成员"
@@ -23,8 +22,17 @@
 			/>
 			<div v-for="student in filteredMembers" :key="student.id" class="member-item">
 				<div class="member-info">
-					<span class="member-id">{{ student.id }}</span>
 					<span class="member-name">{{ student.name }}</span>
+					<el-tag :type="student.points >= 0 ? 'success' : 'danger'" size="small" class="clickable-tag"
+						@click="handleViewRecords(student)">{{ student.points }} 分</el-tag>
+				</div>
+				<div class="member-actions">
+					<el-button type="success" style="margin: 0px;" :icon="Plus" circle size="small"
+						@click="handleAddPoints(student)" />
+					<el-button type="danger" style="margin: 0px;" :icon="Minus" circle size="small"
+						@click="handleSubtractPoints(student)" />
+					<el-button type="warning" style="margin: 0px;" :icon="Ticket" circle size="small"
+						@click="handleAdjustPoints(student)" />
 				</div>
 			</div>
 			<el-empty v-if="filteredMembers.length === 0" description="暂无成员" :image-size="60" />
@@ -34,16 +42,16 @@
 				<div class="footer-label">小组操作：</div>
 				<div class="team-actions">
 					<el-tooltip content="小组加分" placement="top">
-						<el-button type="success" style="margin: 0px;" :icon="Plus" circle size="small" @click="handleAddPoints" />
+						<el-button type="success" style="margin: 0px;" :icon="Plus" circle size="small" @click="handleTeamAddPoints" />
 					</el-tooltip>
 					<el-tooltip content="小组减分" placement="top">
-						<el-button type="danger" style="margin: 0px;" :icon="Minus" circle size="small" @click="handleSubtractPoints" />
+						<el-button type="danger" style="margin: 0px;" :icon="Minus" circle size="small" @click="handleTeamSubtractPoints" />
 					</el-tooltip>
 					<el-tooltip content="按规则调整小组积分" placement="top">
-						<el-button type="warning" style="margin: 0px;" :icon="Ticket" circle size="small" @click="handleAdjustPoints" />
+						<el-button type="warning" style="margin: 0px;" :icon="Ticket" circle size="small" @click="handleTeamAdjustPoints" />
 					</el-tooltip>
 					<el-tooltip content="查看小组积分记录" placement="top">
-						<el-button type="info" style="margin: 0px;" :icon="List" circle size="small" @click="handleViewRecords" />
+						<el-button type="info" style="margin: 0px;" :icon="List" circle size="small" @click="handleTeamViewRecords" />
 					</el-tooltip>
 				</div>
 			</div>
@@ -54,6 +62,7 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue';
 import { Edit, Delete, Plus, Minus, Ticket, Search, List } from '@element-plus/icons-vue';
+import { Student } from '../../../database/class';
 import type { TeamInfo } from './index.vue';
 
 const props = defineProps<{
@@ -78,18 +87,30 @@ const filteredMembers = computed(() => {
 const emit = defineEmits<{
 	edit: [team: TeamInfo];
 	delete: [team: TeamInfo];
+	// 小组级操作（只影响小组分数）
 	'add-points': [team: TeamInfo];
 	'subtract-points': [team: TeamInfo];
 	'adjust-points': [team: TeamInfo];
 	'view-records': [team: TeamInfo];
+	// 成员级操作（只影响成员个人分数）
+	'member-add-points': [student: Student];
+	'member-subtract-points': [student: Student];
+	'member-adjust-points': [student: Student];
+	'member-view-records': [student: Student];
 }>();
 
 const handleEdit = () => emit('edit', props.team);
 const handleDelete = () => emit('delete', props.team);
-const handleAddPoints = () => emit('add-points', props.team);
-const handleSubtractPoints = () => emit('subtract-points', props.team);
-const handleAdjustPoints = () => emit('adjust-points', props.team);
-const handleViewRecords = () => emit('view-records', props.team);
+
+const handleTeamAddPoints = () => emit('add-points', props.team);
+const handleTeamSubtractPoints = () => emit('subtract-points', props.team);
+const handleTeamAdjustPoints = () => emit('adjust-points', props.team);
+const handleTeamViewRecords = () => emit('view-records', props.team);
+
+const handleAddPoints = (student: Student) => emit('member-add-points', student);
+const handleSubtractPoints = (student: Student) => emit('member-subtract-points', student);
+const handleAdjustPoints = (student: Student) => emit('member-adjust-points', student);
+const handleViewRecords = (student: Student) => emit('member-view-records', student);
 </script>
 
 <style scoped>
@@ -136,11 +157,6 @@ const handleViewRecords = () => emit('view-records', props.team);
 	min-height: 120px;
 }
 
-.member-tip {
-	font-size: 12px;
-	color: #909399;
-}
-
 .search-input {
 	width: 100%;
 }
@@ -160,15 +176,23 @@ const handleViewRecords = () => emit('view-records', props.team);
 	gap: 12px;
 }
 
-.member-id {
-	font-size: 12px;
-	color: #909399;
-}
-
 .member-name {
 	font-size: 14px;
 	color: #606266;
 	font-weight: 500;
+}
+
+.clickable-tag {
+	cursor: pointer;
+}
+
+.clickable-tag:hover {
+	opacity: 0.8;
+}
+
+.member-actions {
+	display: flex;
+	gap: 8px;
 }
 
 .card-footer {

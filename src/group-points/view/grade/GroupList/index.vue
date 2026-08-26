@@ -515,6 +515,7 @@ const handleAddPoints = async (student: Student) => {
 		handleRuleRecord({ stu_id: student.id, points: Number(step.value), rule_id: 'ACTIVE_ADD' });
 	}
 	await handleUpdateGradeInfo();
+	ElMessage.success(`已为「${student.name}」加 ${Number(step.value)} 分（将影响小组积分）`);
 };
 
 const handleSubtractPoints = async (student: Student) => {
@@ -525,6 +526,7 @@ const handleSubtractPoints = async (student: Student) => {
 		handleRuleRecord({ stu_id: student.id, points: -Number(step.value), rule_id: 'ACTIVE_SUB' });
 	}
 	await handleUpdateGradeInfo();
+	ElMessage.success(`已为「${student.name}」减 ${Number(step.value)} 分（将影响小组积分）`);
 };
 
 const handleAdjustPoints = (student: Student) => {
@@ -565,8 +567,8 @@ const handleBatchPointsConfirm = async (count: number) => {
 		await handleUpdateGradeInfo();
 		ElMessage.success(
 			batchPointsType.value === 'add'
-				? `成功为 ${currentGroup.value.studentList.length} 名学生各加 ${points} 分`
-				: `成功为 ${currentGroup.value.studentList.length} 名学生各减 ${Math.abs(points)} 分`
+				? `成功为 ${currentGroup.value.studentList.length} 名学生各加 ${points} 分（将影响小组积分）`
+				: `成功为 ${currentGroup.value.studentList.length} 名学生各减 ${Math.abs(points)} 分（将影响小组积分）`
 		);
 		currentGroup.value = null;
 	}
@@ -593,8 +595,8 @@ const handleRuleConfirm = async (rule: Rule, count = 1) => {
 		await handleUpdateGradeInfo();
 		ElMessage.success(
 			points > 0
-				? `${currentStudent.value.name} 加分 ${points} 分`
-				: `${currentStudent.value.name} 减分 ${Math.abs(points)} 分`
+				? `${currentStudent.value.name} 加分 ${points} 分（将影响小组积分）`
+				: `${currentStudent.value.name} 减分 ${Math.abs(points)} 分（将影响小组积分）`
 		);
 		currentStudent.value = null;
 	} else if (ruleSelectorType.value === 'batch' && currentGroup.value) {
@@ -609,8 +611,8 @@ const handleRuleConfirm = async (rule: Rule, count = 1) => {
 		await handleUpdateGradeInfo();
 		ElMessage.success(
 			points > 0
-				? `成功为 ${currentGroup.value.studentList.length} 名学生各加 ${points} 分`
-				: `成功为 ${currentGroup.value.studentList.length} 名学生各减 ${Math.abs(points)} 分`
+				? `成功为 ${currentGroup.value.studentList.length} 名学生各加 ${points} 分（将影响小组积分）`
+				: `成功为 ${currentGroup.value.studentList.length} 名学生各减 ${Math.abs(points)} 分（将影响小组积分）`
 		);
 	}
 };

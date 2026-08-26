@@ -67,10 +67,10 @@
 				<el-form-item label="姓名" prop="name" :rules="[{ required: true, message: '请输入姓名', trigger: 'blur' }]">
 					<el-input v-model="formData.name" placeholder="请输入姓名" />
 				</el-form-item>
-				<el-form-item label="积分" prop="points" :rules="[{ required: true, message: '请输入积分', trigger: 'blur' }]">
+				<!-- <el-form-item label="积分" prop="points" :rules="[{ required: true, message: '请输入积分', trigger: 'blur' }]">
 					<el-input-number style="width: 100%" controls-position="right" v-model="formData.points"
 						placeholder="请输入积分" />
-				</el-form-item>
+				</el-form-item> -->
 			</el-form>
 			<template #footer>
 				<el-button @click="handleDialogClose">取消</el-button>

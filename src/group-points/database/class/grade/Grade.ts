@@ -31,6 +31,7 @@ export class Grade {
 		},
 		gradeConfig: {
 			orderByPoints: number,
+			teamOrderByPoints?: number,
 		}
 	};
 
@@ -58,6 +59,7 @@ export class Grade {
 			},
 			gradeConfig: {
 				orderByPoints: number,
+				teamOrderByPoints?: number,
 			},
 		};
 	}) {

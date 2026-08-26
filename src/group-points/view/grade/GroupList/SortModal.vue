@@ -40,12 +40,14 @@
 <script setup lang="ts">
 import draggable from 'vuedraggable'
 import { computed, ref, watch } from 'vue';
-import { GroupInfo } from './index.vue';
+
+// 可排序项：仅依赖 id + name，分组管理与独立分组的小组对象均可传入
+type SortableItem = { id: string; name: string };
 
 const props = defineProps<{
 	visible: boolean;
 	defaultOrderByPoints: number;
-	defaultGroupList: Array<GroupInfo>;
+	defaultGroupList: Array<SortableItem>;
 }>();
 
 const emit = defineEmits<{
@@ -62,7 +64,7 @@ const isDragging = ref(false)
 const orderByPoints = ref(props.defaultOrderByPoints);
 
 // 确保 groupList 始终是有效的数组，避免 vuedraggable 初始化报错
-const groupList = ref<Array<GroupInfo>>([...(props.defaultGroupList || [])]);
+const groupList = ref<Array<SortableItem>>([...(props.defaultGroupList || [])]);
 
 // 监听 visible 变化，当弹窗打开时同步最新数据
 watch(() => props.visible, (newVal) => {
