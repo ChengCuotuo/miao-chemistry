@@ -169,7 +169,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue';
+import { computed, ref, watch, onMounted } from 'vue';
 import { useAppStore } from '../../../store/models/app';
 import { useMonitorCycle } from '../../../database/utils/useMonitorCycle';
 import { useRule } from '../../../database/utils/useRule';
@@ -184,7 +184,7 @@ import RecordList from '../RecordList/index.vue';
 const appStore = useAppStore();
 const {
 	getMonitorCycleList, createMonitorCycle, updateMonitorCycle,
-	startMonitorCycle, finishMonitorCycle, deleteMonitorCycle, adjustPointsByRule,
+	startMonitorCycle, finishMonitorCycle, deleteMonitorCycle, adjustPointsByRule, autoFinishExpiredCycles,
 } = useMonitorCycle();
 const { getRuleList } = useRule();
 const { getMonitorAccountList, createMonitorAccount, updateMonitorAccountPassword, deleteMonitorAccount } = useMonitorAccount();
@@ -208,6 +208,14 @@ const syncSelectedCycle = () => {
 	selectedCycleId.value = (running || cycleList.value[cycleList.value.length - 1]).id;
 };
 watch(() => cycleList.value.length, () => { syncSelectedCycle(); }, { immediate: true });
+
+// 进入页面时自动结束已过期的进行中周期
+onMounted(async () => {
+	const count = await autoFinishExpiredCycles();
+	if (count > 0) {
+		syncSelectedCycle();
+	}
+});
 
 const canRecord = computed(() => !!currentCycle.value && currentCycle.value.status === 0 && rules.value.length > 0);
 

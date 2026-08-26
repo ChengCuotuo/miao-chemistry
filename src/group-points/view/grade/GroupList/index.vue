@@ -101,7 +101,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue';
+import { computed, ref, watch, onMounted } from 'vue';
 import { useAppStore } from '../../../store/models/app';
 import { Plus, Sort, Edit, Delete } from '@element-plus/icons-vue';
 import { RuleRecord, Student } from '../../../database/class';
@@ -317,7 +317,7 @@ const handleDelete = (group: Partial<GroupInfo>) => {
 // ---------- 周期选择（分组管理） ----------
 const {
 	getMonitorCycleList, createMonitorCycle, updateMonitorCycle,
-	startMonitorCycle, finishMonitorCycle, deleteMonitorCycle,
+	startMonitorCycle, finishMonitorCycle, deleteMonitorCycle, autoFinishExpiredCycles,
 } = useMonitorCycle();
 
 const cycleList = computed(() => getMonitorCycleList());
@@ -336,8 +336,23 @@ const syncSelectedCycle = () => {
 };
 watch(() => cycleList.value.length, () => { syncSelectedCycle(); }, { immediate: true });
 
-// 当前是否可记分：必须选中未结束周期
-const canChangePoints = computed(() => !!currentCycle.value && currentCycle.value.status === 0);
+// 进入页面时自动结束已过期的进行中周期
+onMounted(async () => {
+	const count = await autoFinishExpiredCycles();
+	if (count > 0) {
+		syncSelectedCycle();
+	}
+});
+
+// 当前是否可记分：选中周期存在、未结束、且当前日期在周期时间范围内（无范围则不限制时间）
+const canChangePoints = computed(() => {
+	const cycle = currentCycle.value;
+	if (!cycle || cycle.status !== 0) return false;
+	const today = dayjs().format('YYYY-MM-DD');
+	if (cycle.endTime && today > cycle.endTime) return false;
+	if (cycle.startTime && today < cycle.startTime) return false;
+	return true;
+});
 
 // ---------- 周期管理 ----------
 const cycleDialogVisible = ref(false);

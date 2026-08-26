@@ -183,6 +183,14 @@
   border-radius: 20px;
 }
 
+/* 复选框保持默认小圆角（不受全局 border-radius 影响） */
+.el-checkbox {
+  --el-checkbox-border-radius: 2px;
+}
+.el-checkbox__inner {
+  border-radius: 2px;
+}
+
 /* 空态/骨架屏底色微调 */
 .el-empty__description p {
   color: var(--el-text-color-secondary);
