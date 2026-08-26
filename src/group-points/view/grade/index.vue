@@ -25,6 +25,9 @@
 			<div v-if="activeName === 'record'" class="info-container">
 				<RecordList></RecordList>
 			</div>
+			<div v-if="activeName === 'analysis'" class="info-container">
+				<AnalysisList></AnalysisList>
+			</div>
 		</div>
 	</div>
 </template>
@@ -39,6 +42,7 @@ import GroupList from './GroupList/index.vue';
 import LotteryDraw from './LotteryDraw/index.vue';
 import RecordList from './RecordList/index.vue';
 import MonitorList from './MonitorList/index.vue';
+import AnalysisList from './AnalysisList/index.vue';
 
 const router = useRouter();
 const appStore = useAppStore();
@@ -51,8 +55,9 @@ const TAB_DEFS: Record<string, string> = {
 	monitor: '班委积分',
 	record: '积分记录',
 	lottery: '积分兑换',
+	analysis: '数据分析',
 };
-const DEFAULT_TAB_ORDER = ['group', 'student', 'monitor', 'record', 'lottery'];
+const DEFAULT_TAB_ORDER = ['group', 'student', 'monitor', 'record', 'lottery', 'analysis'];
 
 // 各模块可见性
 const moduleVisibility = computed(() => appStore.database.basicConfig?.moduleVisibility || {
@@ -70,6 +75,7 @@ const isTabVisible = (name: string): boolean => {
 	if (name === 'group') return moduleVisibility.value.groupManage;
 	if (name === 'record') return moduleVisibility.value.pointsManage;
 	if (name === 'lottery') return moduleVisibility.value.pointsExchange;
+	if (name === 'analysis') return moduleVisibility.value.analysisManage ?? true;
 	return true;
 };
 

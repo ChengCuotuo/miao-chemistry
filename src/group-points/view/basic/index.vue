@@ -63,8 +63,9 @@ const MODULE_DEFS: Record<string, string> = {
 	monitor: '班委积分',
 	record: '积分记录',
 	lottery: '积分兑换',
+	analysis: '数据分析',
 };
-const DEFAULT_MODULE_ORDER = ['group', 'student', 'monitor', 'record', 'lottery'];
+const DEFAULT_MODULE_ORDER = ['group', 'student', 'monitor', 'record', 'lottery', 'analysis'];
 
 // 模块 key → moduleVisibility 里的真实字段名
 const MODULE_VIS_FIELD: Record<string, string> = {
@@ -73,10 +74,11 @@ const MODULE_VIS_FIELD: Record<string, string> = {
 	monitor: 'monitorManage',
 	record: 'pointsManage',
 	lottery: 'pointsExchange',
+	analysis: 'analysisManage',
 };
 
 const getModuleVisible = (key: string): boolean => {
-	const vis = basicConfig?.moduleVisibility || { groupManage: true, pointsManage: true, pointsExchange: true, studentManage: true, monitorManage: true };
+	const vis = basicConfig?.moduleVisibility || { groupManage: true, pointsManage: true, pointsExchange: true, studentManage: true, monitorManage: true, analysisManage: true };
 	return vis[MODULE_VIS_FIELD[key] as keyof typeof vis] ?? true;
 };
 
@@ -130,7 +132,7 @@ const handleModuleChange = () => {
 	if (basicConfig) {
 		// 初始化兜底
 		if (!basicConfig.moduleVisibility) {
-			basicConfig.moduleVisibility = { groupManage: true, pointsManage: true, pointsExchange: true, studentManage: true, monitorManage: true };
+			basicConfig.moduleVisibility = { groupManage: true, pointsManage: true, pointsExchange: true, studentManage: true, monitorManage: true, analysisManage: true };
 		}
 		moduleOrderList.value.forEach(item => {
 			// 按映射写入真实字段：groupManage / studentManage / monitorManage / pointsManage / pointsExchange

@@ -19,6 +19,8 @@ export class Basic {
 		studentManage: boolean;
 		// 班委积分
 		monitorManage: boolean;
+		// 数据分析
+		analysisManage: boolean;
 	};
 	// 班级页模块展示顺序（tab name 数组）
 	moduleOrder: string[];
@@ -36,6 +38,7 @@ export class Basic {
 			pointsExchange: params.moduleVisibility?.pointsExchange ?? true,
 			studentManage: params.moduleVisibility?.studentManage ?? true,
 			monitorManage: params.moduleVisibility?.monitorManage ?? true,
+			analysisManage: params.moduleVisibility?.analysisManage ?? true,
 		};
 		this.moduleOrder = params.moduleOrder || [];
 	}

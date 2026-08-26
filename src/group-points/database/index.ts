@@ -122,6 +122,7 @@ export async function loadGroupPointsConfig() {
 			pointsManage: basicConfigData.moduleVisibility?.pointsManage ?? true,
 			pointsExchange: basicConfigData.moduleVisibility?.pointsExchange ?? true,
 			studentManage: basicConfigData.moduleVisibility?.studentManage ?? true,
+			analysisManage: basicConfigData.moduleVisibility?.analysisManage ?? true,
 		};
 		// 兼容旧版本配置：班委积分可见性默认开启；旧版本存在顶层 monitorVisibility 字段的迁入 moduleVisibility.monitorManage
 		basicConfigData.moduleVisibility.monitorManage = basicConfigData.moduleVisibility?.monitorManage
