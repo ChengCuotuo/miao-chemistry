@@ -1,11 +1,19 @@
 # 小组积分的
 
 ```bash
+# 创建标签，推送到github可以自动打包生成软件
 git tag v1.0.1
+git push origin v1.0.1
 git push github v1.0.1
+
+# 补充内容
+# 删除标签
 git tag -d v1.0.1
-git push github
+# 推送到 gitee
 git push origin
+# 推送到github
+git push github
+# 全量推送
 git push -u github master
 ```
 
