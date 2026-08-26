@@ -31,6 +31,10 @@
 			<el-form-item label="规则描述">
 				<el-input :value="selectedRule?.description" disabled type="textarea" :rows="3" />
 			</el-form-item>
+			<el-form-item label="记录次数">
+				<el-input-number v-model="form.count" :min="1" :max="99" controls-position="right" style="width: 160px" />
+				<span class="count-tip">积分 = 规则分值 × 次数</span>
+			</el-form-item>
 		</el-form>
 		<template #footer>
 			<el-button @click="handleClose">取消</el-button>
@@ -53,7 +57,7 @@ const props = defineProps<{
 
 const emit = defineEmits<{
 	(e: 'update:visible', value: boolean): void;
-	(e: 'confirm', rule: Rule): void;
+	(e: 'confirm', rule: Rule, count: number): void;
 }>();
 
 const visible = computed({
@@ -63,7 +67,8 @@ const visible = computed({
 
 const formRef = ref<FormInstance>();
 const form = ref({
-	ruleId: ''
+	ruleId: '',
+	count: 1,
 });
 
 const title = computed(() => {
@@ -81,6 +86,7 @@ const selectedRule = computed<Rule | undefined>(() => {
 watch(() => props.visible, (newVal) => {
 	if (!newVal) {
 		form.value.ruleId = '';
+		form.value.count = 1;
 	}
 });
 
@@ -95,9 +101,17 @@ const handleSubmit = () => {
 		}
 	formRef.value?.validate((valid) => {
 		if (valid && selectedRule.value) {
-			emit('confirm', selectedRule.value);
+			emit('confirm', selectedRule.value, form.value.count);
 			visible.value = false;
 		}
 	});
 };
 </script>
+
+<style scoped>
+.count-tip {
+	margin-left: 10px;
+	font-size: 12px;
+	color: #909399;
+}
+</style>

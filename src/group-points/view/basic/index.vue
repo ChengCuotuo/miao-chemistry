@@ -41,6 +41,13 @@
           <li class="module-drag-item">
             <el-icon class="drag-handle"><Rank /></el-icon>
             <span class="module-name">{{ element.label }}</span>
+            <el-tooltip
+              v-if="element.key === 'monitor'"
+              content="关闭后：分组管理隐藏积分周期、数据分析自动隐藏、锁屏直接管理员登录"
+              placement="top"
+            >
+              <el-icon class="module-tip-icon"><InfoFilled /></el-icon>
+            </el-tooltip>
             <el-switch v-model="element.visible" @change="handleModuleChange" />
           </li>
         </template>
@@ -82,7 +89,7 @@
 <script setup lang="ts">
 import { useAppStore } from '../../store/models/app';
 import { useBasic } from '../../database/utils/useBasic';
-import { Edit, Rank } from '@element-plus/icons-vue';
+import { Edit, Rank, InfoFilled } from '@element-plus/icons-vue';
 import { ElMessage } from 'element-plus';
 import { ref } from 'vue';
 import draggable from 'vuedraggable';
@@ -360,5 +367,11 @@ const handleModuleChange = () => {
 
 .module-name {
   flex: 1;
+}
+
+.module-tip-icon {
+  color: #909399;
+  cursor: help;
+  font-size: 14px;
 }
 </style>

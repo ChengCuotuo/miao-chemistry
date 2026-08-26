@@ -116,6 +116,13 @@ export async function loadGroupPointsConfig() {
 		const { grade, prize } = mainConfig;
 		const gradeList: Grade[] = JSON.parse(grade) || [];
 		const ruleList: Rule[] = JSON.parse(ruleConfig) || [];
+		// 补齐默认主动加减分规则（旧数据可能缺失）
+		if (!ruleList.some(r => r.id === 'ACTIVE_ADD')) {
+			ruleList.unshift(new Rule({ id: 'ACTIVE_ADD', name: '主动加分', description: '默认主动加分规则', points: 1, allow_grades: [] }));
+		}
+		if (!ruleList.some(r => r.id === 'ACTIVE_SUB')) {
+			ruleList.splice(ruleList.some(r => r.id === 'ACTIVE_ADD') ? 1 : 0, 0, new Rule({ id: 'ACTIVE_SUB', name: '主动减分', description: '默认主动减分规则', points: -1, allow_grades: [] }));
+		}
 		const prizeList: Prize[] = JSON.parse(prize) || [];
 		const basicConfigData = JSON.parse(basicConfig) || { step: "1", buildType, password: md5(password), firstRun: 1, startTime, duration };
 

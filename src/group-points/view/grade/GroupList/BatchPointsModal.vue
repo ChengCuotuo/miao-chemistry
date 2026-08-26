@@ -13,18 +13,19 @@
 				<el-tag>{{ group?.studentList.length }} 人</el-tag>
 			</el-form-item>
 			<el-form-item 
-				label="调整分值" 
-				prop="points" 
+				label="记录次数" 
+				prop="count" 
 				:rules="rules">
 				<el-input-number 
-					v-model="form.points" 
-					:min="minValue" 
-					:max="maxValue"
+					v-model="form.count" 
+					:min="1" 
+					:max="99"
 					:step="1"
 					style="width: 100%"
-					placeholder="请输入分值"
+					placeholder="请输入次数"
 					controls-position="right"
 				/>
+				<div class="count-tip">积分 = 规则分值 × 次数（{{ type === 'add' ? '+1' : '-1' }} 分/次）</div>
 			</el-form-item>
 		</el-form>
 		<template #footer>
@@ -48,7 +49,7 @@ const props = defineProps<{
 
 const emit = defineEmits<{
 	(e: 'update:visible', value: boolean): void;
-	(e: 'confirm', points: number): void;
+	(e: 'confirm', count: number): void;
 }>();
 
 const visible = computed({
@@ -58,42 +59,24 @@ const visible = computed({
 
 const formRef = ref<FormInstance>();
 const form = ref({
-	points: 0,
+	count: 1,
 });
 
 const title = computed(() => {
 	return props.type === 'add' ? '批量加分' : '批量减分';
 });
 
-const minValue = computed(() => {
-	return props.type === 'add' ? 1 : -9999;
-});
-
-const maxValue = computed(() => {
-	return props.type === 'add' ? 9999 : -1;
-});
-
 const rules = computed(() => {
-	if (props.type === 'add') {
-		return [
-			{ required: true, message: '请输入加分值', trigger: 'blur' },
-			{ type: 'number', min: 1, message: '加分值必须为正数', trigger: 'blur' }
-		];
-	} else {
-		return [
-			{ required: true, message: '请输入减分值', trigger: 'blur' },
-			{ type: 'number', max: -1, message: '减分值必须为负数', trigger: 'blur' }
-		];
-	}
+	return [
+		{ required: true, message: '请输入次数', trigger: 'blur' },
+		{ type: 'number', min: 1, max: 99, message: '次数范围 1-99', trigger: 'blur' }
+	];
 });
 
 // 监听 visible 变化，初始化表单
 watch(() => props.visible, (newVal) => {
-	if (newVal && props.group) {
-		form.value.points = props.type === 'add' ? props.step : -props.step;
-	} else if (!newVal) {
-		// 弹窗关闭时重置表单
-		form.value.points = 0;
+	if (newVal) {
+		form.value.count = 1;
 	}
 });
 
@@ -104,9 +87,19 @@ const handleClose = () => {
 const handleSubmit = () => {
 	formRef.value?.validate((valid) => {
 		if (valid) {
-			emit('confirm', form.value.points);
+			emit('confirm', form.value.count);
 			emit('update:visible', false);
 		}
 	});
 };
 </script>
+
+<style scoped>
+.count-tip {
+	font-size: 12px;
+	color: #909399;
+	line-height: 1.4;
+	margin-top: 4px;
+	width: 100%;
+}
+</style>

@@ -9,7 +9,7 @@
 					<el-button type="primary" :icon="Plus" @click="handleAdd">新增小组</el-button>
 				</el-space>
 			</div>
-			<el-space>
+			<el-space v-if="monitorEnabled">
 				<span class="label-text">积分周期：</span>
 				<el-select v-model="selectedCycleId" placeholder="请选择周期" style="width: 200px">
 					<el-option v-for="cycle in cycleList" :key="cycle.id" :label="cycle.name" :value="cycle.id">
@@ -29,6 +29,10 @@
 				<el-button v-if="currentCycle && currentCycle.status === 0" type="danger" :icon="Delete" circle
 					@click="handleDeleteCycle" />
 			</el-space>
+			<!-- 当前周期说明 -->
+			<el-alert v-if="currentCycle && monitorEnabled" :closable="false" class="cycle-tip"
+				:type="currentCycle.status === 0 ? 'info' : 'warning'"
+				:title="cycleTip" />
 		</div>
 		<div class="group-list-content">
 			<GroupCard v-for="group in groupInfoList || []" :key="group.id" :group="group" @edit="handleEdit"
@@ -153,6 +157,15 @@ const groupIndex = computed(() => appStore.activeGrade?.gradeInfo?.indexMap?.gro
 const step = computed(() => appStore.database.basicConfig?.step || 0);
 
 const dialogTitle = computed(() => (isEdit.value ? '编辑小组' : '新增小组'));
+
+const cycleTip = computed(() => {
+	const cycle = currentCycle.value;
+	if (!cycle) return '';
+	const rangeText = cycle.startTime ? `（${cycle.startTime} ~ ${cycle.endTime}）` : '';
+	return cycle.status === 0
+		? `当前周期「${cycle.name}」进行中${rangeText}，仅可通过规则调整积分`
+		: `周期「${cycle.name}」已结束${rangeText}，仅可查看记录，无法再记分`;
+});
 
 // 批量加减分弹窗相关
 const batchPointsVisible = ref(false);
@@ -320,6 +333,8 @@ const {
 	startMonitorCycle, finishMonitorCycle, deleteMonitorCycle, autoFinishExpiredCycles,
 } = useMonitorCycle();
 
+// 是否开启周期记分
+const monitorEnabled = computed(() => appStore.database.basicConfig?.moduleVisibility?.monitorManage ?? true);
 const cycleList = computed(() => getMonitorCycleList());
 const selectedCycleId = ref('');
 const currentCycle = computed(() => cycleList.value.find(item => item.id === selectedCycleId.value));
@@ -344,8 +359,9 @@ onMounted(async () => {
 	}
 });
 
-// 当前是否可记分：选中周期存在、未结束、且当前日期在周期时间范围内（无范围则不限制时间）
+// 当前是否可记分：未开启周期记分时恒可记分；开启时需选中未结束且未过期的周期
 const canChangePoints = computed(() => {
+	if (!monitorEnabled.value) return true;
 	const cycle = currentCycle.value;
 	if (!cycle || cycle.status !== 0) return false;
 	const today = dayjs().format('YYYY-MM-DD');
@@ -466,13 +482,13 @@ const handleDeleteCycle = () => {
 	}).catch(() => { });
 };
 
-const handleRuleRecord = (params: { stu_id: string, points: number, rule_id?: string }) => {
+const handleRuleRecord = (params: { stu_id: string, points: number, rule_id?: string, count?: number }) => {
 	// 记录积分变化
 	if (appStore.activeGrade) {
-		const { stu_id, points, rule_id } = params;
+		const { stu_id, points, rule_id, count = 1 } = params;
 		const recordIndex = appStore.activeGrade.gradeInfo.indexMap.record;
-		// 归入当前选中周期
-		const cycle = currentCycle.value;
+		// 归入当前选中周期（未开启周期记分时 source=0 普通记录）
+		const cycle = monitorEnabled.value ? currentCycle.value : null;
 		const ruleRecord = new RuleRecord({
 			id: recordIndex,
 			stu_id,
@@ -481,6 +497,7 @@ const handleRuleRecord = (params: { stu_id: string, points: number, rule_id?: st
 			time: dayjs().format('YYYY-MM-DD HH:mm:ss'),
 			source: cycle ? 1 : 0,
 			cycle_id: cycle ? cycle.id : '',
+			count,
 		});
 		appStore.activeGrade.gradeInfo.indexMap.record++;
 		appStore.activeGrade.gradeInfo.recordList.push(ruleRecord);
@@ -493,9 +510,9 @@ const handleRuleRecord = (params: { stu_id: string, points: number, rule_id?: st
 const handleAddPoints = async (student: Student) => {
 	if (!canChangePoints.value) { ElMessage.warning('请先选择未结束的积分周期'); return; }
 	student.points = Number(student.points) + Number(step.value);
-	// 记录积分变化
+	// 记录积分变化：对应「主动加分」默认规则
 	if (appStore.activeGrade) {
-		handleRuleRecord({ stu_id: student.id, points: Number(step.value) });
+		handleRuleRecord({ stu_id: student.id, points: Number(step.value), rule_id: 'ACTIVE_ADD' });
 	}
 	await handleUpdateGradeInfo();
 };
@@ -503,9 +520,9 @@ const handleAddPoints = async (student: Student) => {
 const handleSubtractPoints = async (student: Student) => {
 	if (!canChangePoints.value) { ElMessage.warning('请先选择未结束的积分周期'); return; }
 	student.points = Number(student.points) - Number(step.value);
-	// 记录积分变化
+	// 记录积分变化：对应「主动减分」默认规则
 	if (appStore.activeGrade) {
-		handleRuleRecord({ stu_id: student.id, points: -Number(step.value) });
+		handleRuleRecord({ stu_id: student.id, points: -Number(step.value), rule_id: 'ACTIVE_SUB' });
 	}
 	await handleUpdateGradeInfo();
 };
@@ -532,14 +549,17 @@ const handleMulSubtractPoints = (group: GroupInfo) => {
 	batchPointsVisible.value = true;
 };
 
-const handleBatchPointsConfirm = async (points: number) => {
+const handleBatchPointsConfirm = async (count: number) => {
 	if (currentGroup.value) {
-		// 批量调整小组成员的积分
+		// 批量调整：主动加分(+1)/减分(-1) 规则分值 × 次数
+		const batchRuleId = batchPointsType.value === 'add' ? 'ACTIVE_ADD' : 'ACTIVE_SUB';
+		const perPoints = batchPointsType.value === 'add' ? 1 : -1;
+		const points = perPoints * count;
 		currentGroup.value.studentList.forEach(student => {
 			student.points = Number(student.points) + points;
 			// 记录积分变化
 			if (appStore.activeGrade) {
-				handleRuleRecord({ stu_id: student.id, points });
+				handleRuleRecord({ stu_id: student.id, points, rule_id: batchRuleId, count });
 			}
 		});
 		await handleUpdateGradeInfo();
@@ -560,14 +580,14 @@ const handleMulAdjustPoints = (group: GroupInfo) => {
 	ruleSelectorVisible.value = true;
 };
 
-const handleRuleConfirm = async (rule: Rule) => {
-	const points = rule.points;
+const handleRuleConfirm = async (rule: Rule, count = 1) => {
+	const points = rule.points * count;
 	if (ruleSelectorType.value === 'single' && currentStudent.value) {
 		// 单个学生调整
 		currentStudent.value.points = Number(currentStudent.value.points) + points;
 		// 记录积分变化
 		if (appStore.activeGrade) {
-			handleRuleRecord({ stu_id: currentStudent.value.id, points, rule_id: rule.id });
+			handleRuleRecord({ stu_id: currentStudent.value.id, points, rule_id: rule.id, count });
 		}
 
 		await handleUpdateGradeInfo();
@@ -583,7 +603,7 @@ const handleRuleConfirm = async (rule: Rule) => {
 			student.points = Number(student.points) + points;
 			// 记录积分变化
 			if (appStore.activeGrade) {
-				handleRuleRecord({ stu_id: student.id, points, rule_id: rule.id });
+				handleRuleRecord({ stu_id: student.id, points, rule_id: rule.id, count });
 			}
 		});
 		await handleUpdateGradeInfo();

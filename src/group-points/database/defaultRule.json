@@ -1,5 +1,19 @@
 [
 	{
+		"id": "ACTIVE_ADD",
+		"name": "主动加分",
+		"description": "默认主动加分规则",
+		"points": 1,
+		"allow_grades": []
+	},
+	{
+		"id": "ACTIVE_SUB",
+		"name": "主动减分",
+		"description": "默认主动减分规则",
+		"points": -1,
+		"allow_grades": []
+	},
+	{
 		"id": "A001",
 		"name": "课堂主动举手发言",
 		"description": "单日最多5分",

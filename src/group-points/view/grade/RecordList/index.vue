@@ -2,7 +2,7 @@
 	<div class="record-list">
 		<!-- 筛选区域 -->
 		<div class="filter-bar">
-			<el-select v-if="!props.cycleId" v-model="filterCycleId" placeholder="周期" class="filter-select" clearable>
+			<el-select v-if="monitorEnabled && !props.cycleId" v-model="filterCycleId" placeholder="周期" class="filter-select" clearable>
 				<el-option v-for="cycle in cycleList" :key="cycle.id" :label="cycle.name" :value="cycle.id" />
 			</el-select>
 			<el-input
@@ -61,7 +61,7 @@
 					</span>
 				</template>
 			</el-table-column>
-			<el-table-column v-if="!props.cycleId" label="周期" width="110">
+			<el-table-column v-if="monitorEnabled && !props.cycleId" label="周期" width="110">
 				<template #default="scope">
 					<span v-if="getCycleNameByRecord(scope.row)">{{ getCycleNameByRecord(scope.row) }}</span>
 					<span v-else class="text-muted">—</span>
@@ -105,6 +105,9 @@ interface Props {
 const props = defineProps<Props>();
 
 const appStore = useAppStore();
+
+// 是否开启周期记分：未开启时隐藏周期筛选与周期列
+const monitorEnabled = computed(() => appStore.database.basicConfig?.moduleVisibility?.monitorManage ?? true);
 
 // 周期筛选：cycleId prop 优先（弹窗固定周期），否则用筛选器
 const filterCycleId = ref('');

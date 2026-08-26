@@ -84,7 +84,8 @@ const isTabVisible = (name: string): boolean => {
 	if (name === 'group') return moduleVisibility.value.groupManage;
 	if (name === 'record') return moduleVisibility.value.pointsManage;
 	if (name === 'lottery') return moduleVisibility.value.pointsExchange;
-	if (name === 'analysis') return moduleVisibility.value.analysisManage ?? true;
+	// 数据分析依赖周期记分开启：未开启周期记分时自动隐藏数据分析
+	if (name === 'analysis') return monitorVisible.value && (moduleVisibility.value.analysisManage ?? true);
 	return true;
 };
 

@@ -135,6 +135,8 @@ const router = useRouter()
 const { getGradeInfoById } = useGrade()
 const { verifyMonitorAccount } = useMonitorAccount()
 const currentPassword = computed(() => appStore.database.basicConfig?.password || '')
+// 是否开启周期记分（未开启则无班委角色，直接管理员登录）
+const monitorEnabled = computed(() => appStore.database.basicConfig?.moduleVisibility?.monitorManage ?? true)
 
 // 未删除的班级列表
 const gradeList = computed(() => appStore.database.gradeList.filter(item => item.delete === 0))
@@ -183,8 +185,12 @@ const handleMenuClick = () => {
       return
     }
   }
-  // 已设置密码：弹出角色选择
-  roleDialogVisible.value = true
+  // 已设置密码：未开启周期记分时直接管理员登录；开启时弹出角色选择
+  if (!monitorEnabled.value) {
+    passwordDialogVisible.value = true
+  } else {
+    roleDialogVisible.value = true
+  }
 }
 
 // ---------- 角色选择 ----------
