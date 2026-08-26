@@ -63,7 +63,7 @@
 			</el-table-column>
 			<el-table-column v-if="!props.cycleId" label="周期" width="110">
 				<template #default="scope">
-					<span v-if="scope.row.source === 1">{{ getCycleName(scope.row.cycle_id) }}</span>
+					<span v-if="getCycleNameByRecord(scope.row)">{{ getCycleNameByRecord(scope.row) }}</span>
 					<span v-else class="text-muted">—</span>
 				</template>
 			</el-table-column>
@@ -115,6 +115,19 @@ const cycleList = computed(() => appStore.activeGrade?.gradeInfo?.monitorCycleLi
 // 获取周期名称
 const getCycleName = (cycleId: string): string => {
 	return cycleList.value.find(item => item.id === cycleId)?.name || '';
+};
+
+// 根据记录反查所属周期名：优先 source=1 的 cycle_id，否则按记录时间匹配周期时间范围
+const getCycleNameByRecord = (record: RuleRecord): string => {
+	if (record.source === 1 && record.cycle_id) {
+		return getCycleName(record.cycle_id);
+	}
+	if (!record.time) return '';
+	const date = record.time.slice(0, 10);
+	const cycle = cycleList.value.find(c =>
+		c.startTime && c.endTime && date >= c.startTime && date <= c.endTime
+	);
+	return cycle?.name || '';
 };
 
 // 筛选类型：all-全部, add-加分, subtract-减分

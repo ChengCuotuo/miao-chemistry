@@ -1,13 +1,33 @@
 <template>
 	<div class="group-list-container">
 		<div class="action-bar">
+			<div class="operation-bar">
+				<el-space>
+					<el-input v-model="searchQuery" placeholder="请输入小组名或学生名搜索" class="search-input" prefix-icon="Search" />
+					<el-button type="info" @click="handleReset">重置</el-button>
+					<el-button type="success" :icon="Sort" @click="handleSort">调整排序</el-button>
+					<el-button type="primary" :icon="Plus" @click="handleAdd">新增小组</el-button>
+				</el-space>
+			</div>
 			<el-space>
-				<el-input v-model="searchQuery" placeholder="请输入小组名或学生名搜索" class="search-input" prefix-icon="Search" />
-				<el-button type="info" @click="handleReset">重置</el-button>
-			</el-space>
-			<el-space>
-				<el-button type="success" :icon="Sort" @click="handleSort">调整排序</el-button>
-				<el-button type="primary" :icon="Plus" @click="handleAdd">新增小组</el-button>
+				<span class="label-text">积分周期：</span>
+				<el-select v-model="selectedCycleId" placeholder="请选择周期" style="width: 200px">
+					<el-option v-for="cycle in cycleList" :key="cycle.id" :label="cycle.name" :value="cycle.id">
+						<span style="float: left">{{ cycle.name }}<span v-if="cycle.startTime" class="cycle-range">（{{
+							cycle.startTime }} ~ {{ cycle.endTime }}）</span></span>
+						<span style="float: right; font-size: 12px;" :class="cycle.status === 0 ? 'text-success' : 'text-muted'">
+							{{ cycle.status === 0 ? '进行中' : '已结束' }}
+						</span>
+					</el-option>
+				</el-select>
+				<el-button type="primary" :icon="Plus" @click="handleAddCycle">新增周期</el-button>
+				<el-button v-if="currentCycle" :icon="Edit" circle @click="handleEditCycle" />
+				<el-button v-if="currentCycle && currentCycle.status === 0" type="warning" plain
+					@click="handleFinishCycle">结束周期</el-button>
+				<el-button v-if="currentCycle && currentCycle.status === 1" type="success" plain
+					@click="handleStartCycle">重新开始</el-button>
+				<el-button v-if="currentCycle && currentCycle.status === 0" type="danger" :icon="Delete" circle
+					@click="handleDeleteCycle" />
 			</el-space>
 		</div>
 		<div class="group-list-content">
@@ -58,18 +78,38 @@
 		<el-dialog title="学生积分记录" v-model="recordDialogVisible" width="900px">
 			<RecordList :student-id="selectedStudentId" />
 		</el-dialog>
+
+		<!-- 周期新增/编辑弹窗 -->
+		<el-dialog :title="isEditCycle ? '编辑周期' : '新增周期'" v-model="cycleDialogVisible" width="440px">
+			<el-form ref="cycleFormRef" :model="cycleForm" label-width="90px">
+				<el-form-item label="周期名称" prop="name" :rules="[{ required: true, message: '请输入周期名称', trigger: 'blur' }]">
+					<el-input v-model="cycleForm.name" placeholder="如：第一周、第二周" />
+				</el-form-item>
+				<el-form-item label="时间范围" prop="range" :rules="[{ required: true, message: '请选择周期时间范围', trigger: 'change' }]">
+					<el-date-picker v-model="cycleForm.range" type="daterange" value-format="YYYY-MM-DD" range-separator="至"
+						start-placeholder="开始日期" end-placeholder="结束日期" style="width: 100%" :clearable="true"
+						:disabled-date="disabledOverlapDate" />
+					<div class="form-tip">时间范围不可与其他周期重叠</div>
+				</el-form-item>
+			</el-form>
+			<template #footer>
+				<el-button @click="cycleDialogVisible = false">取消</el-button>
+				<el-button type="primary" @click="handleCycleSubmit">确定</el-button>
+			</template>
+		</el-dialog>
 	</div>
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from 'vue';
+import { computed, ref, watch } from 'vue';
 import { useAppStore } from '../../../store/models/app';
-import { Plus, Sort } from '@element-plus/icons-vue';
+import { Plus, Sort, Edit, Delete } from '@element-plus/icons-vue';
 import { RuleRecord, Student } from '../../../database/class';
 import { dayjs, ElMessage, ElMessageBox, FormInstance } from 'element-plus';
 import { Group, StudentGroup, Rule } from '../../../database/class';
 import { useGrade } from '../../../database/utils/useGrade';
 import { useRule } from '../../../database/utils/useRule';
+import { useMonitorCycle } from '../../../database/utils/useMonitorCycle';
 import GroupCard from './GroupCard.vue';
 import BatchPointsModal from './BatchPointsModal.vue';
 import RuleSelectorModal from './RuleSelectorModal.vue';
@@ -274,12 +314,159 @@ const handleDelete = (group: Partial<GroupInfo>) => {
 	})
 };
 
+// ---------- 周期选择（分组管理） ----------
+const {
+	getMonitorCycleList, createMonitorCycle, updateMonitorCycle,
+	startMonitorCycle, finishMonitorCycle, deleteMonitorCycle,
+} = useMonitorCycle();
+
+const cycleList = computed(() => getMonitorCycleList());
+const selectedCycleId = ref('');
+const currentCycle = computed(() => cycleList.value.find(item => item.id === selectedCycleId.value));
+
+// 默认选中未结束的周期
+const syncSelectedCycle = () => {
+	if (!cycleList.value.length) {
+		selectedCycleId.value = '';
+		return;
+	}
+	if (cycleList.value.some(item => item.id === selectedCycleId.value)) return;
+	const running = cycleList.value.find(item => item.status === 0);
+	selectedCycleId.value = (running || cycleList.value[cycleList.value.length - 1]).id;
+};
+watch(() => cycleList.value.length, () => { syncSelectedCycle(); }, { immediate: true });
+
+// 当前是否可记分：必须选中未结束周期
+const canChangePoints = computed(() => !!currentCycle.value && currentCycle.value.status === 0);
+
+// ---------- 周期管理 ----------
+const cycleDialogVisible = ref(false);
+const isEditCycle = ref(false);
+const cycleFormRef = ref<FormInstance>();
+const cycleForm = ref<{ id: string, name: string, range: [string, string] | string[] | null }>({ id: '', name: '', range: null });
+
+const handleAddCycle = () => {
+	isEditCycle.value = false;
+	cycleForm.value = { id: '', name: '', range: null };
+	cycleDialogVisible.value = true;
+};
+
+const handleEditCycle = () => {
+	if (!currentCycle.value) return;
+	isEditCycle.value = true;
+	cycleForm.value = { id: currentCycle.value.id, name: currentCycle.value.name, range: currentCycle.value.startTime && currentCycle.value.endTime ? [currentCycle.value.startTime, currentCycle.value.endTime] : null };
+	cycleDialogVisible.value = true;
+};
+
+// 已被其他周期占用的日期区间
+const occupiedRanges = computed(() => {
+	const ranges: { start: string, end: string, id: string }[] = [];
+	cycleList.value.forEach(cycle => {
+		if (cycle.id === cycleForm.value.id) return;
+		if (cycle.startTime && cycle.endTime) ranges.push({ start: cycle.startTime, end: cycle.endTime, id: cycle.id });
+	});
+	return ranges;
+});
+
+const disabledOverlapDate = (date: Date) => {
+	const dateStr = dayjs(date).format('YYYY-MM-DD');
+	return occupiedRanges.value.some(range => dateStr >= range.start && dateStr <= range.end);
+};
+
+const checkRangeOverlap = (selfId: string, startTime: string, endTime: string): string | null => {
+	if (!startTime || !endTime) return null;
+	const conflict = cycleList.value.find(cycle => {
+		if (cycle.id === selfId) return false;
+		if (!cycle.startTime || !cycle.endTime) return false;
+		return startTime <= cycle.endTime && cycle.startTime <= endTime;
+	});
+	return conflict ? conflict.name : null;
+};
+
+const handleCycleSubmit = () => {
+	cycleFormRef.value?.validate(async (valid) => {
+		if (!valid) return;
+		const { id, name, range } = cycleForm.value;
+		if (!range || !Array.isArray(range) || range.length !== 2 || !range[0] || !range[1]) {
+			ElMessage.warning('请选择周期时间范围');
+			return;
+		}
+		const [startTime = '', endTime = ''] = range;
+		const overlapCycle = checkRangeOverlap(id, startTime, endTime);
+		if (overlapCycle) {
+			ElMessage.warning(`时间范围与周期「${overlapCycle}」重叠，请调整`);
+			return;
+		}
+		const res = id ? await updateMonitorCycle(id, name, startTime, endTime) : await createMonitorCycle(name, startTime, endTime);
+		if (res) {
+			ElMessage.success(id ? '周期已更新' : '周期已创建');
+			cycleDialogVisible.value = false;
+			syncSelectedCycle();
+			if (!id) {
+				const list = getMonitorCycleList();
+				selectedCycleId.value = list[list.length - 1]?.id || '';
+			}
+		} else {
+			ElMessage.error('操作失败，请重试');
+		}
+	});
+};
+
+const handleFinishCycle = () => {
+	if (!currentCycle.value) return;
+	ElMessageBox.confirm(`结束后周期「${currentCycle.value.name}」将无法再记录积分，确认结束？`, '结束周期', {
+		type: 'warning', confirmButtonText: '确认', cancelButtonText: '取消',
+	}).then(async () => {
+		if (await finishMonitorCycle(currentCycle.value!.id)) {
+			ElMessage.success('周期已结束');
+		}
+	}).catch(() => { });
+};
+
+const handleStartCycle = () => {
+	if (!currentCycle.value) return;
+	ElMessageBox.confirm(`重新开始周期「${currentCycle.value.name}」后可继续记分（历史记录保留），确认？`, '重新开始', {
+		type: 'info', confirmButtonText: '确认', cancelButtonText: '取消',
+	}).then(async () => {
+		if (await startMonitorCycle(currentCycle.value!.id)) {
+			ElMessage.success('周期已重新开始');
+		}
+	}).catch(() => { });
+};
+
+const handleDeleteCycle = () => {
+	if (!currentCycle.value) return;
+	if (currentCycle.value.status === 1) {
+		ElMessage.warning('已结束的周期不允许删除');
+		return;
+	}
+	ElMessageBox.confirm(`删除周期「${currentCycle.value.name}」将同时删除该周期的所有积分记录，并回退学生在周期内被调整的积分，确认删除？`, '删除周期', {
+		type: 'warning', confirmButtonText: '确认', cancelButtonText: '取消',
+	}).then(async () => {
+		if (await deleteMonitorCycle(currentCycle.value!.id)) {
+			ElMessage.success('周期已删除');
+			selectedCycleId.value = '';
+			syncSelectedCycle();
+		}
+	}).catch(() => { });
+};
+
 const handleRuleRecord = (params: { stu_id: string, points: number, rule_id?: string }) => {
 	// 记录积分变化
 	if (appStore.activeGrade) {
 		const { stu_id, points, rule_id } = params;
 		const recordIndex = appStore.activeGrade.gradeInfo.indexMap.record;
-		const ruleRecord = new RuleRecord({ id: recordIndex, stu_id, rule_id, points, time: dayjs().format('YYYY-MM-DD HH:mm:ss') });
+		// 归入当前选中周期
+		const cycle = currentCycle.value;
+		const ruleRecord = new RuleRecord({
+			id: recordIndex,
+			stu_id,
+			rule_id,
+			points,
+			time: dayjs().format('YYYY-MM-DD HH:mm:ss'),
+			source: cycle ? 1 : 0,
+			cycle_id: cycle ? cycle.id : '',
+		});
 		appStore.activeGrade.gradeInfo.indexMap.record++;
 		appStore.activeGrade.gradeInfo.recordList.push(ruleRecord);
 		// 仅保留最近100条记录
@@ -289,6 +476,7 @@ const handleRuleRecord = (params: { stu_id: string, points: number, rule_id?: st
 }
 
 const handleAddPoints = async (student: Student) => {
+	if (!canChangePoints.value) { ElMessage.warning('请先选择未结束的积分周期'); return; }
 	student.points = Number(student.points) + Number(step.value);
 	// 记录积分变化
 	if (appStore.activeGrade) {
@@ -298,6 +486,7 @@ const handleAddPoints = async (student: Student) => {
 };
 
 const handleSubtractPoints = async (student: Student) => {
+	if (!canChangePoints.value) { ElMessage.warning('请先选择未结束的积分周期'); return; }
 	student.points = Number(student.points) - Number(step.value);
 	// 记录积分变化
 	if (appStore.activeGrade) {
@@ -307,6 +496,7 @@ const handleSubtractPoints = async (student: Student) => {
 };
 
 const handleAdjustPoints = (student: Student) => {
+	if (!canChangePoints.value) { ElMessage.warning('请先选择未结束的积分周期'); return; }
 	ruleSelectorType.value = 'single';
 	ruleTargetName.value = student.name;
 	currentStudent.value = student;
@@ -314,12 +504,14 @@ const handleAdjustPoints = (student: Student) => {
 };
 
 const handleMulAddPoints = (group: GroupInfo) => {
+	if (!canChangePoints.value) { ElMessage.warning('请先选择未结束的积分周期'); return; }
 	batchPointsType.value = 'add';
 	currentGroup.value = group;
 	batchPointsVisible.value = true;
 };
 
 const handleMulSubtractPoints = (group: GroupInfo) => {
+	if (!canChangePoints.value) { ElMessage.warning('请先选择未结束的积分周期'); return; }
 	batchPointsType.value = 'subtract';
 	currentGroup.value = group;
 	batchPointsVisible.value = true;
@@ -346,6 +538,7 @@ const handleBatchPointsConfirm = async (points: number) => {
 };
 
 const handleMulAdjustPoints = (group: GroupInfo) => {
+	if (!canChangePoints.value) { ElMessage.warning('请先选择未结束的积分周期'); return; }
 	ruleSelectorType.value = 'batch';
 	ruleTargetName.value = group.name;
 	currentGroup.value = group;
@@ -425,13 +618,44 @@ const handleSortConfirm = async (prams: { orderByPoints: number, groupList: stri
 
 .action-bar {
 	display: flex;
-	justify-content: space-between;
-	align-items: center;
+	gap: 10px;
+	flex-direction: column;
 	margin-bottom: 20px;
+}
+
+.operation-bar {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
 }
 
 .search-input {
 	width: 200px;
+}
+
+.label-text {
+	font-weight: 600;
+}
+
+.cycle-range {
+	font-size: 12px;
+	color: #909399;
+}
+
+.form-tip {
+	font-size: 12px;
+	color: #909399;
+	line-height: 1.4;
+	margin-top: 4px;
+	width: 100%;
+}
+
+.text-success {
+	color: #67c23a;
+}
+
+.text-muted {
+	color: #909399;
 }
 
 .group-list-content {

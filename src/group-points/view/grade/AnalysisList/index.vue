@@ -79,7 +79,10 @@
 						<div class="card-title">个体诊断（学生维度）</div>
 						<div class="card-sub">学生加减分构成与净变化（不受统计范围影响）</div>
 					</div>
-					<el-input v-model="studentSearch" placeholder="按学生名称搜索" clearable prefix-icon="Search" class="card-search" />
+					<div class="card-tools">
+						<el-input v-model="studentSearch" placeholder="按学生名称搜索" clearable prefix-icon="Search" class="card-search" />
+						<el-button type="primary" plain :icon="Download" @click="handleExportStudent">导出 Excel</el-button>
+					</div>
 				</div>
 				<AnalysisChart :option="studentOption" height="340px" />
 			</section>
@@ -93,28 +96,51 @@
 					</div>
 					<div class="card-tools">
 						<el-input v-model="matrixSearch" placeholder="按学生名称搜索" clearable prefix-icon="Search" class="card-search" />
-						<el-button type="primary" plain :icon="Download" @click="handleExport">导出 Excel</el-button>
+						<el-button type="primary" plain :icon="Download" @click="handleExportMatrix">导出 Excel</el-button>
 					</div>
 				</div>
 				<el-table :data="matrixData" size="small" max-height="420" border>
-					<el-table-column prop="name" label="学生" width="110" fixed align="center" />
-					<el-table-column v-for="cycle in cycleList" :key="cycle.id" :label="cycle.name" align="center" min-width="90">
+					<el-table-column type="expand" width="40">
 						<template #default="scope">
-							<span :class="scope.row.cyclePoints[cycle.id] > 0 ? 'text-success' : scope.row.cyclePoints[cycle.id] < 0 ? 'text-danger' : 'text-muted'">
-								{{ scope.row.cyclePoints[cycle.id] > 0 ? '+' : '' }}{{ scope.row.cyclePoints[cycle.id] || 0 }}
-							</span>
+							<div class="expand-detail">
+								<div class="expand-title">各项规则积分</div>
+								<el-table :data="scope.row.ruleStats" size="small" border>
+									<el-table-column prop="name" label="规则" min-width="140" />
+									<el-table-column prop="points" label="分值" width="80" align="center">
+										<template #default="s">
+											<span :class="s.row.points > 0 ? 'text-success' : s.row.points < 0 ? 'text-danger' : 'text-muted'">
+												{{ s.row.points > 0 ? '+' : '' }}{{ s.row.points }}
+											</span>
+										</template>
+									</el-table-column>
+									<el-table-column prop="count" label="次数" width="80" align="center">
+										<template #default="s">
+											<span :class="s.row.count > 0 ? 'text-success' : 'text-muted'">{{ s.row.count }}</span>
+										</template>
+									</el-table-column>
+									<el-table-column prop="total" label="积分" width="100" align="center">
+										<template #default="s">
+											<span :class="s.row.total > 0 ? 'text-success' : s.row.total < 0 ? 'text-danger' : 'text-muted'">
+												{{ s.row.total > 0 ? '+' : '' }}{{ s.row.total }}
+											</span>
+										</template>
+									</el-table-column>
+								</el-table>
+							</div>
 						</template>
 					</el-table-column>
-					<el-table-column prop="total" label="合计" width="90" fixed="right" align="center" sortable>
+					<el-table-column prop="name" label="学生" fixed align="center" />
+					<el-table-column prop="total" label="合计"  align="center" sortable>
 						<template #default="scope">
 							<span :class="scope.row.total > 0 ? 'text-success' : scope.row.total < 0 ? 'text-danger' : 'text-muted'">
 								{{ scope.row.total > 0 ? '+' : '' }}{{ scope.row.total }}
 							</span>
 						</template>
 					</el-table-column>
-					<el-table-column label="趋势" width="80" fixed="right" align="center">
+					<el-table-column label="操作" fixed="right" align="center">
 						<template #default="scope">
 							<el-button size="small" type="primary" link :icon="TrendCharts" @click="handleShowTrend(scope.row)">趋势</el-button>
+							<el-button size="small" type="success" link :icon="DataAnalysis" @click="handleShowStats(scope.row)">统计</el-button>
 						</template>
 					</el-table-column>
 				</el-table>
@@ -125,6 +151,20 @@
 		<el-dialog :title="`${trendStudent?.name || ''} - 周期积分变化`" v-model="trendDialogVisible" width="720px">
 			<AnalysisChart :option="studentTrendOption" height="380px" />
 		</el-dialog>
+
+		<!-- 学生周期 × 规则执行次数统计弹窗 -->
+		<el-dialog :title="`${statsStudent?.name || ''} - 各周期规则执行次数`" v-model="statsDialogVisible" width="900px">
+			<el-table :data="statsMatrix" size="small" max-height="500" border>
+				<el-table-column prop="cycleName" label="周期" width="110" fixed align="center" />
+				<el-table-column v-for="rule in rulesInStats" :key="rule.id" :label="rule.name" align="center" min-width="90">
+					<template #default="scope">
+						<span :class="scope.row.ruleCounts[rule.id] > 0 ? 'text-success' : 'text-muted'">{{ scope.row.ruleCounts[rule.id] || 0 }}</span>
+					</template>
+				</el-table-column>
+				<el-table-column prop="total" label="合计" width="80" fixed="right" align="center" />
+			</el-table>
+			<el-empty v-if="statsMatrix.length === 0" description="该学生暂无记录" :image-size="60" />
+		</el-dialog>
 	</div>
 </template>
 
@@ -132,7 +172,7 @@
 import { computed, ref } from 'vue';
 import { useAppStore } from '../../../store/models/app';
 import AnalysisChart from './AnalysisChart.vue';
-import { TrendCharts, Download, Search } from '@element-plus/icons-vue';
+import { TrendCharts, Download, Search, DataAnalysis } from '@element-plus/icons-vue';
 import { utils, writeFile as writeExcelFile } from 'xlsx';
 import { ElMessage } from 'element-plus';
 
@@ -340,37 +380,137 @@ const matrixData = computed(() => {
 			cyclePoints[cycle.id] = net;
 			total += net;
 		});
-		return { name: s.name, cyclePoints, total };
+		// 展开用的规则次数明细（该学生各规则的执行次数，仅列有记录的规则）
+		const stuRecs = recordList.value.filter(r => r.stu_id === s.id);
+		const usedRuleIds = new Set<string>();
+		stuRecs.forEach(r => { if (r.rule_id) usedRuleIds.add(r.rule_id); });
+		const ruleStats = ruleList.value
+			.filter(r => usedRuleIds.has(r.id))
+			.map(r => {
+				const recs = stuRecs.filter(rec => rec.rule_id === r.id);
+				return {
+					name: r.name,
+					points: r.points,
+					count: recs.reduce((a, rec) => a + (rec.count || 1), 0),
+					total: recs.reduce((a, rec) => a + rec.points, 0),
+				};
+			})
+			.sort((a, b) => b.total - a.total);
+		return { stu_id: s.id, name: s.name, cyclePoints, ruleStats, total };
 	}).filter(s => !matrixSearch.value || s.name.toLowerCase().includes(matrixSearch.value.toLowerCase()))
 		.sort((a, b) => b.total - a.total);
 });
 
 // ---------- 导出：个体诊断 + 积分变化明细 → 同一 Excel 两个 sheet ----------
-const handleExport = () => {
+// ---------- 导出个体诊断（学生维度） ----------
+const handleExportStudent = () => {
 	try {
 		const workbook = utils.book_new();
-
-		// sheet1：个体诊断（学生维度）
 		const diagRows: (string | number)[][] = [['学生姓名', '加分', '减分', '净变化']];
 		studentStats.value.forEach(s => diagRows.push([s.name, s.add, -s.sub, s.net]));
 		utils.book_append_sheet(workbook, utils.aoa_to_sheet(diagRows), '个体诊断');
-
-		// sheet2：积分变化明细（学生 × 周期）
-		const matrixRows: (string | number)[][] = [['学生姓名', ...cycleList.value.map(c => c.name), '合计']];
-		matrixData.value.forEach(s => {
-			const row: (string | number)[] = [s.name];
-			cycleList.value.forEach(c => row.push(s.cyclePoints[c.id] || 0));
-			row.push(s.total);
-			matrixRows.push(row);
-		});
-		utils.book_append_sheet(workbook, utils.aoa_to_sheet(matrixRows), '积分变化明细');
-
-		writeExcelFile(workbook, '数据分析导出.xlsx');
-		ElMessage.success('已导出：个体诊断 + 积分变化明细');
+		writeExcelFile(workbook, '个体诊断导出.xlsx');
+		ElMessage.success('已导出：个体诊断');
 	} catch (error) {
 		console.error('导出失败:', error);
 		ElMessage.error('导出失败');
 	}
+};
+
+// ---------- 导出积分变化明细（学生 × 周期，合并单元格：学生姓名跨周期行合并） ----------
+const handleExportMatrix = () => {
+	try {
+		const workbook = utils.book_new();
+
+		// 全班用过的规则（去重，按规则列表顺序）
+		const usedRuleIds = new Set<string>();
+		recordList.value.forEach(r => { if (r.rule_id) usedRuleIds.add(r.rule_id); });
+		const usedRules = ruleList.value.filter(r => usedRuleIds.has(r.id));
+
+		// 表头：学生姓名 | 周期 | 规则1 | 规则2 | ...
+		const rows: (string | number)[][] = [['学生姓名', '周期', ...usedRules.map(r => r.name)]];
+
+		// 学生姓名列合并范围
+		const merges: { s: { r: number, c: number }, e: { r: number, c: number } }[] = [];
+
+		matrixData.value.forEach(s => {
+			// 该学生在每个周期的行
+			const startRow = rows.length; // 即将写入的第一行（0-based 行号）
+			let rowCount = 0;
+			cycleList.value.forEach(cycle => {
+				const row: (string | number)[] = [s.name, cycle.name];
+				usedRules.forEach(rule => {
+					const recs = recordList.value.filter(r =>
+						r.stu_id === s.stu_id && r.rule_id === rule.id && recordInCycle(r, cycle)
+					);
+					row.push(recs.reduce((a, r) => a + (r.count || 1), 0));
+				});
+				rows.push(row);
+				rowCount++;
+			});
+			// 该学生的总计行：汇总该学生各规则的次数（"总计"放在周期列，学生姓名列留空）
+			const stuTotalRow: (string | number)[] = ['', '总计'];
+			usedRules.forEach(rule => {
+				const cnt = recordList.value
+					.filter(r => r.stu_id === s.stu_id && r.rule_id === rule.id)
+					.reduce((a, r) => a + (r.count || 1), 0);
+				stuTotalRow.push(cnt);
+			});
+			rows.push(stuTotalRow);
+
+			// 学生姓名列合并（第 0 列）：从第一周期行到总计行（含总计行）
+			const endRow = startRow + rowCount; // 总计行所在行号
+			if (endRow > startRow) {
+				merges.push({ s: { r: startRow, c: 0 }, e: { r: endRow, c: 0 } });
+			}
+		});
+
+		const sheet = utils.aoa_to_sheet(rows);
+		sheet['!merges'] = merges;
+		utils.book_append_sheet(workbook, sheet, '积分变化明细');
+		writeExcelFile(workbook, '积分变化明细导出.xlsx');
+		ElMessage.success('已导出：积分变化明细');
+	} catch (error) {
+		console.error('导出失败:', error);
+		ElMessage.error('导出失败');
+	}
+};
+
+// ---------- 6d. 学生周期 × 规则执行次数统计 ----------
+const statsDialogVisible = ref(false);
+const statsStudent = ref<{ stu_id: string, name: string } | null>(null);
+
+// 该学生各周期内出现的规则（去重，按规则列表顺序）
+const rulesInStats = computed(() => {
+	if (!statsStudent.value) return [];
+	const ids = new Set<string>();
+	recordList.value.forEach(r => {
+		if (r.stu_id === statsStudent.value!.stu_id && r.rule_id) ids.add(r.rule_id);
+	});
+	return ruleList.value.filter(r => ids.has(r.id));
+});
+
+// 统计矩阵：行=周期，列=规则，值为执行次数
+const statsMatrix = computed(() => {
+	if (!statsStudent.value) return [];
+	return cycleList.value.map(cycle => {
+		const ruleCounts: Record<string, number> = {};
+		let total = 0;
+		rulesInStats.value.forEach(rule => {
+			const recs = recordList.value.filter(r =>
+				r.stu_id === statsStudent.value!.stu_id && r.rule_id === rule.id && recordInCycle(r, cycle)
+			);
+			const cnt = recs.reduce((a, r) => a + (r.count || 1), 0);
+			ruleCounts[rule.id] = cnt;
+			total += cnt;
+		});
+		return { cycleName: cycle.name, ruleCounts, total };
+	});
+});
+
+const handleShowStats = (row: { stu_id: string, name: string }) => {
+	statsStudent.value = row;
+	statsDialogVisible.value = true;
 };
 
 // ---------- 6c. 学生周期趋势弹窗 ----------
@@ -484,6 +624,16 @@ const studentTrendOption = computed(() => {
 
 .card-search {
 	width: 200px;
+}
+
+.expand-detail {
+	padding: 8px 16px;
+}
+
+.expand-title {
+	font-size: 12px;
+	color: #909399;
+	margin-bottom: 6px;
 }
 
 .text-success {

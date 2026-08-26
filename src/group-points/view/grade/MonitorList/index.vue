@@ -100,6 +100,7 @@
 
 		<!-- 周期新增/编辑弹窗 -->
 		<el-dialog :title="isEditCycle ? '编辑周期' : '新增周期'" v-model="cycleDialogVisible" width="440px">
+			<div style="height: 20px;"></div>
 			<el-form ref="cycleFormRef" :model="cycleForm" label-width="90px">
 				<el-form-item label="周期名称" prop="name" :rules="[{ required: true, message: '请输入周期名称', trigger: 'blur' }]">
 					<el-input v-model="cycleForm.name" placeholder="如：第一周、第二周" />
