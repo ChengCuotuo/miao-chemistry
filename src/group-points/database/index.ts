@@ -128,6 +128,18 @@ export async function loadGroupPointsConfig() {
 		basicConfigData.moduleVisibility.monitorManage = basicConfigData.moduleVisibility?.monitorManage
 			?? (basicConfigData as any).monitorVisibility ?? true;
 
+		// 兼容旧版本配置：数据分析图表可见性/顺序默认全展示
+		basicConfigData.analysisChartVisibility = {
+			trend: basicConfigData.analysisChartVisibility?.trend ?? true,
+			rule: basicConfigData.analysisChartVisibility?.rule ?? true,
+			ruleHealth: basicConfigData.analysisChartVisibility?.ruleHealth ?? true,
+			group: basicConfigData.analysisChartVisibility?.group ?? true,
+			student: basicConfigData.analysisChartVisibility?.student ?? true,
+			matrix: basicConfigData.analysisChartVisibility?.matrix ?? true,
+		};
+		basicConfigData.analysisChartOrder = Array.isArray(basicConfigData.analysisChartOrder)
+			? basicConfigData.analysisChartOrder : [];
+
 		// 正式版构建运行时，如果持久化的配置信息还是体验版，则覆盖为正式版
 		if (buildType === BUILD_TYPE.official && basicConfigData.buildType !== BUILD_TYPE.official) {
 			basicConfigData.buildType = BUILD_TYPE.official;

@@ -24,8 +24,19 @@ export class Basic {
 	};
 	// 班级页模块展示顺序（tab name 数组）
 	moduleOrder: string[];
+	// 数据分析各图表可见性
+	analysisChartVisibility: {
+		trend: boolean;
+		rule: boolean;
+		ruleHealth: boolean;
+		group: boolean;
+		student: boolean;
+		matrix: boolean;
+	};
+	// 数据分析各图表展示顺序（key 数组）
+	analysisChartOrder: string[];
 
-	constructor(params: { step: number, buildType: string, password: string, firstRun: number, startTime: number, duration: number, moduleVisibility?: Partial<Basic['moduleVisibility']>, moduleOrder?: string[] }) {
+	constructor(params: { step: number, buildType: string, password: string, firstRun: number, startTime: number, duration: number, moduleVisibility?: Partial<Basic['moduleVisibility']>, moduleOrder?: string[], analysisChartVisibility?: Partial<Basic['analysisChartVisibility']>, analysisChartOrder?: string[] }) {
 		this.step = params.step;
 		this.buildType = params.buildType;
 		this.password = params.password;
@@ -41,6 +52,15 @@ export class Basic {
 			analysisManage: params.moduleVisibility?.analysisManage ?? true,
 		};
 		this.moduleOrder = params.moduleOrder || [];
+		this.analysisChartVisibility = {
+			trend: params.analysisChartVisibility?.trend ?? true,
+			rule: params.analysisChartVisibility?.rule ?? true,
+			ruleHealth: params.analysisChartVisibility?.ruleHealth ?? true,
+			group: params.analysisChartVisibility?.group ?? true,
+			student: params.analysisChartVisibility?.student ?? true,
+			matrix: params.analysisChartVisibility?.matrix ?? true,
+		};
+		this.analysisChartOrder = params.analysisChartOrder || [];
 	}
 
 	toJSON() {

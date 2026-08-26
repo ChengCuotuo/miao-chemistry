@@ -18,21 +18,21 @@
 
 		<div v-else class="card-grid">
 			<!-- 1. 趋势分析（周期对比） -->
-			<section class="chart-card">
+			<section class="chart-card" v-if="isChartVisible('trend')" :style="{ order: chartOrderIndex('trend') }">
 				<div class="card-title">趋势分析（周期对比）</div>
 				<div class="card-sub">各周期积分净变化，观察班级整体走势</div>
 				<AnalysisChart :option="trendOption" height="300px"/>
 			</section>
 
 			<!-- 2. 行为画像（规则维度） -->
-			<section class="chart-card">
+			<section class="chart-card" v-if="isChartVisible('rule')" :style="{ order: chartOrderIndex('rule') }">
 				<div class="card-title">行为画像（规则维度）</div>
 				<div class="card-sub">各规则触发次数与积分贡献</div>
 				<AnalysisChart :option="ruleOption" height="340px" />
 			</section>
 
 			<!-- 3. 规则健康度（规则库维度） -->
-			<section class="chart-card" >
+			<section class="chart-card" v-if="isChartVisible('ruleHealth')" :style="{ order: chartOrderIndex('ruleHealth') }">
 				<div class="card-title">规则健康度（规则库维度）</div>
 				<div class="card-sub">规则触发次数，识别形同虚设的规则</div>
 				<el-table :data="ruleHealth" size="small" max-height="300">
@@ -63,14 +63,14 @@
 			</section>
 
 			<!-- 4. 协作观察（小组维度） -->
-			<section class="chart-card" v-if="groupList.length > 0 && moduleVisibility.groupManage">
+			<section class="chart-card" v-if="isChartVisible('group') && groupList.length > 0 && moduleVisibility.groupManage" :style="{ order: chartOrderIndex('group') }">
 				<div class="card-title">协作观察（小组维度）</div>
 				<div class="card-sub">小组积分合计对比</div>
 				<AnalysisChart :option="groupOption" height="300px" />
 			</section>
 
 			<!-- 5. 个体诊断（学生维度） -->
-			<section class="chart-card">
+			<section class="chart-card" v-if="isChartVisible('student')" :style="{ order: chartOrderIndex('student') }">
 				<div class="card-title">个体诊断（学生维度）</div>
 				<div class="card-sub">学生加减分构成与净变化</div>
 				<AnalysisChart :option="studentOption" height="340px" />
@@ -79,7 +79,7 @@
 			
 
 			<!-- 6. 积分变化明细（学生 × 周期） -->
-			<section class="chart-card" v-if="cycleList.length > 0">
+			<section class="chart-card" v-if="isChartVisible('matrix') && cycleList.length > 0" :style="{ order: chartOrderIndex('matrix') }">
 				<div class="card-title">积分变化明细（学生 × 周期）</div>
 				<div class="card-sub">热力图观察整体分布与个体趋势，下方表格可精确读数</div>
 				<el-table :data="matrixData" size="small" max-height="420" border>
@@ -132,6 +132,27 @@ const ruleList = computed(() => appStore.database.ruleList || []);
 const moduleVisibility = computed(() => appStore.database.basicConfig?.moduleVisibility || {
 	groupManage: true,
 });
+
+// ---------- 数据分析图表展示配置 ----------
+const CHART_DEFS = ['trend', 'rule', 'ruleHealth', 'group', 'student', 'matrix'];
+const DEFAULT_CHART_ORDER = ['trend', 'rule', 'ruleHealth', 'group', 'student', 'matrix'];
+
+const chartOrder = computed(() => {
+	const saved = appStore.database.basicConfig?.analysisChartOrder;
+	return (Array.isArray(saved) && saved.length ? saved : DEFAULT_CHART_ORDER)
+		.filter((k: string) => CHART_DEFS.includes(k));
+});
+
+const chartVisibility = computed(() => appStore.database.basicConfig?.analysisChartVisibility || {});
+
+// 图表是否可见
+const isChartVisible = (key: string) => (chartVisibility.value as Record<string, boolean>)[key] ?? true;
+
+// 图表顺序索引（用于 CSS order，未出现在配置里的排在后面）
+const chartOrderIndex = (key: string) => {
+	const idx = chartOrder.value.indexOf(key);
+	return idx === -1 ? 999 : idx;
+};
 
 const getRuleName = (id: string) => ruleList.value.find(r => r.id === id)?.name || '';
 
@@ -376,6 +397,8 @@ watch(cycleList, (list) => {
 .card-grid {
 	overflow-y: auto;
 	padding-bottom: 6px;
+	display: flex;
+	flex-direction: column;
 }
 
 .chart-card {
