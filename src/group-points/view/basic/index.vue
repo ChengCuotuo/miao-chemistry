@@ -60,7 +60,7 @@ const basicConfig = appStore.database.basicConfig
 const MODULE_DEFS: Record<string, string> = {
 	student: '学生管理',
 	group: '分组管理',
-	monitor: '班委积分',
+	monitor: '周期记分',
 	record: '积分记录',
 	lottery: '积分兑换',
 	analysis: '数据分析',

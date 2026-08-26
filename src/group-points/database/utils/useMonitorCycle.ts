@@ -104,7 +104,7 @@ export const useMonitorCycle = () => {
 		}
 	}
 
-	// 通过规则调整学生积分（周期内）—— 班委积分唯一入口
+	// 通过规则调整学生积分（周期内）—— 周期记分唯一入口
 	// group_id: 按组发放时记录组 id；单个发放传 ''
 	const adjustPointsByRule = async (params: { cycleId: string, ruleId: string, students: Student[], groupId?: string, count?: number }) => {
 		try {
@@ -145,7 +145,7 @@ export const useMonitorCycle = () => {
 			await saveGradeInfo(appStore.activeGrade.id, JSON.stringify(appStore.activeGrade));
 			return { success: true, message: `已记录 ${students.length} 人` };
 		} catch (error) {
-			console.error('班委积分调整出错:', error);
+			console.error('周期记分调整出错:', error);
 			return { success: false, message: '操作失败，请重试' };
 		}
 	}

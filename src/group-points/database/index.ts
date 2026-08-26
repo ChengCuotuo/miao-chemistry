@@ -124,7 +124,7 @@ export async function loadGroupPointsConfig() {
 			studentManage: basicConfigData.moduleVisibility?.studentManage ?? true,
 			analysisManage: basicConfigData.moduleVisibility?.analysisManage ?? true,
 		};
-		// 兼容旧版本配置：班委积分可见性默认开启；旧版本存在顶层 monitorVisibility 字段的迁入 moduleVisibility.monitorManage
+		// 兼容旧版本配置：周期记分可见性默认开启；旧版本存在顶层 monitorVisibility 字段的迁入 moduleVisibility.monitorManage
 		basicConfigData.moduleVisibility.monitorManage = basicConfigData.moduleVisibility?.monitorManage
 			?? (basicConfigData as any).monitorVisibility ?? true;
 
@@ -175,7 +175,7 @@ export async function loadGradeInfoById(gradeId: string) {
 			studentList: [], // 学生列表
 			studentGroupList: [], // 学生分组列表
 			recordList: [], // 奖励记录列表
-			monitorCycleList: [], // 班委积分周期列表
+			monitorCycleList: [], // 周期记分周期列表
 			indexMap: { group: 0, student: 0, studentGroup: 0, record: 0, monitorCycle: 0 }, // 索引映射
 			gradeConfig: {
 				orderByPoints: 0,

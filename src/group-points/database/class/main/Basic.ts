@@ -17,7 +17,7 @@ export class Basic {
 		pointsExchange: boolean;
 		// 学生管理
 		studentManage: boolean;
-		// 班委积分
+		// 周期记分
 		monitorManage: boolean;
 		// 数据分析
 		analysisManage: boolean;

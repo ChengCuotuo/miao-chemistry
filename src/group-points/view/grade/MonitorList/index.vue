@@ -72,8 +72,8 @@
 					</div>
 				<div class="table-wrap">
 					<el-table ref="studentTableRef" :data="pagedStudents" border height="100%" @selection-change="handleSelectionChange">
-						<el-table-column type="selection" min-width="45" />
-						<el-table-column prop="id" label="ID" min-width="60" align="center" />
+						<el-table-column type="selection" width="45" />
+						<el-table-column prop="id" label="ID" width="60" align="center" />
 						<el-table-column prop="name" label="姓名" min-width="100" align="center" />
 						<el-table-column prop="points" label="积分" min-width="80" align="center" sortable>
 							<template #default="scope">

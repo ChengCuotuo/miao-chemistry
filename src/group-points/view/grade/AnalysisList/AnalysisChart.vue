@@ -4,12 +4,12 @@
 
 <script setup lang="ts">
 import * as echarts from 'echarts/core';
-import { GridComponent, TooltipComponent, LegendComponent } from 'echarts/components';
-import { BarChart, LineChart } from 'echarts/charts';
+import { GridComponent, TooltipComponent, LegendComponent, VisualMapComponent } from 'echarts/components';
+import { BarChart, LineChart, HeatmapChart } from 'echarts/charts';
 import { CanvasRenderer } from 'echarts/renderers';
 import { onMounted, onBeforeUnmount, ref, watch, nextTick } from 'vue';
 
-echarts.use([GridComponent, TooltipComponent, LegendComponent, BarChart, LineChart, CanvasRenderer]);
+echarts.use([GridComponent, TooltipComponent, LegendComponent, VisualMapComponent, BarChart, LineChart, HeatmapChart, CanvasRenderer]);
 
 const props = defineProps<{
 	option: Record<string, unknown>;

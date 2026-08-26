@@ -31,21 +31,7 @@
 				<AnalysisChart :option="ruleOption" height="340px" />
 			</section>
 
-			<!-- 3. 个体诊断（学生维度） -->
-			<section class="chart-card">
-				<div class="card-title">个体诊断（学生维度）</div>
-				<div class="card-sub">学生加减分构成与净变化</div>
-				<AnalysisChart :option="studentOption" height="340px" />
-			</section>
-
-			<!-- 4. 协作观察（小组维度） -->
-			<section class="chart-card" v-if="groupList.length > 0 && moduleVisibility.groupManage">
-				<div class="card-title">协作观察（小组维度）</div>
-				<div class="card-sub">小组积分合计对比</div>
-				<AnalysisChart :option="groupOption" height="300px" />
-			</section>
-
-			<!-- 5. 规则健康度（规则库维度） -->
+			<!-- 3. 规则健康度（规则库维度） -->
 			<section class="chart-card" >
 				<div class="card-title">规则健康度（规则库维度）</div>
 				<div class="card-sub">规则触发次数，识别形同虚设的规则</div>
@@ -75,7 +61,56 @@
 					</el-table-column>
 				</el-table>
 			</section>
+
+			<!-- 4. 协作观察（小组维度） -->
+			<section class="chart-card" v-if="groupList.length > 0 && moduleVisibility.groupManage">
+				<div class="card-title">协作观察（小组维度）</div>
+				<div class="card-sub">小组积分合计对比</div>
+				<AnalysisChart :option="groupOption" height="300px" />
+			</section>
+
+			<!-- 5. 个体诊断（学生维度） -->
+			<section class="chart-card">
+				<div class="card-title">个体诊断（学生维度）</div>
+				<div class="card-sub">学生加减分构成与净变化</div>
+				<AnalysisChart :option="studentOption" height="340px" />
+			</section>
+
+			
+
+			<!-- 6. 积分变化明细（学生 × 周期） -->
+			<section class="chart-card" v-if="cycleList.length > 0">
+				<div class="card-title">积分变化明细（学生 × 周期）</div>
+				<div class="card-sub">热力图观察整体分布与个体趋势，下方表格可精确读数</div>
+				<el-table :data="matrixData" size="small" max-height="420" border>
+					<el-table-column prop="name" label="学生" width="110" fixed align="center" />
+					<el-table-column v-for="cycle in cycleList" :key="cycle.id" :label="cycle.name" align="center" min-width="90">
+						<template #default="scope">
+							<span :class="scope.row.cyclePoints[cycle.id] > 0 ? 'text-success' : scope.row.cyclePoints[cycle.id] < 0 ? 'text-danger' : 'text-muted'">
+								{{ scope.row.cyclePoints[cycle.id] > 0 ? '+' : '' }}{{ scope.row.cyclePoints[cycle.id] || 0 }}
+							</span>
+						</template>
+					</el-table-column>
+					<el-table-column prop="total" label="合计" width="90" fixed="right" align="center" sortable>
+						<template #default="scope">
+							<span :class="scope.row.total > 0 ? 'text-success' : scope.row.total < 0 ? 'text-danger' : 'text-muted'">
+								{{ scope.row.total > 0 ? '+' : '' }}{{ scope.row.total }}
+							</span>
+						</template>
+					</el-table-column>
+					<el-table-column label="趋势" width="80" fixed="right" align="center">
+						<template #default="scope">
+							<el-button size="small" type="primary" link :icon="TrendCharts" @click="handleShowTrend(scope.row)">趋势</el-button>
+						</template>
+					</el-table-column>
+				</el-table>
+			</section>
 		</div>
+
+		<!-- 学生周期趋势弹窗 -->
+		<el-dialog :title="`${trendStudent?.name || ''} - 周期积分变化`" v-model="trendDialogVisible" width="720px">
+			<AnalysisChart :option="studentTrendOption" height="380px" />
+		</el-dialog>
 	</div>
 </template>
 
@@ -83,6 +118,7 @@
 import { computed, ref, watch } from 'vue';
 import { useAppStore } from '../../../store/models/app';
 import AnalysisChart from './AnalysisChart.vue';
+import { TrendCharts } from '@element-plus/icons-vue';
 
 const appStore = useAppStore();
 const selectedCycleId = ref('');
@@ -246,6 +282,55 @@ const ruleHealth = computed(() => {
 			total: sumPoints(recs),
 		};
 	}).sort((a, b) => b.count - a.count);
+});
+
+// ---------- 6. 积分变化明细：学生 × 周期 净变化矩阵 ----------
+const matrixData = computed(() => {
+	return studentList.value.map(s => {
+		const cyclePoints: Record<string, number> = {};
+		let total = 0;
+		cycleList.value.forEach(cycle => {
+			const recs = recordList.value.filter(r => r.stu_id === s.id && recordInCycle(r, cycle));
+			const net = sumPoints(recs);
+			cyclePoints[cycle.id] = net;
+			total += net;
+		});
+		return { name: s.name, cyclePoints, total };
+	});
+});
+
+// ---------- 6c. 学生周期趋势弹窗 ----------
+const trendDialogVisible = ref(false);
+const trendStudent = ref<{ name: string, cyclePoints: Record<string, number>, total: number } | null>(null);
+
+const handleShowTrend = (row: { name: string, cyclePoints: Record<string, number>, total: number }) => {
+	trendStudent.value = row;
+	trendDialogVisible.value = true;
+};
+
+const studentTrendOption = computed(() => {
+	if (!trendStudent.value) return {};
+	const cycles = cycleList.value;
+	const names = cycles.map(c => c.name);
+	const values = cycles.map(c => trendStudent.value!.cyclePoints[c.id] || 0);
+	return {
+		tooltip: { trigger: 'axis' },
+		grid: { left: 50, right: 20, top: 30, bottom: 40 },
+		xAxis: { type: 'category', data: names, name: '周期', boundaryGap: false },
+		yAxis: { type: 'value', name: '净积分' },
+		series: [{
+			name: '净变化',
+			type: 'line',
+			data: values,
+			smooth: true,
+			symbol: 'circle',
+			symbolSize: 8,
+			itemStyle: { color: '#409eff' },
+			areaStyle: { opacity: 0.08 },
+			markLine: { data: [{ type: 'average', name: '均值' }], lineStyle: { type: 'dashed', color: '#909399' }, label: { position: 'insideEndTop' } },
+			markPoint: { data: [{ type: 'max', name: '峰值' }, { type: 'min', name: '谷值' }] },
+		}],
+	};
 });
 
 // 周期删除后，若选中的周期消失则重置

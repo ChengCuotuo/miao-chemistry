@@ -1,4 +1,4 @@
-// - 班委积分周期 - monitor cycle
+// - 周期记分周期 - monitor cycle
 //   - id - id（使用 indexMap.monitorCycle 自增序号）
 //   - 周期名称 - name，如：第一周、第二周
 //   - 状态 - status：0-进行中 1-已结束
