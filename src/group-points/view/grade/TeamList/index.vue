@@ -34,11 +34,11 @@
 				:type="currentCycle.status === 0 ? 'info' : 'warning'" :title="cycleTip" />
 		</div>
 		<div class="team-list-content">
-			<TeamCard v-for="team in teamInfoList || []" :key="team.id" :team="team" @edit="handleEdit"
-				@delete="handleDelete" @add-points="handleAddPoints" @subtract-points="handleSubtractPoints"
-				@adjust-points="handleAdjustPoints" @view-records="handleViewRecords"
-				@member-add-points="handleMemberAddPoints" @member-subtract-points="handleMemberSubtractPoints"
-				@member-adjust-points="handleMemberAdjustPoints" @member-view-records="handleStudentViewRecords" />
+			<TeamCard v-for="team in teamInfoList || []" :key="team.id" :team="team" @edit="handleEdit" @delete="handleDelete"
+				@add-points="handleAddPoints" @subtract-points="handleSubtractPoints" @adjust-points="handleAdjustPoints"
+				@view-records="handleViewRecords" @member-add-points="handleMemberAddPoints"
+				@member-subtract-points="handleMemberSubtractPoints" @member-adjust-points="handleMemberAdjustPoints"
+				@member-view-records="handleStudentViewRecords" />
 		</div>
 
 		<!-- 新增/编辑小组弹窗 -->
@@ -83,8 +83,7 @@
 					<el-input :value="selectedRule?.description || ''" disabled type="textarea" :rows="3" />
 				</el-form-item>
 				<el-form-item label="记录次数">
-					<el-input-number v-model="ruleForm.count" :min="1" :max="99" controls-position="right"
-						style="width: 160px" />
+					<el-input-number v-model="ruleForm.count" :min="1" :max="99" controls-position="right" style="width: 160px" />
 					<span class="count-tip">积分 = 规则分值 × 次数</span>
 				</el-form-item>
 			</el-form>
@@ -104,7 +103,12 @@
 							{{ scope.row.points > 0 ? '+' : '' }}{{ scope.row.points }} 分
 						</span>
 						<template v-if="scope.row.count > 1">
-							<span class="count-badge"> × {{ scope.row.count }} 次</span>
+							(
+								<span class="count-badge">
+								{{ singlePoints(scope.row) > 0 ? '+' : '' }}{{ singlePoints(scope.row) }} 分
+								</span>
+								<span class="count-badge">× {{ scope.row.count }} 次</span>
+							)
 						</template>
 					</template>
 				</el-table-column>
@@ -644,6 +648,12 @@ const teamRecords = computed(() => {
 		.map(record => ({ ...record, rule_name: getRuleName(record.rule_id) }))
 		.reverse();
 });
+
+// 单次规则分值 = 总积分 / 次数（count>=1 时 points 恒为 rule.points × count）
+const singlePoints = (record: RuleRecord): number => {
+	const count = record.count > 1 ? record.count : 1;
+	return record.points / count;
+};
 
 const handleViewRecords = (team: TeamInfo) => {
 	recordTeamId.value = team.id;

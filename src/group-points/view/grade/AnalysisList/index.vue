@@ -158,10 +158,9 @@
 				<el-table-column prop="cycleName" label="周期" width="110" fixed align="center" />
 				<el-table-column v-for="rule in rulesInStats" :key="rule.id" :label="rule.name" align="center" min-width="90">
 					<template #default="scope">
-						<span :class="scope.row.ruleCounts[rule.id] > 0 ? 'text-success' : 'text-muted'">{{ scope.row.ruleCounts[rule.id] || 0 }}</span>
+						<span>{{ scope.row.ruleCounts[rule.id] || 0 }}次</span>
 					</template>
 				</el-table-column>
-				<el-table-column prop="total" label="合计" width="80" fixed="right" align="center" />
 			</el-table>
 			<el-empty v-if="statsMatrix.length === 0" description="该学生暂无记录" :image-size="60" />
 		</el-dialog>
@@ -172,7 +171,7 @@
 import { computed, ref } from 'vue';
 import { useAppStore } from '../../../store/models/app';
 import AnalysisChart from './AnalysisChart.vue';
-import { TrendCharts, Download, Search, DataAnalysis } from '@element-plus/icons-vue';
+import { TrendCharts, Download, DataAnalysis } from '@element-plus/icons-vue';
 import { utils, writeFile as writeExcelFile } from 'xlsx';
 import { ElMessage } from 'element-plus';
 
@@ -495,16 +494,14 @@ const statsMatrix = computed(() => {
 	if (!statsStudent.value) return [];
 	return cycleList.value.map(cycle => {
 		const ruleCounts: Record<string, number> = {};
-		let total = 0;
 		rulesInStats.value.forEach(rule => {
 			const recs = recordList.value.filter(r =>
 				r.stu_id === statsStudent.value!.stu_id && r.rule_id === rule.id && recordInCycle(r, cycle)
 			);
 			const cnt = recs.reduce((a, r) => a + (r.count || 1), 0);
 			ruleCounts[rule.id] = cnt;
-			total += cnt;
 		});
-		return { cycleName: cycle.name, ruleCounts, total };
+		return { cycleName: cycle.name, ruleCounts };
 	});
 });
 

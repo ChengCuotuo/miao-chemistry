@@ -135,6 +135,13 @@
 			<el-table :data="detailStats" border max-height="420" size="small">
 				<el-table-column prop="ruleName" label="规则名称" min-width="160" show-overflow-tooltip />
 				<el-table-column prop="count" label="次数" width="70" align="center" sortable />
+				<el-table-column prop="count" label="积分" width="70" align="center">
+					<template #default="scope">
+						<span class="count-badge">
+								{{ singlePoints(scope.row) > 0 ? '+' : '' }}{{ singlePoints(scope.row) }} 分
+								</span>
+					</template>
+				</el-table-column>
 				<el-table-column label="积分合计" width="100" align="center" sortable prop="points">
 					<template #default="scope">
 						<span :class="scope.row.points > 0 ? 'text-success' : scope.row.points < 0 ? 'text-danger' : 'text-muted'">
@@ -175,7 +182,7 @@ import { useMonitorCycle } from '../../../database/utils/useMonitorCycle';
 import { useRule } from '../../../database/utils/useRule';
 import { ElMessage, ElMessageBox, dayjs, type FormInstance } from 'element-plus';
 import { Plus, Edit, Delete, Ticket, Search, Document, View, UserFilled } from '@element-plus/icons-vue';
-import { Student } from '../../../database/class';
+import { RuleRecord, Student } from '../../../database/class';
 import { useMonitorAccount } from '../../../database/utils/useMonitorAccount';
 import MonitorRecordModal from './MonitorRecordModal.vue';
 import MonitorAccountDialog from './MonitorAccountDialog.vue';
@@ -196,6 +203,12 @@ const allCycleList = computed(() => getMonitorCycleList());
 const cycleList = computed(() => isMonitor.value ? allCycleList.value.filter(c => c.status === 0) : allCycleList.value);
 const selectedCycleId = ref('');
 const currentCycle = computed(() => cycleList.value.find(item => item.id === selectedCycleId.value));
+
+// 单次规则分值 = 总积分 / 次数（count>=1 时 points 恒为 rule.points × count）
+const singlePoints = (record: RuleRecord): number => {
+	const count = record.count > 1 ? record.count : 1;
+	return record.points / count;
+};
 
 // 默认选中最新周期（或进行中的周期）
 const syncSelectedCycle = () => {
@@ -687,5 +700,9 @@ const detailStats = computed(() => {
 	color: #909399;
 	line-height: 1.4;
 	margin-top: 4px;
+}
+
+.count-badge {
+	color: #909399;
 }
 </style>
