@@ -18,7 +18,8 @@
   --el-color-primary-dark-2: #669d54;
 
   /* ---------- 功能色：暖调 ---------- */
-  --el-color-success: #4a90d9;        /* 天蓝，与主色草地绿彻底区分 */
+  --el-color-success: #4a90d9;
+  /* 天蓝，与主色草地绿彻底区分 */
   --el-color-success-light-3: #85b8e6;
   --el-color-success-light-5: #b5d2ef;
   --el-color-success-light-7: #d7e7f6;
@@ -26,7 +27,8 @@
   --el-color-success-light-9: #f3f8fd;
   --el-color-success-dark-2: #3b73ad;
 
-  --el-color-warning: #f4a259;        /* 暖橙 */
+  --el-color-warning: #f4a259;
+  /* 暖橙 */
   --el-color-warning-light-3: #f8c48b;
   --el-color-warning-light-5: #fbdbb8;
   --el-color-warning-light-7: #fdeed9;
@@ -34,7 +36,8 @@
   --el-color-warning-light-9: #fefaf4;
   --el-color-warning-dark-2: #c38247;
 
-  --el-color-danger: #e76f51;         /* 陶土红 */
+  --el-color-danger: #e76f51;
+  /* 陶土红 */
   --el-color-danger-light-3: #f09a85;
   --el-color-danger-light-5: #f5bdad;
   --el-color-danger-light-7: #fadbd3;
@@ -50,7 +53,8 @@
   --el-color-error-light-9: #fdf4f2;
   --el-color-error-dark-2: #b95941;
 
-  --el-color-info: #8f9b8f;           /* 灰绿 */
+  --el-color-info: #8f9b8f;
+  /* 灰绿 */
   --el-color-info-light-3: #b3bcb3;
   --el-color-info-light-5: #cdd4cd;
   --el-color-info-light-7: #e3e7e3;
@@ -110,6 +114,7 @@
   font-weight: 500;
   transition: transform 0.15s ease, box-shadow 0.15s ease;
 }
+
 .el-button:not(.is-disabled):active {
   transform: translateY(1px);
 }
@@ -120,6 +125,7 @@
   border: 1px solid var(--el-border-color-lighter);
   box-shadow: var(--el-box-shadow-light);
 }
+
 .el-card.is-hover-shadow:hover {
   box-shadow: var(--el-box-shadow);
 }
@@ -130,9 +136,6 @@
   border-radius: 16px;
   box-shadow: var(--el-box-shadow-dark);
 }
-.el-dialog__header {
-  border-bottom: 1px solid var(--el-border-color-lighter);
-}
 
 /* 表格：表头暖灰底、去掉生硬边框感 */
 .el-table {
@@ -141,6 +144,7 @@
   --el-table-header-text-color: #5f554a;
   --el-table-row-hover-bg-color: #f9f7f1;
 }
+
 .el-table th.el-table__cell {
   font-weight: 600;
 }
@@ -187,6 +191,7 @@
 .el-checkbox {
   --el-checkbox-border-radius: 2px;
 }
+
 .el-checkbox__inner {
   border-radius: 2px;
 }

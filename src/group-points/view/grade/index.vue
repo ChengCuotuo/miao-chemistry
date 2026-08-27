@@ -73,7 +73,7 @@ const isMonitor = computed(() => appStore.currentRole === 'monitor');
 
 // 各模块可见性
 const moduleVisibility = computed(() => appStore.database.basicConfig?.moduleVisibility || {
-	groupManage: true,
+	groupManage: false,
 	teamManage: true,
 	pointsManage: true,
 	pointsExchange: true,

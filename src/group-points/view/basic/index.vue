@@ -55,7 +55,7 @@
             >
               <el-icon class="module-tip-icon"><InfoFilled /></el-icon>
             </el-tooltip>
-            <el-switch v-model="element.visible" @change="(v) => handleModuleToggle(element, v)" />
+            <el-switch v-model="element.visible" @change="(v: any) => handleModuleToggle(element, v)" />
           </li>
         </template>
       </draggable>
@@ -141,7 +141,7 @@ const MODULE_VIS_FIELD: Record<string, string> = {
 
 const getModuleVisible = (key: string): boolean => {
   const vis = basicConfig?.moduleVisibility || {
-    groupManage: true,
+    groupManage: false,
     pointsManage: true,
     pointsExchange: true,
     studentManage: true,
@@ -328,7 +328,7 @@ const handleModuleChange = () => {
     // 初始化兜底
     if (!basicConfig.moduleVisibility) {
       basicConfig.moduleVisibility = {
-        groupManage: true,
+        groupManage: false,
         pointsManage: true,
         pointsExchange: true,
         studentManage: true,

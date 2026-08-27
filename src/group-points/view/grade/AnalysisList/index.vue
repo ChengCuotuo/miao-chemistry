@@ -187,7 +187,7 @@ const recordList = computed(() => appStore.activeGrade?.gradeInfo?.recordList ||
 const cycleList = computed(() => appStore.activeGrade?.gradeInfo?.monitorCycleList || []);
 const ruleList = computed(() => appStore.database.ruleList || []);
 const moduleVisibility = computed(() => appStore.database.basicConfig?.moduleVisibility || {
-	groupManage: true,
+	groupManage: false,
 });
 
 // ---------- 数据分析图表展示配置 ----------

@@ -221,7 +221,7 @@ const canRecord = computed(() => !!currentCycle.value && currentCycle.value.stat
 
 // 模块可见性配置（默认全部展示，兼容旧数据）
 const moduleVisibility = computed(() => appStore.database.basicConfig?.moduleVisibility || {
-	groupManage: true,
+	groupManage: false,
 });
 
 const cycleTip = computed(() => {

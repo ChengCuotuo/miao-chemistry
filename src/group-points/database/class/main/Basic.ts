@@ -46,7 +46,7 @@ export class Basic {
 		this.startTime = params.startTime;
 		this.duration = params.duration;
 		this.moduleVisibility = {
-			groupManage: params.moduleVisibility?.groupManage ?? true,
+			groupManage: params.moduleVisibility?.groupManage ?? false,
 			teamManage: params.moduleVisibility?.teamManage ?? true,
 			pointsManage: params.moduleVisibility?.pointsManage ?? true,
 			pointsExchange: params.moduleVisibility?.pointsExchange ?? true,

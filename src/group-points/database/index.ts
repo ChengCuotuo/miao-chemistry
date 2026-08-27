@@ -135,7 +135,7 @@ export async function loadGroupPointsConfig() {
 
 		// 兼容旧版本配置：模块可见性字段缺失时默认全部展示
 		basicConfigData.moduleVisibility = {
-			groupManage: basicConfigData.moduleVisibility?.groupManage ?? true,
+			groupManage: basicConfigData.moduleVisibility?.groupManage ?? false,
 			pointsManage: basicConfigData.moduleVisibility?.pointsManage ?? true,
 			pointsExchange: basicConfigData.moduleVisibility?.pointsExchange ?? true,
 			studentManage: basicConfigData.moduleVisibility?.studentManage ?? true,
