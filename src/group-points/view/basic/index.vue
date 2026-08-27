@@ -111,22 +111,15 @@ const basicConfig = appStore.database.basicConfig;
 // 模块定义：key 唯一标识，label 展示名
 const MODULE_DEFS: Record<string, string> = {
   student: '学生管理',
-  group: '关联分组',
-  team: '独立分组',
-  monitor: '周期记分',
-  record: '积分记录',
-  lottery: '积分兑换',
-  analysis: '数据分析',
+	group: '关联分组',
+	team: '独立分组',
+	monitor: '周期记分',
+	analysis: '数据分析',
+	lottery: '积分兑换',
+	record: '积分记录',
 };
-const DEFAULT_MODULE_ORDER = [
-  'group',
-  'team',
-  'student',
-  'monitor',
-  'record',
-  'lottery',
-  'analysis',
-];
+
+const DEFAULT_MODULE_ORDER = ['student','group', 'team',  'monitor', 'analysis', 'record', 'lottery'];
 
 // 模块 key → moduleVisibility 里的真实字段名
 const MODULE_VIS_FIELD: Record<string, string> = {
@@ -176,20 +169,20 @@ const handleModuleOrderChange = () => {
 
 // ---------- 数据分析图表设置 ----------
 const ANALYSIS_CHART_DEFS: Record<string, string> = {
-  trend: '趋势分析（周期对比）',
-  rule: '行为画像（规则维度）',
-  ruleHealth: '规则健康度（规则库维度）',
-  group: '协作观察（小组维度）',
   student: '个体诊断（学生维度）',
   matrix: '积分变化明细（学生×周期）',
+  rule: '行为画像（规则维度）',
+  trend: '趋势分析（周期对比）',
+  ruleHealth: '规则健康度（规则库维度）',
+  group: '协作观察（小组维度）',
 };
 const DEFAULT_ANALYSIS_CHART_ORDER = [
-  'trend',
-  'rule',
-  'ruleHealth',
-  'group',
   'student',
   'matrix',
+  'rule',
+  'trend',
+  'ruleHealth',
+  'group',
 ];
 
 const getChartVisible = (key: string): boolean => {

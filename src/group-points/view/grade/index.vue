@@ -62,11 +62,11 @@ const TAB_DEFS: Record<string, string> = {
 	group: '关联分组',
 	team: '独立分组',
 	monitor: '周期记分',
-	record: '积分记录',
-	lottery: '积分兑换',
 	analysis: '数据分析',
+	lottery: '积分兑换',
+	record: '积分记录',
 };
-const DEFAULT_TAB_ORDER = ['group', 'team', 'student', 'monitor', 'record', 'lottery', 'analysis'];
+const DEFAULT_TAB_ORDER = ['student','group', 'team',  'monitor', 'analysis', 'record', 'lottery'];
 
 // 当前角色：班委仅显示「周期记分」tab
 const isMonitor = computed(() => appStore.currentRole === 'monitor');
