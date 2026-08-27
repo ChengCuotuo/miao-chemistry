@@ -41,7 +41,7 @@
 import draggable from 'vuedraggable'
 import { computed, ref, watch } from 'vue';
 
-// 可排序项：仅依赖 id + name，分组管理与独立分组的小组对象均可传入
+// 可排序项：仅依赖 id + name，关联分组与独立分组的小组对象均可传入
 type SortableItem = { id: string; name: string };
 
 const props = defineProps<{

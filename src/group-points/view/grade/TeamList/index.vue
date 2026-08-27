@@ -115,7 +115,7 @@
 			</el-table>
 		</el-dialog>
 
-		<!-- 成员按规则调整弹窗（复用分组管理的规则选择） -->
+		<!-- 成员按规则调整弹窗（复用关联分组的规则选择） -->
 		<RuleSelectorModal v-model:visible="memberRuleVisible" :rules="rules" :target-name="memberRuleTargetName"
 			type="single" @confirm="handleMemberRuleConfirm" />
 
@@ -288,7 +288,7 @@ const handleTeamRecord = (params: { team_id: string, points: number, rule_id?: s
 	}
 };
 
-// 记录学生积分变化（成员个人积分，写 recordList，与分组管理一致）
+// 记录学生积分变化（成员个人积分，写 recordList，与关联分组一致）
 const handleStudentRecord = (params: { stu_id: string, points: number, rule_id?: string, count?: number }) => {
 	if (appStore.activeGrade) {
 		const { stu_id, points, rule_id, count = 1 } = params;
@@ -394,7 +394,7 @@ const handleSortConfirm = async (params: { orderByPoints: number, groupList: str
 	ElMessage.success('成功调整排序');
 };
 
-// ---------- 周期选择（与分组管理共用同一份周期数据） ----------
+// ---------- 周期选择（与关联分组共用同一份周期数据） ----------
 const monitorEnabled = computed(() => appStore.database.basicConfig?.moduleVisibility?.monitorManage ?? true);
 const cycleList = computed(() => getMonitorCycleList());
 const selectedCycleId = ref('');
@@ -644,7 +644,7 @@ const handleViewRecords = (team: TeamInfo) => {
 	recordDialogVisible.value = true;
 };
 
-// ---------- 成员个人积分操作（与分组管理一致，只影响个人，不影响小组） ----------
+// ---------- 成员个人积分操作（与关联分组一致，只影响个人，不影响小组） ----------
 const memberRuleVisible = ref(false);
 const memberRuleTargetName = ref('');
 const currentStudent = ref<Student | null>(null);

@@ -327,7 +327,7 @@ const handleDelete = (group: Partial<GroupInfo>) => {
 	})
 };
 
-// ---------- 周期选择（分组管理） ----------
+// ---------- 周期选择（关联分组） ----------
 const {
 	getMonitorCycleList, createMonitorCycle, updateMonitorCycle,
 	startMonitorCycle, finishMonitorCycle, deleteMonitorCycle, autoFinishExpiredCycles,

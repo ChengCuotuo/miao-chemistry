@@ -96,9 +96,9 @@ out/
 config/
 AGENTS.md
 HEARTBEAT.md
+IDENTITY.md
+USER.md
 SOUL.md
 TOOLS.md
 .openclaw/
 .opencode/
-IDENTITY.md
-USER.md

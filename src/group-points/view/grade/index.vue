@@ -59,7 +59,7 @@ const activeGrade = computed(() => appStore.activeGrade);
 // 模块定义（key 与路由 name 一致）与默认顺序
 const TAB_DEFS: Record<string, string> = {
 	student: '学生管理',
-	group: '分组管理',
+	group: '关联分组',
 	team: '独立分组',
 	monitor: '周期记分',
 	record: '积分记录',

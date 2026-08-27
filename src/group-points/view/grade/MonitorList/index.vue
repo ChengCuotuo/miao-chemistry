@@ -58,7 +58,7 @@
 								</div>
 							</el-collapse-item>
 						</el-collapse>
-						<el-empty v-if="groupInfoList.length === 0" description="暂无小组，展开分组管理中创建" :image-size="60" />
+						<el-empty v-if="groupInfoList.length === 0" description="暂无小组，展开关联分组中创建" :image-size="60" />
 					</div>
 				</div>
 

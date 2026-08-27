@@ -9,7 +9,7 @@ export class Basic {
 	duration: number;
 	// 班级管理页模块可见性配置
 	moduleVisibility: {
-		// 分组管理
+		// 关联分组
 		groupManage: boolean;
 		// 独立分组
 		teamManage: boolean;

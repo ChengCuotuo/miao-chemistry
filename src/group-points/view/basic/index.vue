@@ -43,12 +43,19 @@
             <span class="module-name">{{ element.label }}</span>
             <el-tooltip
               v-if="element.key === 'monitor'"
-              content="关闭后：分组管理隐藏积分周期、数据分析自动隐藏、锁屏直接管理员登录"
+              content="关闭后：关联分组/独立分组隐藏积分周期、数据分析自动隐藏、锁屏直接管理员登录"
               placement="top"
             >
               <el-icon class="module-tip-icon"><InfoFilled /></el-icon>
             </el-tooltip>
-            <el-switch v-model="element.visible" @change="handleModuleChange" />
+            <el-tooltip
+              v-if="element.key === 'group' || element.key === 'team'"
+              :content="element.key === 'group' ? '关联分组与独立分组互斥，只能开启一个' : '独立分组与关联分组互斥，只能开启一个'"
+              placement="top"
+            >
+              <el-icon class="module-tip-icon"><InfoFilled /></el-icon>
+            </el-tooltip>
+            <el-switch v-model="element.visible" @change="(v) => handleModuleToggle(element, v)" />
           </li>
         </template>
       </draggable>
@@ -90,7 +97,7 @@
 import { useAppStore } from '../../store/models/app';
 import { useBasic } from '../../database/utils/useBasic';
 import { Edit, Rank, InfoFilled } from '@element-plus/icons-vue';
-import { ElMessage } from 'element-plus';
+import { ElMessage, ElMessageBox } from 'element-plus';
 import { ref } from 'vue';
 import draggable from 'vuedraggable';
 import PasswordChangeDialog from './PasswordChangeDialog.vue';
@@ -104,7 +111,7 @@ const basicConfig = appStore.database.basicConfig;
 // 模块定义：key 唯一标识，label 展示名
 const MODULE_DEFS: Record<string, string> = {
   student: '学生管理',
-  group: '分组管理',
+  group: '关联分组',
   team: '独立分组',
   monitor: '周期记分',
   record: '积分记录',
@@ -281,6 +288,41 @@ const handlePasswordChanged = async (newPassword: string) => {
 };
 
 // 模块可见性/顺序变更：同步到配置字段（防抖持久化）
+// 开关切换统一入口：关联分组/独立分组互斥，只能开一个
+const handleModuleToggle = (element: { key: string, label: string, visible: boolean }, newValue: boolean) => {
+	// 处理关联分组/独立分组互斥
+	if (element.key === 'group' && newValue) {
+		const teamItem = moduleOrderList.value.find(item => item.key === 'team');
+		if (teamItem && teamItem.visible) {
+			ElMessageBox.confirm('关联分组与独立分组互斥，开启「关联分组」将自动关闭「独立分组」，确认？', '提示', {
+				type: 'warning', confirmButtonText: '确认', cancelButtonText: '取消',
+			}).then(() => {
+				teamItem.visible = false;
+				handleModuleChange();
+			}).catch(() => {
+				// 取消则回滚开关
+				element.visible = false;
+			});
+			return;
+		}
+	} else if (element.key === 'team' && newValue) {
+		const groupItem = moduleOrderList.value.find(item => item.key === 'group');
+		if (groupItem && groupItem.visible) {
+			ElMessageBox.confirm('独立分组与关联分组互斥，开启「独立分组」将自动关闭「关联分组」，确认？', '提示', {
+				type: 'warning', confirmButtonText: '确认', cancelButtonText: '取消',
+			}).then(() => {
+				groupItem.visible = false;
+				handleModuleChange();
+			}).catch(() => {
+				element.visible = false;
+			});
+			return;
+		}
+	}
+	// 其他情况直接保存
+	handleModuleChange();
+};
+
 const handleModuleChange = () => {
   if (basicConfig) {
     // 初始化兜底
