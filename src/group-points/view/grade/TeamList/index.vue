@@ -79,6 +79,9 @@
 							:label="`${rule.name} (${rule.points > 0 ? '+' : ''}${rule.points}分)`" :value="rule.id" />
 					</el-select>
 				</el-form-item>
+				<el-form-item label="规则描述">
+					<el-input :value="selectedRule?.description || ''" disabled type="textarea" :rows="3" />
+				</el-form-item>
 				<el-form-item label="记录次数">
 					<el-input-number v-model="ruleForm.count" :min="1" :max="99" controls-position="right"
 						style="width: 160px" />
@@ -577,6 +580,9 @@ const handleSubtractPoints = async (team: TeamInfo) => {
 // 按规则调整
 const ruleDialogVisible = ref(false);
 const ruleForm = ref({ ruleId: '', count: 1 });
+
+// 当前选中的规则（用于展示规则描述）
+const selectedRule = computed(() => rules.value.find(rule => rule.id === ruleForm.value.ruleId));
 const currentTeam = ref<TeamInfo | null>(null);
 
 const handleAdjustPoints = (team: TeamInfo) => {

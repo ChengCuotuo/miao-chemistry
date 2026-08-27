@@ -44,7 +44,7 @@
       />
       <template #footer>
         <el-button @click="passwordDialogVisible = false">取消</el-button>
-        <el-button type="primary" @click="verifyPassword">确认</el-button>
+        <el-button type="primary" @click="verifyPassword">登录</el-button>
       </template>
     </el-dialog>
 
@@ -113,7 +113,7 @@
 
 <script lang="ts" setup>
 import { Menu, Message, Platform, Avatar, User } from '@element-plus/icons-vue'
-import { ref, onMounted, onUnmounted, computed } from 'vue'
+import { ref, onMounted, onUnmounted, computed, nextTick } from 'vue'
 import { ElMessage, dayjs } from 'element-plus'
 import { useAppStore } from '../group-points/store/models/app'
 import md5 from 'blueimp-md5'
@@ -215,12 +215,14 @@ const passwordDialogVisible = ref(false)
 const inputPassword = ref('')
 const expiredDialogVisible = ref(false)
 
-const verifyPassword = () => {
+const verifyPassword = async() => {
   if (md5(inputPassword.value) === currentPassword.value) {
     appStore.setCurrentRole('teacher')
     props.onMenu('menu')
     passwordDialogVisible.value = false
     inputPassword.value = ''
+    await nextTick();
+    router.push({ name: 'home' });
   } else {
     ElMessage.error('密码错误')
   }
@@ -256,9 +258,11 @@ const handleMonitorLoginSubmit = async () => {
       appStore.setCurrentRole('monitor');
       appStore.setIsCollapse(true);
       monitorLoginVisible.value = false;
-      // 先切到积分管理，再进入班级页（跳过 HomeView，避免其 onMounted 清空 activeGrade）
-      router.push({ name: 'grade' });
+      // 顺序：先切 activeKey 让 GroupPoints 挂载（此时 HomeView 虽挂载但有角色守卫不会清数据），
+      // 再跳转 grade 路由进入班级页，彻底规避 HomeView.onMounted 与路由竞争清空 activeGrade 的问题
       props.onMenu('menu');
+      await nextTick();
+      router.push({ name: 'grade' });
     } else {
       ElMessage.warning(res.message || '登录失败');
     }

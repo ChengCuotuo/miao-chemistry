@@ -88,7 +88,11 @@ const rules = reactive<FormRules<RuleForm>>({
 
 onMounted(() => {
 	// 初始化时，将 activeGrade 设置为 undefined
-	appStore.setActiveGrade(undefined);
+	// 班委登录场景：HomeView 随 GroupPoints 首挂载而被渲染（路由尚在 '/'），
+	// 此时清空会把班委刚加载的班级数据清掉，导致周期记分页空白——仅教师角色清空
+	if (appStore.currentRole !== 'monitor') {
+		appStore.setActiveGrade(undefined);
+	}
 })
 
 const handleClick = async (grade: DatabaseInfoType['gradeList'][0]) => {
