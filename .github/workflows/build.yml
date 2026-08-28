@@ -49,6 +49,9 @@ jobs:
         run: |
           sed -i '' 's|https://nexus.mcd.com.cn/repository/npm-group/|https://registry.npmjs.org/|g' package-lock.json
           sed -i '' 's|https://registry.npmmirror.com|https://registry.npmjs.org/|g' package-lock.json
+          # CI 上强制使用官方 registry（覆盖仓库内 .npmrc 的镜像配置，避免镜像缺包/拼接异常）
+          sed -i '' 's|^registry=.*|registry=https://registry.npmjs.org/|' .npmrc
+          sed -i '' '/^electron_mirror=/d; /^electron_custom_dir=/d; /^esbuild_download_host=/d' .npmrc
 
       - name: Install dependencies
         run: npm ci
@@ -122,6 +125,9 @@ jobs:
         run: |
           sed -i 's|https://nexus.mcd.com.cn/repository/npm-group/|https://registry.npmjs.org/|g' package-lock.json
           sed -i 's|https://registry.npmmirror.com|https://registry.npmjs.org/|g' package-lock.json
+          # CI 上强制使用官方 registry（覆盖仓库内 .npmrc 的镜像配置，避免镜像缺包/拼接异常）
+          sed -i 's|^registry=.*|registry=https://registry.npmjs.org/|' .npmrc
+          sed -i '/^electron_mirror=/d; /^electron_custom_dir=/d; /^esbuild_download_host=/d' .npmrc
 
       - name: Install dependencies
         run: npm ci
