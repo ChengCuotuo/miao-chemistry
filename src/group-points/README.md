@@ -23,6 +23,10 @@ rm -rf node_modules package-lock.json
 npm cache clean --force
 ```
 
+- 分支说明
+  - master 设置的 npm 官方镜像源 package-lock 也是官方的，可以在 github 正常构建
+  - develop 设置的是 淘宝镜像，本地开发更方便
+
 - 版本控制
 
 | 版本       | 时长             | 核心权益                                        | 适用人群                   |
