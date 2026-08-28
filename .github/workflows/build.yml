@@ -46,10 +46,18 @@ jobs:
 
       # 防护：将 lockfile 中的私有仓库 URL 替换为公共源，避免 CI 认证失败
       - name: Normalize registry URLs
-        run: sed -i '' 's|https://nexus.mcd.com.cn/repository/npm-group/|https://registry.npmjs.org/|g' package-lock.json
+        run: |
+          sed -i '' 's|https://nexus.mcd.com.cn/repository/npm-group/|https://registry.npmjs.org/|g' package-lock.json
+          sed -i '' 's|https://registry.npmmirror.com|https://registry.npmjs.org/|g' package-lock.json
 
       - name: Install dependencies
         run: npm ci
+      # npm 可选依赖 bug 兜底（npm/cli#4828）：失败时清理后重装
+      - name: Retry install on failure
+        if: failure()
+        run: |
+          rm -rf node_modules
+          npm ci
 
       # 从 tag 名同步版本号到 package.json（forge.config.js 读取 npm_package_version）
       - name: Sync version from tag
@@ -111,10 +119,18 @@ jobs:
       # 防护：将 lockfile 中的私有仓库 URL 替换为公共源，避免 CI 认证失败
       - name: Normalize registry URLs
         shell: bash
-        run: sed -i 's|https://nexus.mcd.com.cn/repository/npm-group/|https://registry.npmjs.org/|g' package-lock.json
+        run: |
+          sed -i 's|https://nexus.mcd.com.cn/repository/npm-group/|https://registry.npmjs.org/|g' package-lock.json
+          sed -i 's|https://registry.npmmirror.com|https://registry.npmjs.org/|g' package-lock.json
 
       - name: Install dependencies
         run: npm ci
+      # npm 可选依赖 bug 兜底（npm/cli#4828）：失败时清理后重装
+      - name: Retry install on failure
+        if: failure()
+        run: |
+          rm -rf node_modules
+          npm ci
 
       - name: Sync version from tag
         if: startsWith(github.ref, 'refs/tags/v')
