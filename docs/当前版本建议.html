@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Miao教学管理系统 · 教育评价与建议</title>
+<style>
+  :root{
+    --ink:#1f2937; --muted:#6b7280; --line:#e5e7eb; --bg:#f7f8fa;
+    --brand:#2563eb; --brand-dark:#1e40af; --good:#059669; --good-bg:#ecfdf5;
+    --warn:#d97706; --warn-bg:#fffbeb; --bad:#dc2626; --bad-bg:#fef2f2;
+    --paper:#ffffff;
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;
+    background:var(--bg); color:var(--ink); line-height:1.75; padding:40px 16px;}
+  .wrap{max-width:960px; margin:0 auto;}
+  header.hero{background:linear-gradient(135deg,#1e3a8a 0%,#2563eb 60%,#3b82f6 100%);
+    color:#fff; border-radius:18px; padding:40px 40px 34px; margin-bottom:28px; position:relative; overflow:hidden;}
+  header.hero::after{content:""; position:absolute; right:-60px; top:-60px; width:220px; height:220px;
+    background:rgba(255,255,255,.08); border-radius:50%;}
+  header.hero .tag{display:inline-block; font-size:12px; letter-spacing:1px; background:rgba(255,255,255,.16);
+    padding:4px 12px; border-radius:999px; margin-bottom:16px;}
+  header.hero h1{font-size:28px; font-weight:700; margin-bottom:8px;}
+  header.hero p{font-size:14px; color:rgba(255,255,255,.85);}
+  .verdict{background:#fff; border:1px solid var(--line); border-left:5px solid var(--brand);
+    border-radius:14px; padding:22px 24px; margin-bottom:28px;}
+  .verdict b{color:var(--brand-dark);}
+  h2{font-size:20px; margin:36px 0 16px; display:flex; align-items:center; gap:10px;}
+  h2 .num{display:inline-flex; align-items:center; justify-content:center; width:30px; height:30px;
+    background:var(--brand); color:#fff; border-radius:8px; font-size:15px; flex:none;}
+  .cards{display:grid; grid-template-columns:repeat(auto-fit,minmax(260px,1fr)); gap:16px;}
+  .card{background:var(--paper); border:1px solid var(--line); border-radius:14px; padding:20px 20px 18px;}
+  .card .ico{width:38px; height:38px; border-radius:10px; display:flex; align-items:center; justify-content:center;
+    margin-bottom:12px;}
+  .card .ico svg{width:20px; height:20px;}
+  .card h3{font-size:16px; margin-bottom:8px;}
+  .card p{font-size:13.5px; color:var(--muted);}
+  .i-blue{background:#eff6ff;} .i-green{background:var(--good-bg);} .i-amber{background:var(--warn-bg);}
+  table{width:100%; border-collapse:collapse; background:#fff; border-radius:12px; overflow:hidden;
+    border:1px solid var(--line); font-size:14px; margin-bottom:8px;}
+  th,td{padding:12px 14px; text-align:left; border-bottom:1px solid var(--line); vertical-align:top;}
+  th{background:#f3f4f6; font-weight:600; font-size:13px; color:#374151;}
+  tr:last-child td{border-bottom:none;}
+  .risk th:first-child{color:var(--bad);}
+  .prio{display:flex; gap:16px; flex-wrap:wrap;}
+  .prio .col{flex:1 1 300px; min-width:280px;}
+  .prio .head{font-size:14px; font-weight:700; padding:10px 14px; border-radius:10px 10px 0 0; color:#fff;}
+  .prio .body{background:#fff; border:1px solid var(--line); border-top:none; border-radius:0 0 10px 10px; padding:6px 0;}
+  .prio .item{padding:11px 16px; border-bottom:1px solid #f0f1f3; font-size:13.5px;}
+  .prio .item:last-child{border-bottom:none;}
+  .prio .item b{display:block; margin-bottom:2px;}
+  .prio .item span{color:var(--muted); font-size:13px;}
+  .h-high{background:var(--bad);} .h-mid{background:var(--warn);} .h-low{background:var(--good);}
+  .close{background:var(--warn-bg); border:1px solid #fde68a; color:#92400e; border-radius:12px;
+    padding:18px 20px; font-size:14px; margin-top:28px;}
+  .foot{color:var(--muted); font-size:12.5px; text-align:center; margin-top:32px;}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="hero">
+    <span class="tag">班主任 · 教育专家视角</span>
+    <h1>Miao教学管理系统 评价与建议</h1>
+    <p>把一套课堂积分工具，放进真实的班级管理场景里评估</p>
+  </header>
+
+  <div class="verdict">
+    核心结论：这套系统的<b>骨架是优秀的</b>——班级组织、过程记录、数据洞察都立得住；缺的是<b>「教育的温度」</b>——如何用激励激发内驱力而非依赖外部奖惩、如何让数据服务于成长而非给学生定性。它已经是一个「好用的积分工具」，补上下面几点，才能成为「真正的班级成长系统」。
+  </div>
+
+  <h2><span class="num">1</span>做对的三件事</h2>
+  <div class="cards">
+    <div class="card">
+      <div class="ico i-blue"><svg viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2"><circle cx="9" cy="9" r="2.5"/><circle cx="16" cy="15" r="2.5"/><path d="M4 19c0-2.5 2-4 5-4s5 1.5 5 4M15 8c0-2 1.5-3.5 3.5-3.5S22 6 22 8s-1.5 3.5-3.5 3.5S15 10 15 8"/></svg></div>
+      <h3>双轨分组，懂教学</h3>
+      <p>「关联分组」对应合作学习小组（成员贡献计入小组，荣辱与共）；「独立分组」对应值日岗、班委、竞赛队（小组荣誉与个人分数分离）。这个区分说明设计者真的懂班级，不是拍脑袋加功能。</p>
+    </div>
+    <div class="card">
+      <div class="ico i-green"><svg viewBox="0 0 24 24" fill="none" stroke="#059669" stroke-width="2"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg></div>
+      <h3>周期记分 + 班委自治</h3>
+      <p>按周/月归档、班委只能对未结束周期记分、账号按班隔离——本质是把「德育量化」变成可持续的过程记录，而不是一次性登记。班委独立登录更是把「教师一人记分」解放成「学生参与管理」。</p>
+    </div>
+    <div class="card">
+      <div class="ico i-amber"><svg viewBox="0 0 24 24" fill="none" stroke="#d97706" stroke-width="2"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg></div>
+      <h3>六维数据分析</h3>
+      <p>趋势、行为画像、个体诊断、协作观察、规则健康度、变化明细，这套组合已经接近一个「班级行为画像」系统，是教师专业化的加分项，让积分从「登记」跨到「洞察」。</p>
+    </div>
+  </div>
+
+  <h2><span class="num">2</span>必须警惕的四个风险</h2>
+  <table class="risk">
+    <thead><tr><th style="width:22%">风险</th><th style="width:34%">教育学依据</th><th>现实后果</th></tr></thead>
+    <tbody>
+      <tr><td><b>过度依赖外在激励</b></td><td>德西效应 / 过度理由效应：外部奖励会侵蚀内在动机</td><td>学生「为积分而学」，奖励一撤、动机归零</td></tr>
+      <tr><td><b>当众减分</b></td><td>羞辱感、标签化、习得性无助</td><td>低分学生自我放弃，甚至被同伴孤立</td></tr>
+      <tr><td><b>排名公开</b></td><td>隐私与自尊保护</td><td>积分榜可能成为「公开处刑」，伤害发展型学生</td></tr>
+      <tr><td><b>数据定标签</b></td><td>忽视个体差异与发展性</td><td>教师被图表带偏，用「行为画像」给学生定性</td></tr>
+    </tbody>
+  </table>
+
+  <h2><span class="num">3</span>建议（按优先级）</h2>
+  <div class="prio">
+    <div class="col">
+      <div class="head h-high">高优先级 · 伦理与动机</div>
+      <div class="body">
+        <div class="item"><b>加分优先、减分最小化</b><span>减分默认关闭，或改为「待补回」机制，保留「改过」的出口</span></div>
+        <div class="item"><b>排行榜可见性可配置</b><span>让教师决定是否公开、公开到班级还是小组粒度，保护低分学生</span></div>
+        <div class="item"><b>兑换增加非实物奖励</b><span>增加「座位优先 / 免一次作业 / 当一周组长」等特权型奖励，对冲纯物质化</span></div>
+      </div>
+    </div>
+    <div class="col">
+      <div class="head h-mid">中优先级 · 功能增强</div>
+      <div class="body">
+        <div class="item"><b>成长档案 / 进步曲线</b><span>数据分析加「进步值」（本期 vs 上期），关注增值而非绝对值</span></div>
+        <div class="item"><b>低分 / 骤降预警</b><span>积分连续下滑或长期垫底时，给教师「关怀提醒」而非「批评提示」</span></div>
+        <div class="item"><b>学生自评互评</b><span>增加学生端，让评价从「教师单向打分」走向「多方参与」</span></div>
+        <div class="item"><b>家长周报导出</b><span>把积分与表现生成家长可读的周报，打通家校</span></div>
+      </div>
+    </div>
+    <div class="col">
+      <div class="head h-low">低优先级 · 锦上添花</div>
+      <div class="body">
+        <div class="item"><b>随机点名加权</b><span>让「较少被点到 / 参与度低」的学生有更高概率，促进均衡参与</span></div>
+        <div class="item"><b>规则共建引导</b><span>新增规则时引导教师带学生一起制定「班级公约」，规则才有合法性</span></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="close">
+    <b>一句话总结：</b>骨架优秀、方向正确，缺的是教育的温度。把「激励激发内驱力」和「数据服务成长」这两条补上，它会从「好用的积分工具」变成「真正的班级成长系统」。
+  </div>
+
+  <div class="foot">评价对象：Miao教学管理系统（v1.0.9） · 视角：班主任 + 教育评价</div>
+</div>
+</body>
+</html>

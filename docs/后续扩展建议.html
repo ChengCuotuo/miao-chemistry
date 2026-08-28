@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Miao教学管理系统 · 功能扩展路线图</title>
+<style>
+  :root{
+    --ink:#1f2937; --muted:#6b7280; --line:#e5e7eb; --bg:#f7f8fa;
+    --brand:#2563eb; --good:#059669; --warn:#d97706; --violet:#7c3aed;
+    --paper:#fff;
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;
+    background:var(--bg); color:var(--ink); line-height:1.7; padding:40px 16px;}
+  .wrap{max-width:980px; margin:0 auto;}
+  header.hero{background:linear-gradient(135deg,#4c1d95 0%,#7c3aed 55%,#8b5cf6 100%);
+    color:#fff; border-radius:18px; padding:38px 38px 32px; margin-bottom:24px; position:relative; overflow:hidden;}
+  header.hero::after{content:""; position:absolute; right:-70px; bottom:-70px; width:240px; height:240px;
+    background:rgba(255,255,255,.08); border-radius:50%;}
+  header.hero .tag{display:inline-block; font-size:12px; letter-spacing:1px; background:rgba(255,255,255,.16);
+    padding:4px 12px; border-radius:999px; margin-bottom:14px;}
+  header.hero h1{font-size:27px; font-weight:700; margin-bottom:8px;}
+  header.hero p{font-size:14px; color:rgba(255,255,255,.85);}
+  .lines{display:grid; grid-template-columns:repeat(auto-fit,minmax(240px,1fr)); gap:14px; margin-bottom:30px;}
+  .line{background:#fff; border:1px solid var(--line); border-radius:14px; padding:16px 18px; border-top:4px solid var(--brand);}
+  .line.l2{border-top-color:var(--good);} .line.l3{border-top-color:var(--violet);}
+  .line b{display:block; font-size:15px; margin-bottom:4px;}
+  .line p{font-size:13px; color:var(--muted);}
+  h2{font-size:19px; margin:32px 0 14px; display:flex; align-items:center; gap:10px;}
+  h2 .num{display:inline-flex; align-items:center; justify-content:center; width:28px; height:28px;
+    background:var(--violet); color:#fff; border-radius:8px; font-size:14px; flex:none;}
+  .stage{background:#fff; border:1px solid var(--line); border-radius:14px; padding:20px 22px; margin-bottom:16px;
+    border-left:5px solid var(--violet);}
+  .stage.s1{border-left-color:var(--brand);} .stage.s2{border-left-color:var(--good);}
+  .stage.s3{border-left-color:var(--warn);} .stage.s4{border-left-color:var(--violet);}
+  .stage .st-head{display:flex; align-items:baseline; gap:12px; margin-bottom:6px; flex-wrap:wrap;}
+  .stage .st-head h3{font-size:16px;}
+  .stage .st-head .when{font-size:12px; color:var(--muted); background:#f3f4f6; padding:2px 10px; border-radius:999px;}
+  .stage .st-why{font-size:13px; color:var(--muted); margin-bottom:12px;}
+  .stage ul{list-style:none;}
+  .stage li{font-size:14px; padding:7px 0 7px 20px; position:relative; border-bottom:1px dashed #f0f1f3;}
+  .stage li:last-child{border-bottom:none;}
+  .stage li::before{content:""; position:absolute; left:4px; top:15px; width:7px; height:7px;
+    background:var(--violet); border-radius:50%;}
+  .stage.s1 li::before{background:var(--brand);} .stage.s2 li::before{background:var(--good);}
+  .stage.s3 li::before{background:var(--warn);}
+  .stage li b{color:#111827;}
+  .stage li span{color:var(--muted);}
+  .prio table{width:100%; border-collapse:collapse; background:#fff; border-radius:12px; overflow:hidden;
+    border:1px solid var(--line); font-size:14px;}
+  .prio th,.prio td{padding:12px 14px; text-align:left; border-bottom:1px solid var(--line); vertical-align:top;}
+  .prio th{background:#f3f4f6; font-weight:600; font-size:13px; color:#374151;}
+  .prio tr:last-child td{border-bottom:none;}
+  .b1{color:#059669; font-weight:700;} .b2{color:#d97706; font-weight:700;} .b3{color:#7c3aed; font-weight:700;}
+  .principles{display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:14px; margin-top:14px;}
+  .principle{background:#fff; border:1px solid var(--line); border-radius:12px; padding:16px 18px;}
+  .principle b{display:block; font-size:14px; margin-bottom:5px; color:#111827;}
+  .principle p{font-size:13px; color:var(--muted);}
+  .close{background:#f5f3ff; border:1px solid #ddd6fe; color:#4c1d95; border-radius:12px;
+    padding:18px 20px; font-size:14px; margin-top:28px;}
+  .foot{color:var(--muted); font-size:12.5px; text-align:center; margin-top:30px;}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="hero">
+    <span class="tag">功能扩展路线图 · 班主任 / 教育专家视角</span>
+    <h1>从「积分工具」到「班级成长系统」</h1>
+    <p>三条主线、四个阶段，让功能扩展有方向、有顺序、有教育逻辑</p>
+  </header>
+
+  <div class="lines">
+    <div class="line"><b>主线 A · 升维评价</b><p>积分 → 成长档案。从"行为加减分"升级为"五育并举、增值评价、成长记录"。</p></div>
+    <div class="line l2"><b>主线 B · 扩主体</b><p>教师 → 学生 / 家长 / 科任。从"教师一人记分"走向"多方参与、家校协同"。</p></div>
+    <div class="line l3"><b>主线 C · 强洞察</b><p>记录 → 智能。从"数据登记"走向"预警、建议、自动生成报告"。</p></div>
+  </div>
+
+  <h2><span class="num">1</span>四个扩展阶段</h2>
+
+  <div class="stage s1">
+    <div class="st-head"><h3>阶段一 · 成长评价系统</h3><span class="when">近期 · 价值最高</span></div>
+    <div class="st-why">把「积分」升维成「成长」，直接解决上一轮指出的"外在激励依赖、只记行为不记成长"问题。</div>
+    <ul>
+      <li><b>五育多维评价</b><span> — 从单一行为积分扩展到德（品德/助人）、智（参与/进步）、体（两操/体育）、美（活动/作品）、劳（值日/卫生），维度可自定义。</span></li>
+      <li><b>增值评价 / 进步曲线</b><span> — 不只显示绝对分，突出"本期比上期进步 X"，关注与自己的比较而非横向排名。</span></li>
+      <li><b>闪光点 / 正向记录</b><span> — 独立于加减分的"表扬墙"、好人好事记录，让正向信号盖过减分。</span></li>
+      <li><b>学期成长报告</b><span> — 一键生成学生个人 + 班级整体报告，可导出 PDF / 分享家长。</span></li>
+    </ul>
+  </div>
+
+  <div class="stage s2">
+    <div class="st-head"><h3>阶段二 · 多方参与</h3><span class="when">中期 · 生态关键</span></div>
+    <div class="st-why">评价若只有教师一个主体，就只是"管理工具"；引入学生和家长，才变成"成长共同体"。</div>
+    <ul>
+      <li><b>家长端（微信小程序 / 网页）</b><span> — 接收周报、表扬通知、请假申请，查看孩子成长档案。</span></li>
+      <li><b>学生端</b><span> — 自评互评、个人目标卡（"本周我想达成…"）、习惯打卡。</span></li>
+      <li><b>科任教师协同</b><span> — 多教师账号，按学科/场景记分，数据汇总到班主任。</span></li>
+    </ul>
+  </div>
+
+  <div class="stage s3">
+    <div class="st-head"><h3>阶段三 · 班主任运营工具包</h3><span class="when">中期 · 提高粘性</span></div>
+    <div class="st-why">把班主任每天手忙脚乱的"杂活"数字化，让系统成为离不开的日常工具。</div>
+    <ul>
+      <li><b>座位表编排</b><span> — 拖拽编排，可按积分异质/同质分组，一键生成。</span></li>
+      <li><b>值日 / 卫生排班</b><span> — 轮值表自动生成 + 到期提醒。</span></li>
+      <li><b>考勤 / 请假</b><span> — 请假审批、缺勤记录。</span></li>
+      <li><b>班级日志 / 大事记</b><span> — 按天记录，学期末生成班级纪念册。</span></li>
+      <li><b>班会素材库</b><span> — 主题班会模板、活动方案。</span></li>
+    </ul>
+  </div>
+
+  <div class="stage s4">
+    <div class="st-head"><h3>阶段四 · 数据智能 + 生态</h3><span class="when">远期 · 护城河</span></div>
+    <div class="st-why">数据积累到一定程度后，用智能能力把教师从"看数据"解放到"做判断"。</div>
+    <ul>
+      <li><b>智能建议引擎</b><span> — 基于数据生成"下周班级管理建议"（如"XX 连续两周下滑，建议单独谈心"）。</span></li>
+      <li><b>异常预警</b><span> — 情绪 / 低分 / 缺勤异常提醒，主动关怀而非事后追责。</span></li>
+      <li><b>规则 / 模板市场</b><span> — 教师间共享优质规则、奖品、班会方案。</span></li>
+      <li><b>跨学期归档 / 毕业档案</b><span> — 毕业时生成"学生成长档案"，随学籍移交。</span></li>
+    </ul>
+  </div>
+
+  <h2><span class="num">2</span>落地优先级</h2>
+  <div class="prio">
+    <table>
+      <thead><tr><th style="width:16%">批次</th><th style="width:40%">功能</th><th>为什么先做</th></tr></thead>
+      <tbody>
+        <tr><td class="b1">第一批</td><td>闪光点记录 · 进步值 · 学期报告 · 家长周报</td><td>直接解决"激励温度"与"家校断裂"，且集中在现有数据分析层，工程成本可控、见效最快</td></tr>
+        <tr><td class="b2">第二批</td><td>学生端（自评互评 / 目标卡）· 座位表</td><td>参与主体扩展 + 高频刚需，能显著提升使用频率</td></tr>
+        <tr><td class="b3">第三批</td><td>五育多维 · 科任协同 · 智能建议</td><td>需要重构数据模型，价值大但成本高，宜在数据积累后做</td></tr>
+        <tr><td class="b3">远期</td><td>模板市场 · 毕业成长档案</td><td>依赖用户规模与数据沉淀，属于生态型功能</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h2><span class="num">3</span>四条设计原则（做之前先想清楚）</h2>
+  <div class="principles">
+    <div class="principle"><b>每个功能先回答"学生成长了什么"</b><p>回答不了的功能，再炫也不做。</p></div>
+    <div class="principle"><b>正向优先</b><p>表扬、闪光点、进步要始终盖过减分和排名。</p></div>
+    <div class="principle"><b>隐私边界</b><p>家长端、学生端只看自己（孩子）的数据，不做横向公开比较。</p></div>
+    <div class="principle"><b>教师零负担</b><p>自动化生成，减轻而非加重记录负担。</p></div>
+  </div>
+
+  <div class="close">
+    <b>结论：</b>扩展的正确顺序是「先补温度、再扩主体、后上智能」。第一批功能（闪光点、进步值、学期报告、家长周报）投入产出比最高，建议优先立项。
+  </div>
+
+  <div class="foot">规划对象：Miao教学管理系统（v1.0.9） · 视角：班主任 + 教育评价</div>
+</div>
+</body>
+</html>
