@@ -29,7 +29,7 @@
 				<div class="member-actions">
 					<el-button type="success" style="margin: 0px;" :icon="Plus" circle size="small"
 						@click="handleAddPoints(student)" />
-					<el-button type="danger" style="margin: 0px;" :icon="Minus" circle size="small"
+					<el-button v-if="showSubtract" type="danger" style="margin: 0px;" :icon="Minus" circle size="small"
 						@click="handleSubtractPoints(student)" />
 					<el-button type="warning" style="margin: 0px;" :icon="Ticket" circle size="small"
 						@click="handleAdjustPoints(student)" />
@@ -44,7 +44,7 @@
 					<el-tooltip content="小组加分" placement="top">
 						<el-button type="success" style="margin: 0px;" :icon="Plus" circle size="small" @click="handleTeamAddPoints" />
 					</el-tooltip>
-					<el-tooltip content="小组减分" placement="top">
+					<el-tooltip v-if="showSubtract" content="小组减分" placement="top">
 						<el-button type="danger" style="margin: 0px;" :icon="Minus" circle size="small" @click="handleTeamSubtractPoints" />
 					</el-tooltip>
 					<el-tooltip content="按规则调整小组积分" placement="top">
@@ -64,6 +64,11 @@ import { computed, ref } from 'vue';
 import { Edit, Delete, Plus, Minus, Ticket, Search, List } from '@element-plus/icons-vue';
 import { Student } from '../../../database/class';
 import type { TeamInfo } from './index.vue';
+import { useAppStore } from '../../../store/models/app';
+
+// 减分快捷键显示控制：读取基础设置 hideQuickSubtract（true=隐藏，默认隐藏）
+const appStore = useAppStore();
+const showSubtract = computed(() => !(appStore.database.basicConfig as any)?.hideQuickSubtract);
 
 const props = defineProps<{
 	team: TeamInfo;

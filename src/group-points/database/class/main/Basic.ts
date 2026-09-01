@@ -37,8 +37,10 @@ export class Basic {
 	};
 	// 数据分析各图表展示顺序（key 数组）
 	analysisChartOrder: string[];
+	// 是否隐藏减分快捷键（关联分组/独立分组中学生个人减分与小组批量减分按钮），默认隐藏
+	hideQuickSubtract: boolean;
 
-	constructor(params: { step: number, buildType: string, password: string, firstRun: number, startTime: number, duration: number, moduleVisibility?: Partial<Basic['moduleVisibility']>, moduleOrder?: string[], analysisChartVisibility?: Partial<Basic['analysisChartVisibility']>, analysisChartOrder?: string[] }) {
+	constructor(params: { step: number, buildType: string, password: string, firstRun: number, startTime: number, duration: number, moduleVisibility?: Partial<Basic['moduleVisibility']>, moduleOrder?: string[], analysisChartVisibility?: Partial<Basic['analysisChartVisibility']>, analysisChartOrder?: string[], hideQuickSubtract?: boolean }) {
 		this.step = params.step;
 		this.buildType = params.buildType;
 		this.password = params.password;
@@ -64,6 +66,7 @@ export class Basic {
 			matrix: params.analysisChartVisibility?.matrix ?? true,
 		};
 		this.analysisChartOrder = params.analysisChartOrder || [];
+		this.hideQuickSubtract = params.hideQuickSubtract ?? true;
 	}
 
 	toJSON() {

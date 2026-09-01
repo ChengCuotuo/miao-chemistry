@@ -24,6 +24,14 @@
       <el-button type="primary" text :icon="Edit" @click="showPasswordDialog" />
     </el-space>
     <el-divider border-style="dashed" style="margin: 14px 0" />
+    <el-space>
+      <span>隐藏减分快捷键：</span>
+      <el-tooltip content="开启后：关联分组/独立分组中学生个人减分、批量减分及小组减分按钮全部隐藏（按规则调整积分不受影响）" placement="top">
+        <el-icon class="module-tip-icon"><InfoFilled /></el-icon>
+      </el-tooltip>
+      <el-switch v-model="basicConfig.hideQuickSubtract" @change="handleHideQuickSubtractChange" />
+    </el-space>
+    <el-divider border-style="dashed" style="margin: 14px 0" />
     <div class="module-setting">
       <div class="module-setting-title">
         班级管理模块展示设置（拖拽调整顺序，开关控制展示）：
@@ -266,6 +274,13 @@ const handleChangeStep = (val: number) => {
     basicConfig.step = val;
     await updateBasicConfig({ ...basicConfig });
   }, 300);
+};
+
+// 隐藏减分快捷键开关变更
+const handleHideQuickSubtractChange = async (val: boolean) => {
+  basicConfig.hideQuickSubtract = val;
+  await updateBasicConfig({ ...basicConfig });
+  ElMessage.success(val ? '已隐藏减分快捷键' : '已显示减分快捷键');
 };
 
 // 密码修改相关

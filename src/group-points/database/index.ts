@@ -158,6 +158,9 @@ export async function loadGroupPointsConfig() {
 		basicConfigData.analysisChartOrder = Array.isArray(basicConfigData.analysisChartOrder)
 			? basicConfigData.analysisChartOrder : [];
 
+		// 兼容旧版本配置：减分快捷键隐藏开关，默认隐藏
+		basicConfigData.hideQuickSubtract = basicConfigData.hideQuickSubtract ?? true;
+
 		// 正式版构建运行时，如果持久化的配置信息还是体验版，则覆盖为正式版
 		if (buildType === BUILD_TYPE.official && basicConfigData.buildType !== BUILD_TYPE.official) {
 			basicConfigData.buildType = BUILD_TYPE.official;
