@@ -1,7 +1,7 @@
 {
   "name": "miao-chemistry",
   "productName": "miao-chemistry",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "description": "Miao积分管理",
   "main": ".vite/build/main.js",
   "scripts": {
