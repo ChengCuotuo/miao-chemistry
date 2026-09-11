@@ -102,8 +102,8 @@ const handleChange = (value: string | string[]) => {
 
 <style scoped>
 .rule-type-filter {
-	padding: 4px 12px 8px;
-	border-bottom: 1px solid var(--el-border-color-lighter);
+	/* 下边框由 el-select-dropdown__header 自带，这里不再重复绘制，避免出现两条分割线 */
+	padding: 0;
 }
 
 .rule-tree-node {
