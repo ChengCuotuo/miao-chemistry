@@ -73,11 +73,13 @@
 					<el-tag type="info">{{ currentTeam?.name }}</el-tag>
 				</el-form-item>
 				<el-form-item label="选择规则">
-					<el-select v-model="ruleForm.ruleId" placeholder="请选择规则" style="width: 100%" filterable
-						:disabled="rules.length === 0">
-						<el-option v-for="rule in rules" :key="rule.id"
-							:label="`${rule.name} (${rule.points > 0 ? '+' : ''}${rule.points}分)`" :value="rule.id" />
-					</el-select>
+					<RuleTreeSelect v-model="ruleForm.ruleId" :rules="rules" :groups="ruleGroups"
+						:disabled="rules.length === 0" placeholder="请选择规则" />
+				</el-form-item>
+				<!-- 自定义分值规则：必须手动指定分值后才生效 -->
+				<el-form-item v-if="ruleNeedsPoints" label="本次分值">
+					<el-input-number v-model="ruleForm.points" controls-position="right" style="width: 160px" placeholder="请输入分值" />
+					<span class="count-tip">自定义分值规则需指定分值后才会生效</span>
 				</el-form-item>
 				<el-form-item label="规则描述">
 					<el-input :value="selectedRule?.description || ''" disabled type="textarea" :rows="3" />
@@ -85,6 +87,11 @@
 				<el-form-item label="记录次数">
 					<el-input-number v-model="ruleForm.count" :min="1" :max="99" controls-position="right" style="width: 160px" />
 					<span class="count-tip">积分 = 规则分值 × 次数</span>
+				</el-form-item>
+				<el-form-item label="积分变化">
+					<span class="points-preview" :class="rulePreviewPoints >= 0 ? 'text-success' : 'text-danger'">
+						{{ rulePreviewPoints >= 0 ? '+' : '' }}{{ rulePreviewPoints }} 分
+					</span>
 				</el-form-item>
 			</el-form>
 			<template #footer>
@@ -123,7 +130,7 @@
 		</el-dialog>
 
 		<!-- 成员按规则调整弹窗（复用关联分组的规则选择） -->
-		<RuleSelectorModal v-model:visible="memberRuleVisible" :rules="rules" :target-name="memberRuleTargetName"
+		<RuleSelectorModal v-model:visible="memberRuleVisible" :rules="rules" :groups="ruleGroups" :target-name="memberRuleTargetName"
 			type="single" @confirm="handleMemberRuleConfirm" />
 
 		<!-- 成员个人积分记录弹窗 -->
@@ -163,11 +170,12 @@ import { Plus, Edit, Delete, Sort } from '@element-plus/icons-vue';
 import { Team, TeamRecord, Student, RuleRecord, Rule } from '../../../database/class';
 import { dayjs, ElMessage, ElMessageBox, FormInstance } from 'element-plus';
 import { useGrade } from '../../../database/utils/useGrade';
-import { useRule } from '../../../database/utils/useRule';
+import { useRule, isNoPointsRule, getRulePoints } from '../../../database/utils/useRule';
 import { useMonitorCycle } from '../../../database/utils/useMonitorCycle';
 import TeamCard from './TeamCard.vue';
 import SortModal from '../GroupList/SortModal.vue';
 import RuleSelectorModal from '../GroupList/RuleSelectorModal.vue';
+import RuleTreeSelect from '../../components/RuleTreeSelect.vue';
 import RecordList from '../RecordList/index.vue';
 
 export interface TeamInfo {
@@ -181,7 +189,7 @@ export interface TeamInfo {
 
 const formRef = ref<FormInstance>();
 const { updateGradeInfoById } = useGrade();
-const { getRuleList } = useRule();
+const { getRuleList, getRuleGroupList } = useRule();
 const {
 	getMonitorCycleList, createMonitorCycle, updateMonitorCycle,
 	startMonitorCycle, finishMonitorCycle, deleteMonitorCycle, autoFinishExpiredCycles,
@@ -200,6 +208,7 @@ const teamIndex = computed(() => appStore.activeGrade?.gradeInfo?.indexMap?.team
 const dialogTitle = computed(() => (isEdit.value ? '编辑小组' : '新增小组'));
 
 const rules = computed(() => getRuleList(appStore.activeGrade?.id) || []);
+const ruleGroups = computed(() => getRuleGroupList() || []);
 
 // 调整排序弹窗相关
 const sortModalVisible = ref(false);
@@ -583,18 +592,31 @@ const handleSubtractPoints = async (team: TeamInfo) => {
 
 // 按规则调整
 const ruleDialogVisible = ref(false);
-const ruleForm = ref({ ruleId: '', count: 1 });
+const ruleForm = ref<{ ruleId: string, count: number, points?: number }>({ ruleId: '', count: 1 });
 
 // 当前选中的规则（用于展示规则描述）
 const selectedRule = computed(() => rules.value.find(rule => rule.id === ruleForm.value.ruleId));
+// 自定义分值规则：需要手动指定分值
+const ruleNeedsPoints = computed(() => !!selectedRule.value && isNoPointsRule(selectedRule.value));
+// 单次分值：固定分值规则取规则分值，自定义分值规则取输入值
+const ruleSinglePoints = computed(() => {
+	if (!selectedRule.value) return 0;
+	const fixed = getRulePoints(selectedRule.value);
+	if (fixed === null) return Number(ruleForm.value.points) || 0;
+	return fixed;
+});
+const rulePreviewPoints = computed(() => ruleSinglePoints.value * ruleForm.value.count);
 const currentTeam = ref<TeamInfo | null>(null);
 
 const handleAdjustPoints = (team: TeamInfo) => {
 	if (!canChangePoints.value) { ElMessage.warning('请先选择未结束的积分周期'); return; }
-	ruleForm.value = { ruleId: '', count: 1 };
+	ruleForm.value = { ruleId: '', count: 1, points: undefined };
 	currentTeam.value = team;
 	ruleDialogVisible.value = true;
 };
+
+// 切换规则时重置自定义分值输入
+watch(() => ruleForm.value.ruleId, () => { ruleForm.value.points = undefined; });
 
 const handleRuleConfirm = async () => {
 	if (!currentTeam.value) return;
@@ -603,9 +625,14 @@ const handleRuleConfirm = async () => {
 		ElMessage.warning('请选择规则');
 		return;
 	}
+	// 自定义分值规则未指定分值时不生效
+	if (isNoPointsRule(rule) && (ruleForm.value.points === undefined || ruleForm.value.points === null)) {
+		ElMessage.warning('该规则无固定分值，请先设置本次分值');
+		return;
+	}
 	const target = findTeam(currentTeam.value.id);
 	if (!target) return;
-	const points = rule.points * ruleForm.value.count;
+	const points = ruleSinglePoints.value * ruleForm.value.count;
 	target.points = Number(target.points) + points;
 	handleTeamRecord({ team_id: target.id, points, rule_id: rule.id, count: ruleForm.value.count });
 	await handleUpdateGradeInfo();
@@ -688,9 +715,10 @@ const handleMemberAdjustPoints = (student: Student) => {
 	memberRuleVisible.value = true;
 };
 
-const handleMemberRuleConfirm = async (rule: Rule, count = 1) => {
+const handleMemberRuleConfirm = async (rule: Rule, count = 1, singlePoints?: number) => {
 	if (!currentStudent.value) return;
-	const points = rule.points * count;
+	const perPoints = singlePoints !== undefined ? singlePoints : Number(rule.points || 0);
+	const points = perPoints * count;
 	currentStudent.value.points = Number(currentStudent.value.points) + points;
 	handleStudentRecord({ stu_id: currentStudent.value.id, points, rule_id: rule.id, count });
 	await handleUpdateGradeInfo();
@@ -772,6 +800,11 @@ const handleStudentViewRecords = (student: Student) => {
 	margin-left: 10px;
 	font-size: 12px;
 	color: #909399;
+}
+
+.points-preview {
+	font-size: 16px;
+	font-weight: 600;
 }
 
 .text-danger {

@@ -3,6 +3,7 @@ import { Group } from './grade/Group';
 import { Prize } from './main/Prize';
 import { RuleRecord } from './grade/RuleRecord';
 import { Rule } from './main/Rule';
+import { RuleGroup } from './main/RuleGroup';
 import { Student } from './grade/Student';
 import { StudentGroup } from './grade/StudentGroup';
 import { Basic } from './main/Basic';
@@ -15,6 +16,7 @@ export {
 	Grade,
 	Group,
 	Rule,
+	RuleGroup,
 	Prize,
 	RuleRecord,
 	Student,

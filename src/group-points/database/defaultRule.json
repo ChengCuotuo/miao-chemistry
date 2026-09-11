@@ -1,268 +1,443 @@
-[
-	{
-		"id": "ACTIVE_ADD",
-		"name": "主动加分",
-		"description": "默认主动加分规则",
-		"points": 1,
-		"allow_grades": []
-	},
-	{
-		"id": "ACTIVE_SUB",
-		"name": "主动减分",
-		"description": "默认主动减分规则",
-		"points": -1,
-		"allow_grades": []
-	},
-	{
-		"id": "A001",
-		"name": "课堂主动举手发言",
-		"description": "单日最多5分",
-		"points": 1,
-		"allow_grades": []
-	},
-	{
-		"id": "A002",
-		"name": "回答问题准确完整",
-		"description": "",
-		"points": 2,
-		"allow_grades": []
-	},
-	{
-		"id": "A003",
-		"name": "积极参与小组讨论",
-		"description": "每节课",
-		"points": 1,
-		"allow_grades": []
-	},
-	{
-		"id": "A004",
-		"name": "主动上台展示/演讲",
-		"description": "",
-		"points": 3,
-		"allow_grades": []
-	},
-	{
-		"id": "A005",
-		"name": "被老师当众表扬",
-		"description": "",
-		"points": 2,
-		"allow_grades": []
-	},
-	{
-		"id": "A006",
-		"name": "作业按时保质完成",
-		"description": "每科每次",
-		"points": 2,
-		"allow_grades": []
-	},
-	{
-		"id": "A007",
-		"name": "作业评为优秀",
-		"description": "书写工整、质量优秀",
-		"points": 1,
-		"allow_grades": []
-	},
-	{
-		"id": "A008",
-		"name": "文明行为被认可",
-		"description": "",
-		"points": 1,
-		"allow_grades": []
-	},
-	{
-		"id": "A009",
-		"name": "主动制止不文明行为",
-		"description": "",
-		"points": 2,
-		"allow_grades": []
-	},
-	{
-		"id": "A010",
-		"name": "协助他人打扫卫生",
-		"description": "",
-		"points": 1,
-		"allow_grades": []
-	},
-	{
-		"id": "A011",
-		"name": "主动清理公共垃圾",
-		"description": "",
-		"points": 1,
-		"allow_grades": []
-	},
-	{
-		"id": "A012",
-		"name": "参加班级/文体活动",
-		"description": "",
-		"points": 3,
-		"allow_grades": []
-	},
-	{
-		"id": "A013",
-		"name": "参加校级活动",
-		"description": "",
-		"points": 5,
-		"allow_grades": []
-	},
-	{
-		"id": "A014",
-		"name": "校级比赛三等奖",
-		"description": "",
-		"points": 5,
-		"allow_grades": []
-	},
-	{
-		"id": "A015",
-		"name": "校级比赛二等奖",
-		"description": "",
-		"points": 8,
-		"allow_grades": []
-	},
-	{
-		"id": "A016",
-		"name": "校级比赛一等奖",
-		"description": "",
-		"points": 12,
-		"allow_grades": []
-	},
-	{
-		"id": "A017",
-		"name": "帮助同学补习功课",
-		"description": "",
-		"points": 1,
-		"allow_grades": []
-	},
-	{
-		"id": "A018",
-		"name": "拾金不昧",
-		"description": "可调整3-5分",
-		"points": 3,
-		"allow_grades": []
-	},
-	{
-		"id": "A019",
-		"name": "考试进步1-5名",
-		"description": "",
-		"points": 3,
-		"allow_grades": []
-	},
-	{
-		"id": "A020",
-		"name": "考试进步6-10名",
-		"description": "",
-		"points": 5,
-		"allow_grades": []
-	},
-	{
-		"id": "A021",
-		"name": "考试进步10名以上",
-		"description": "",
-		"points": 8,
-		"allow_grades": []
-	},
-	{
-		"id": "A022",
-		"name": "单科成绩满分",
-		"description": "",
-		"points": 5,
-		"allow_grades": []
-	},
-	{
-		"id": "A023",
-		"name": "单科班级前10名",
-		"description": "",
-		"points": 4,
-		"allow_grades": []
-	},
-	{
-		"id": "D001",
-		"name": "迟到/早退5分钟内",
-		"description": "",
-		"points": -1,
-		"allow_grades": []
-	},
-	{
-		"id": "D002",
-		"name": "迟到/早退5-15分钟",
-		"description": "",
-		"points": -2,
-		"allow_grades": []
-	},
-	{
-		"id": "D003",
-		"name": "迟到/早退超15分钟",
-		"description": "",
-		"points": -4,
-		"allow_grades": []
-	},
-	{
-		"id": "D004",
-		"name": "课堂交头接耳",
-		"description": "",
-		"points": -1,
-		"allow_grades": []
-	},
-	{
-		"id": "D005",
-		"name": "上课做与学习无关事情",
-		"description": "玩手机、看闲书等",
-		"points": -3,
-		"allow_grades": []
-	},
-	{
-		"id": "D006",
-		"name": "扰乱课堂、顶撞老师",
-		"description": "",
-		"points": -8,
-		"allow_grades": []
-	},
-	{
-		"id": "D007",
-		"name": "作业未按时上交",
-		"description": "每科每次",
-		"points": -2,
-		"allow_grades": []
-	},
-	{
-		"id": "D008",
-		"name": "作业敷衍潦草",
-		"description": "",
-		"points": -2,
-		"allow_grades": []
-	},
-	{
-		"id": "D009",
-		"name": "抄袭作业/试卷",
-		"description": "",
-		"points": -5,
-		"allow_grades": []
-	},
-	{
-		"id": "D010",
-		"name": "多次漏做作业",
-		"description": "可叠加",
-		"points": -3,
-		"allow_grades": []
-	},
-	{
-		"id": "D011",
-		"name": "说脏话、不文明用语",
-		"description": "",
-		"points": -2,
-		"allow_grades": []
-	},
-	{
-		"id": "D012",
-		"name": "追逐打闹、喧哗",
-		"description": "",
-		"points": -3,
-		"allow_grades": []
-	},
-	{
-		"id": "D013",
-		"name": "与同学冲突、欺凌",
-		"description": "",
-		"points": -6,
-		"allow_grades": []
-	}
-]
+{
+	"groups": [
+		{
+			"id": "DEFAULT",
+			"name": "默认分组",
+			"order": 0
+		},
+		{
+			"id": "g-study",
+			"name": "学习",
+			"order": 1
+		},
+		{
+			"id": "g-homework",
+			"name": "作业",
+			"order": 2
+		},
+		{
+			"id": "g-discipline",
+			"name": "纪律",
+			"order": 3
+		},
+		{
+			"id": "g-attendance",
+			"name": "考勤",
+			"order": 4
+		},
+		{
+			"id": "g-hygiene",
+			"name": "卫生",
+			"order": 5
+		},
+		{
+			"id": "g-arts",
+			"name": "文体",
+			"order": 6
+		},
+		{
+			"id": "g-sports",
+			"name": "体育",
+			"order": 7
+		},
+		{
+			"id": "g-extra",
+			"name": "额外嘉奖",
+			"order": 8
+		},
+		{
+			"id": "g-final",
+			"name": "期末",
+			"order": 9
+		}
+	],
+	"rules": [
+		{
+			"id": "ACTIVE_ADD",
+			"name": "主动加分",
+			"description": "默认主动加分规则",
+			"points": 1,
+			"allow_grades": [],
+			"group_id": "DEFAULT",
+			"order": 0
+		},
+		{
+			"id": "ACTIVE_SUB",
+			"name": "主动减分",
+			"description": "默认主动减分规则",
+			"points": -1,
+			"allow_grades": [],
+			"group_id": "DEFAULT",
+			"order": 1
+		},
+		{
+			"id": "STUDY01",
+			"name": "主动举手回答问题（有效回答）",
+			"description": "",
+			"points": 1,
+			"allow_grades": [],
+			"group_id": "g-study",
+			"order": 0
+		},
+		{
+			"id": "STUDY02",
+			"name": "被老师点名表扬（早读课）",
+			"description": "",
+			"points": 1,
+			"allow_grades": [],
+			"group_id": "g-study",
+			"order": 1
+		},
+		{
+			"id": "HW01",
+			"name": "及时完成作业并上交作业",
+			"description": "课代表主动汇总",
+			"points": 1,
+			"allow_grades": [],
+			"group_id": "g-homework",
+			"order": 0
+		},
+		{
+			"id": "HW02",
+			"name": "获得优★",
+			"description": "",
+			"points": 1,
+			"allow_grades": [],
+			"group_id": "g-homework",
+			"order": 1
+		},
+		{
+			"id": "HW03",
+			"name": "抄袭作业（抄袭者／借他人抄袭者）",
+			"description": "老师反馈情况—黑名单 画三角",
+			"points": -5,
+			"allow_grades": [],
+			"group_id": "g-homework",
+			"order": 2
+		},
+		{
+			"id": "HW04",
+			"name": "课代表未履行上报任务",
+			"description": "",
+			"points": 0,
+			"allow_grades": [],
+			"group_id": "g-homework",
+			"order": 3
+		},
+		{
+			"id": "DISC01",
+			"name": "跑操表现良好",
+			"description": "",
+			"points": 1,
+			"allow_grades": [],
+			"group_id": "g-discipline",
+			"order": 0
+		},
+		{
+			"id": "DISC02",
+			"name": "努力光盘、遵守就餐纪律，完成就餐时长",
+			"description": "",
+			"points": 1,
+			"allow_grades": [],
+			"group_id": "g-discipline",
+			"order": 1
+		},
+		{
+			"id": "DISC03",
+			"name": "自习遵守纪律",
+			"description": "",
+			"points": 1,
+			"allow_grades": [],
+			"group_id": "g-discipline",
+			"order": 2
+		},
+		{
+			"id": "DISC04",
+			"name": "课间不在规定区域活动，有危险性行为",
+			"description": "",
+			"points": -5,
+			"allow_grades": [],
+			"group_id": "g-discipline",
+			"order": 3
+		},
+		{
+			"id": "DISC05",
+			"name": "不遵守校规（住宿行为）",
+			"description": "例如无故带手机、饰品等违禁物品",
+			"points": -5,
+			"allow_grades": [],
+			"group_id": "g-discipline",
+			"order": 4
+		},
+		{
+			"id": "DISC06",
+			"name": "恶意破坏公物",
+			"description": "",
+			"points": -10,
+			"allow_grades": [],
+			"group_id": "g-discipline",
+			"order": 5
+		},
+		{
+			"id": "ATT01",
+			"name": "早上准时准点到班级内，校服",
+			"description": "",
+			"points": 1,
+			"allow_grades": [],
+			"group_id": "g-attendance",
+			"order": 0
+		},
+		{
+			"id": "ATT02",
+			"name": "好人好事（登记表）",
+			"description": "",
+			"points": 2,
+			"allow_grades": [],
+			"group_id": "g-attendance",
+			"order": 1
+		},
+		{
+			"id": "HYG01",
+			"name": "做好自己的值日卫生",
+			"description": "",
+			"points": 1,
+			"allow_grades": [],
+			"group_id": "g-hygiene",
+			"order": 0
+		},
+		{
+			"id": "HYG02",
+			"name": "保持桌椅一臂半径范围内卫生",
+			"description": "",
+			"points": 1,
+			"allow_grades": [],
+			"group_id": "g-hygiene",
+			"order": 1
+		},
+		{
+			"id": "HYG03",
+			"name": "清洁区",
+			"description": "",
+			"points": null,
+			"allow_grades": [],
+			"group_id": "g-hygiene",
+			"order": 2
+		},
+		{
+			"id": "ART01",
+			"name": "运动会参与",
+			"description": "",
+			"points": 1,
+			"allow_grades": [],
+			"group_id": "g-arts",
+			"order": 0
+		},
+		{
+			"id": "ART02",
+			"name": "运动会获奖·一等奖",
+			"description": "",
+			"points": 5,
+			"allow_grades": [],
+			"group_id": "g-arts",
+			"order": 1
+		},
+		{
+			"id": "ART03",
+			"name": "运动会获奖·二等奖",
+			"description": "",
+			"points": 3,
+			"allow_grades": [],
+			"group_id": "g-arts",
+			"order": 2
+		},
+		{
+			"id": "ART04",
+			"name": "运动会获奖·三等奖",
+			"description": "",
+			"points": 2,
+			"allow_grades": [],
+			"group_id": "g-arts",
+			"order": 3
+		},
+		{
+			"id": "ART05",
+			"name": "板报获奖·一等奖",
+			"description": "",
+			"points": 5,
+			"allow_grades": [],
+			"group_id": "g-arts",
+			"order": 4
+		},
+		{
+			"id": "ART06",
+			"name": "板报获奖·二等奖",
+			"description": "",
+			"points": 3,
+			"allow_grades": [],
+			"group_id": "g-arts",
+			"order": 5
+		},
+		{
+			"id": "ART07",
+			"name": "板报获奖·三等奖",
+			"description": "",
+			"points": 2,
+			"allow_grades": [],
+			"group_id": "g-arts",
+			"order": 6
+		},
+		{
+			"id": "ART08",
+			"name": "校园竞技比赛·一等奖",
+			"description": "",
+			"points": 5,
+			"allow_grades": [],
+			"group_id": "g-arts",
+			"order": 7
+		},
+		{
+			"id": "ART09",
+			"name": "校园竞技比赛·二等奖",
+			"description": "",
+			"points": 3,
+			"allow_grades": [],
+			"group_id": "g-arts",
+			"order": 8
+		},
+		{
+			"id": "ART10",
+			"name": "校园竞技比赛·三等奖",
+			"description": "",
+			"points": 2,
+			"allow_grades": [],
+			"group_id": "g-arts",
+			"order": 9
+		},
+		{
+			"id": "ART11",
+			"name": "唱歌比赛·一等奖",
+			"description": "",
+			"points": 5,
+			"allow_grades": [],
+			"group_id": "g-arts",
+			"order": 10
+		},
+		{
+			"id": "ART12",
+			"name": "唱歌比赛·二等奖",
+			"description": "",
+			"points": 3,
+			"allow_grades": [],
+			"group_id": "g-arts",
+			"order": 11
+		},
+		{
+			"id": "ART13",
+			"name": "唱歌比赛·三等奖",
+			"description": "",
+			"points": 2,
+			"allow_grades": [],
+			"group_id": "g-arts",
+			"order": 12
+		},
+		{
+			"id": "SPO01",
+			"name": "仰卧起坐·周冠军",
+			"description": "连3次获奖即为MVP，记为班级最佳记录",
+			"points": 3,
+			"allow_grades": [],
+			"group_id": "g-sports",
+			"order": 0
+		},
+		{
+			"id": "SPO02",
+			"name": "仰卧起坐·亚军",
+			"description": "连3次获奖即为MVP，记为班级最佳记录",
+			"points": 2,
+			"allow_grades": [],
+			"group_id": "g-sports",
+			"order": 1
+		},
+		{
+			"id": "SPO03",
+			"name": "仰卧起坐·季军",
+			"description": "连3次获奖即为MVP，记为班级最佳记录",
+			"points": 1,
+			"allow_grades": [],
+			"group_id": "g-sports",
+			"order": 2
+		},
+		{
+			"id": "SPO04",
+			"name": "平板支撑·周冠军",
+			"description": "连3次获奖即为MVP，记为班级最佳记录",
+			"points": 3,
+			"allow_grades": [],
+			"group_id": "g-sports",
+			"order": 3
+		},
+		{
+			"id": "SPO05",
+			"name": "平板支撑·亚军",
+			"description": "连3次获奖即为MVP，记为班级最佳记录",
+			"points": 2,
+			"allow_grades": [],
+			"group_id": "g-sports",
+			"order": 4
+		},
+		{
+			"id": "SPO06",
+			"name": "平板支撑·季军",
+			"description": "连3次获奖即为MVP，记为班级最佳记录",
+			"points": 1,
+			"allow_grades": [],
+			"group_id": "g-sports",
+			"order": 5
+		},
+		{
+			"id": "EXT01",
+			"name": "老师办公室表扬，班主任班级表扬",
+			"description": "",
+			"points": null,
+			"allow_grades": [],
+			"group_id": "g-extra",
+			"order": 0
+		},
+		{
+			"id": "EXT02",
+			"name": "班委表扬（需核实情况）",
+			"description": "",
+			"points": null,
+			"allow_grades": [],
+			"group_id": "g-extra",
+			"order": 1
+		},
+		{
+			"id": "FIN01",
+			"name": "班委按照工作情况+分",
+			"description": "",
+			"points": null,
+			"allow_grades": [],
+			"group_id": "g-final",
+			"order": 0
+		},
+		{
+			"id": "FIN02",
+			"name": "班级同学评定+分",
+			"description": "",
+			"points": null,
+			"allow_grades": [],
+			"group_id": "g-final",
+			"order": 1
+		},
+		{
+			"id": "FIN03",
+			"name": "自我评定进步者",
+			"description": "",
+			"points": null,
+			"allow_grades": [],
+			"group_id": "g-final",
+			"order": 2
+		}
+	]
+}

@@ -147,10 +147,11 @@ export const useMonitorCycle = () => {
 
 	// 通过规则调整学生积分（周期内）—— 周期记分唯一入口
 	// group_id: 按组发放时记录组 id；单个发放传 ''
-	const adjustPointsByRule = async (params: { cycleId: string, ruleId: string, students: Student[], groupId?: string, count?: number }) => {
+	// pointsPerCount: 单次分值覆盖值，自定义分值规则由调用方传入（不传则取规则固定分值）
+	const adjustPointsByRule = async (params: { cycleId: string, ruleId: string, students: Student[], groupId?: string, count?: number, pointsPerCount?: number }) => {
 		try {
 			if (!appStore.activeGrade) return { success: false, message: '暂无班级信息' };
-			const { cycleId, ruleId, students, groupId = '', count = 1 } = params;
+			const { cycleId, ruleId, students, groupId = '', count = 1, pointsPerCount } = params;
 			const gradeInfo = appStore.activeGrade.gradeInfo;
 			const cycle = gradeInfo.monitorCycleList.find(item => item.id === cycleId);
 			if (!cycle) return { success: false, message: '周期不存在' };
@@ -163,14 +164,19 @@ export const useMonitorCycle = () => {
 				return { success: false, message: `周期「${cycle.name}」尚未开始，无法记录积分` };
 			}
 
-			// 规则积分
+			// 规则积分：自定义分值规则必须由调用方指定单次分值，否则不生效
 			const rule = appStore.database.ruleList.find(item => item.id === ruleId);
 			if (!rule) return { success: false, message: '规则不存在' };
+			const isNoPoints = rule.points === null || rule.points === undefined;
+			if (isNoPoints && (pointsPerCount === undefined || pointsPerCount === null)) {
+				return { success: false, message: '该规则无固定分值，请先设置本次分值' };
+			}
+			const perPoints = isNoPoints ? Number(pointsPerCount) : Number(rule.points);
 			const time = dayjs().format('YYYY-MM-DD HH:mm:ss');
 			students.forEach(stu => {
 				const target = gradeInfo.studentList.find(item => item.id === stu.id);
 				if (!target) return;
-				const points = rule.points * count;
+				const points = perPoints * count;
 				target.points = Number(target.points) + points;
 				const recordIndex = gradeInfo.indexMap.record;
 				const record = new RuleRecord({

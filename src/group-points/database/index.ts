@@ -1,6 +1,7 @@
 import {
 	Grade,
 	Rule,
+	RuleGroup,
 	Prize,
 	RuleRecord,
 	Group,
@@ -47,6 +48,7 @@ export interface DatabaseInfoType {
 		delete: number;
 	}[];
 	ruleList: Rule[];
+	ruleGroupList: RuleGroup[];
 	prizeList: Prize[];
 	basicConfig: Basic;
 	password: string;
@@ -63,6 +65,14 @@ export const DEFAULT_TABLE_NAME = {
 	prize: 'prize',
 	basic: 'basic',
 }
+
+// 规则默认分组：旧数据（扁平规则数组）升级后统一归入该分组
+export const DEFAULT_RULE_GROUP_ID = 'DEFAULT';
+export const DEFAULT_RULE_GROUP_NAME = '默认分组';
+
+// 系统内置规则（主动加分 / 主动减分）：由程序按需自动补齐，不允许删除
+export const SYSTEM_RULE_IDS = ['ACTIVE_ADD', 'ACTIVE_SUB'];
+export const isSystemRule = (id?: string) => !!id && SYSTEM_RULE_IDS.includes(id);
 
 export const BUILD_TYPE = {
 	trial: 'trial',
@@ -122,13 +132,52 @@ export async function loadGroupPointsConfig() {
 		// 解析信息
 		const { grade, prize } = mainConfig;
 		const gradeList: Grade[] = JSON.parse(grade) || [];
-		const ruleList: Rule[] = JSON.parse(ruleConfig) || [];
+		// 规则数据兼容两种格式：
+		// 1) 旧格式：扁平规则数组（无分组）→ 全部归入默认分组
+		// 2) 新格式：{ groups, rules }（树形结构，最多两层）
+		const parsedRuleConfig = JSON.parse(ruleConfig);
+		let ruleGroupList: RuleGroup[];
+		let ruleList: Rule[];
+		if (Array.isArray(parsedRuleConfig)) {
+			// 旧数据：全部归入默认分组
+			ruleGroupList = [new RuleGroup({ id: DEFAULT_RULE_GROUP_ID, name: DEFAULT_RULE_GROUP_NAME, order: 0 })];
+			ruleList = parsedRuleConfig.map((item: any, index: number) => new Rule({
+				id: item.id,
+				name: item.name,
+				description: item.description,
+				points: item.points ?? null,
+				allow_grades: item.allow_grades || [],
+				group_id: DEFAULT_RULE_GROUP_ID,
+				order: typeof item?.order === 'number' ? item.order : index,
+			}));
+		} else {
+			ruleGroupList = (parsedRuleConfig?.groups || []).map((item: any, index: number) => new RuleGroup({
+				id: item.id || `${index}`,
+				name: item.name || '未命名分组',
+				order: typeof item?.order === 'number' ? item.order : index,
+			}));
+			// 兜底：默认分组必须存在
+			if (!ruleGroupList.some(g => g.id === DEFAULT_RULE_GROUP_ID)) {
+				ruleGroupList.unshift(new RuleGroup({ id: DEFAULT_RULE_GROUP_ID, name: DEFAULT_RULE_GROUP_NAME, order: -1 }));
+			}
+			const validGroupIds = new Set(ruleGroupList.map(g => g.id));
+			ruleList = (parsedRuleConfig?.rules || []).map((item: any, index: number) => new Rule({
+				id: item.id,
+				name: item.name,
+				description: item.description,
+				points: item.points ?? null,
+				allow_grades: item.allow_grades || [],
+				// 分组缺失或指向已删除的分组 → 回归默认分组
+				group_id: item?.group_id && validGroupIds.has(item.group_id) ? item.group_id : DEFAULT_RULE_GROUP_ID,
+				order: typeof item?.order === 'number' ? item.order : index,
+			}));
+		}
 		// 补齐默认主动加减分规则（旧数据可能缺失）
 		if (!ruleList.some(r => r.id === 'ACTIVE_ADD')) {
-			ruleList.unshift(new Rule({ id: 'ACTIVE_ADD', name: '主动加分', description: '默认主动加分规则', points: 1, allow_grades: [] }));
+			ruleList.unshift(new Rule({ id: 'ACTIVE_ADD', name: '主动加分', description: '默认主动加分规则', points: 1, allow_grades: [], group_id: DEFAULT_RULE_GROUP_ID, order: -2 }));
 		}
 		if (!ruleList.some(r => r.id === 'ACTIVE_SUB')) {
-			ruleList.splice(ruleList.some(r => r.id === 'ACTIVE_ADD') ? 1 : 0, 0, new Rule({ id: 'ACTIVE_SUB', name: '主动减分', description: '默认主动减分规则', points: -1, allow_grades: [] }));
+			ruleList.splice(ruleList.some(r => r.id === 'ACTIVE_ADD') ? 1 : 0, 0, new Rule({ id: 'ACTIVE_SUB', name: '主动减分', description: '默认主动减分规则', points: -1, allow_grades: [], group_id: DEFAULT_RULE_GROUP_ID, order: -1 }));
 		}
 		const prizeList: Prize[] = JSON.parse(prize) || [];
 		const basicConfigData = JSON.parse(basicConfig) || { step: "1", buildType, password: md5(password), firstRun: 1, startTime, duration };
@@ -170,6 +219,7 @@ export async function loadGroupPointsConfig() {
 		const data: DatabaseInfoType = {
 			gradeList,
 			ruleList,
+			ruleGroupList,
 			prizeList,
 			basicConfig: basicConfigData,
 			password,
@@ -228,6 +278,11 @@ export async function appendRuleConfig(content: string) {
 		suffix: GroupPointsConfig.suffix,
 		content
 	});
+}
+
+// 持久化规则配置（分组 + 规则，新格式 { groups, rules }）
+export async function saveRuleConfig(groups: RuleGroup[], rules: Rule[]) {
+	return appendRuleConfig(JSON.stringify({ groups, rules }));
 }
 
 export async function appendPrizeConfig(content: string) {

@@ -6,12 +6,15 @@
 				<span class="count-text">（{{ studentCount }} 人）</span>
 			</el-form-item>
 			<el-form-item label="选择规则" prop="ruleId" :rules="[{ required: true, message: '请选择规则', trigger: 'change' }]">
-				<el-select v-model="form.ruleId" placeholder="请选择规则" style="width: 100%" filterable
-					:disabled="rules.length === 0">
-					<el-option v-for="rule in rules" :key="rule.id"
-						:label="`${rule.name} (${rule.points > 0 ? '+' : ''}${rule.points}分)`" :value="rule.id" />
-				</el-select>
+				<RuleTreeSelect v-model="form.ruleId" :rules="rules" :groups="groups"
+					:disabled="rules.length === 0" placeholder="请选择规则" />
 				<div v-if="rules.length === 0" class="form-tip">暂无可用规则，请先在规则设置中添加</div>
+			</el-form-item>
+			<!-- 自定义分值规则：必须手动指定分值后才生效 -->
+			<el-form-item v-if="needsPoints" label="本次分值" prop="points"
+				:rules="[{ required: true, message: '该规则无固定分值，请填写本次分值', trigger: 'blur' }]">
+				<el-input-number v-model="form.points" controls-position="right" style="width: 160px" placeholder="请输入分值" />
+				<span class="count-tip">自定义分值规则需指定分值后才会生效</span>
 			</el-form-item>
 			<el-form-item label="规则描述">
 				<el-input :value="selectedRule?.description" disabled type="textarea" :rows="2" />
@@ -35,30 +38,50 @@
 
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue';
-import { type FormInstance } from 'element-plus';
-import { MonitorCycle, Rule } from '../../../database/class';
+import { ElMessage, type FormInstance } from 'element-plus';
+import { MonitorCycle, Rule, RuleGroup } from '../../../database/class';
+import { isNoPointsRule, getRulePoints } from '../../../database/utils/useRule';
+import RuleTreeSelect from '../../components/RuleTreeSelect.vue';
 
-const props = defineProps<{
+const props = withDefaults(defineProps<{
 	visible: boolean;
 	cycle?: MonitorCycle;
 	rules: Rule[];
+	groups?: RuleGroup[];
 	targetName: string;
 	studentCount: number;
 	groupId?: string;
-}>();
+}>(), {
+	groups: () => [],
+});
 
 const emit = defineEmits<{
 	(e: 'update:visible', value: boolean): void;
-	(e: 'confirm', payload: { ruleId: string, count: number }): void;
+	(e: 'confirm', payload: { ruleId: string, count: number, points: number }): void;
 }>();
 
 const formRef = ref<FormInstance>();
-const form = ref({ ruleId: '', count: 1 });
+const form = ref<{
+	ruleId: string;
+	points: number | undefined;
+	count: number;
+}>({ ruleId: '', points: undefined, count: 1 });
 
 const selectedRule = computed(() => props.rules.find(rule => rule.id === form.value.ruleId));
 
-// 积分预览：规则分值 × 次数
-const previewPoints = computed(() => (selectedRule.value?.points || 0) * form.value.count);
+// 自定义分值规则：需要手动指定分值
+const needsPoints = computed(() => !!selectedRule.value && isNoPointsRule(selectedRule.value));
+
+// 单次分值：固定分值规则取规则分值，自定义分值规则取输入值
+const singlePoints = computed(() => {
+	if (!selectedRule.value) return 0;
+	const fixed = getRulePoints(selectedRule.value);
+	if (fixed === null) return Number(form.value.points) || 0;
+	return fixed;
+});
+
+// 积分预览：单次分值 × 次数
+const previewPoints = computed(() => singlePoints.value * form.value.count);
 
 const dialogTitle = computed(() => '周期规则记分');
 
@@ -69,16 +92,25 @@ const handleVisibleChange = (v: boolean) => {
 watch(() => props.visible, (v) => {
 	if (v) {
 		form.value.ruleId = '';
+		form.value.points = undefined;
 		form.value.count = 1;
 	}
 });
 
+// 切换规则时重置自定义分值输入
+watch(() => form.value.ruleId, () => {
+	form.value.points = undefined;
+});
+
 const handleSubmit = () => {
 	formRef.value?.validate((valid) => {
-		if (valid && selectedRule.value) {
-			emit('confirm', { ruleId: selectedRule.value.id, count: form.value.count });
-			handleVisibleChange(false);
+		if (!valid || !selectedRule.value) return;
+		if (isNoPointsRule(selectedRule.value) && (form.value.points === undefined || form.value.points === null)) {
+			ElMessage.warning('该规则无固定分值，请先设置本次分值');
+			return;
 		}
+		emit('confirm', { ruleId: selectedRule.value.id, count: form.value.count, points: singlePoints.value });
+		handleVisibleChange(false);
 	});
 };
 </script>

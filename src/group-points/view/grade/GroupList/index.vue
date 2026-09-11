@@ -71,7 +71,7 @@
 			:step="Number(step)" @confirm="handleBatchPointsConfirm" />
 
 		<!-- 规则选择弹窗 -->
-		<RuleSelectorModal v-model:visible="ruleSelectorVisible" :rules="rules" :target-name="ruleTargetName"
+		<RuleSelectorModal v-model:visible="ruleSelectorVisible" :rules="rules" :groups="ruleGroups" :target-name="ruleTargetName"
 			:type="ruleSelectorType" @confirm="handleRuleConfirm" />
 
 		<!-- 调整排序弹窗 -->
@@ -186,9 +186,10 @@ const orderByPoints = ref(0);
 const recordDialogVisible = ref(false);
 const selectedStudentId = ref('');
 
-const { getRuleList } = useRule();
+const { getRuleList, getRuleGroupList } = useRule();
 
 const rules = computed(() => getRuleList(appStore.activeGrade?.id) || []);
+const ruleGroups = computed(() => getRuleGroupList() || []);
 
 const formData = ref<GroupInfo>({
 	id: '',
@@ -582,8 +583,10 @@ const handleMulAdjustPoints = (group: GroupInfo) => {
 	ruleSelectorVisible.value = true;
 };
 
-const handleRuleConfirm = async (rule: Rule, count = 1) => {
-	const points = rule.points * count;
+const handleRuleConfirm = async (rule: Rule, count = 1, singlePoints?: number) => {
+	// 自定义分值规则由弹窗传入单次分值，其余取规则固定分值
+	const perPoints = singlePoints !== undefined ? singlePoints : Number(rule.points || 0);
+	const points = perPoints * count;
 	if (ruleSelectorType.value === 'single' && currentStudent.value) {
 		// 单个学生调整
 		currentStudent.value.points = Number(currentStudent.value.points) + points;

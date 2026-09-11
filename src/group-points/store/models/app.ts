@@ -17,6 +17,7 @@ export const useAppStore = defineStore('app', {
 		database: {
 			gradeList: [],
 			ruleList: [],
+			ruleGroupList: [],
 			prizeList: [],
 			basicConfig: {} as DatabaseInfoType['basicConfig'],
 			password: '',

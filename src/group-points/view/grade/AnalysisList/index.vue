@@ -43,7 +43,7 @@
 					<el-table-column prop="points" label="分值" width="90" align="center">
 						<template #default="scope">
 							<span :class="scope.row.points > 0 ? 'text-success' : scope.row.points < 0 ? 'text-danger' : 'text-muted'">
-								{{ scope.row.points > 0 ? '+' : '' }}{{ scope.row.points }}
+								{{ formatPoints(scope.row.points) }}
 							</span>
 						</template>
 					</el-table-column>
@@ -109,7 +109,7 @@
 									<el-table-column prop="points" label="分值" width="80" align="center">
 										<template #default="s">
 											<span :class="s.row.points > 0 ? 'text-success' : s.row.points < 0 ? 'text-danger' : 'text-muted'">
-												{{ s.row.points > 0 ? '+' : '' }}{{ s.row.points }}
+												{{ formatPoints(s.row.points) }}
 											</span>
 										</template>
 									</el-table-column>
@@ -211,6 +211,12 @@ const chartOrderIndex = (key: string) => {
 };
 
 const getRuleName = (id: string) => ruleList.value.find(r => r.id === id)?.name || '';
+
+// 规则分值展示：自定义分值规则（points 为 null）显示「自定义分值」
+const formatPoints = (points: number | null | undefined) => {
+	if (points === null || points === undefined) return '自定义分值';
+	return `${points > 0 ? '+' : ''}${points}`;
+};
 
 // 判断记录是否属于指定周期（班委记录按 cycle_id；普通记录按时间范围）
 const recordInCycle = (record: { source?: number, cycle_id?: string, time?: string }, cycle: { id: string, startTime?: string, endTime?: string }) => {

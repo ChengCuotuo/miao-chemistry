@@ -119,7 +119,7 @@
 		</el-dialog>
 
 		<!-- 规则记分弹窗（单个 / 多选 / 按组共用） -->
-		<MonitorRecordModal :visible="recordModalVisible" :cycle="currentCycle" :rules="rules" :target-name="recordTarget.name"
+		<MonitorRecordModal :visible="recordModalVisible" :cycle="currentCycle" :rules="rules" :groups="ruleGroups" :target-name="recordTarget.name"
 			:student-count="recordTarget.students.length" :group-id="recordTarget.groupId || ''"
 			@update:visible="handleModalVisibleChange" @confirm="handleRecordConfirm" />
 
@@ -193,10 +193,11 @@ const {
 	getMonitorCycleList, createMonitorCycle, updateMonitorCycle,
 	startMonitorCycle, finishMonitorCycle, deleteMonitorCycle, adjustPointsByRule, autoFinishExpiredCycles,
 } = useMonitorCycle();
-const { getRuleList } = useRule();
+const { getRuleList, getRuleGroupList } = useRule();
 const { getMonitorAccountList, createMonitorAccount, updateMonitorAccountPassword, deleteMonitorAccount } = useMonitorAccount();
 
 const rules = computed(() => getRuleList(appStore.activeGrade?.id) || []);
+const ruleGroups = computed(() => getRuleGroupList() || []);
 const isMonitor = computed(() => appStore.currentRole === 'monitor');
 // 班委仅可见未结束周期；教师可见全部
 const allCycleList = computed(() => getMonitorCycleList());
@@ -437,7 +438,7 @@ const handleModalVisibleChange = (v: boolean) => {
 	recordModalVisible.value = v;
 };
 
-const handleRecordConfirm = async (payload: { ruleId: string, count: number }) => {
+const handleRecordConfirm = async (payload: { ruleId: string, count: number, points?: number }) => {
 	const target = recordTarget.value;
 	if (!currentCycle.value || !target.students.length) return;
 	const res = await adjustPointsByRule({
@@ -446,6 +447,7 @@ const handleRecordConfirm = async (payload: { ruleId: string, count: number }) =
 		students: target.students,
 		groupId: target.groupId || '',
 		count: payload.count,
+		pointsPerCount: payload.points,
 	});
 	if (res.success) {
 		ElMessage.success(res.message);
