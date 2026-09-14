@@ -18,8 +18,29 @@
 			<el-space>
 				<el-button :icon="FolderAdd" @click="handleAddGroup">新增分组</el-button>
 				<el-button type="primary" :icon="Plus" @click="handleAdd">新增规则</el-button>
-				<el-button type="success" :icon="Upload" @click="handleImport">导入</el-button>
-				<el-button type="warning" :icon="Download" @click="handleExport">导出</el-button>
+				<el-dropdown trigger="click" @command="handleImportCommand">
+					<el-button type="success" :icon="Upload">导入<el-icon class="el-icon--right"><ArrowDown /></el-icon></el-button>
+					<template #dropdown>
+						<el-dropdown-menu>
+							<el-dropdown-item command="excel" :icon="Grid">从 Excel 导入规则（支持分组）</el-dropdown-item>
+							<el-dropdown-item command="backup" :icon="Document">导入备份文件（.miao）</el-dropdown-item>
+						</el-dropdown-menu>
+					</template>
+				</el-dropdown>
+				<el-dropdown trigger="click" @command="handleExportCommand">
+					<el-button type="warning" :icon="Download">导出<el-icon class="el-icon--right"><ArrowDown /></el-icon></el-button>
+					<template #dropdown>
+						<el-dropdown-menu>
+							<el-dropdown-item command="excel" :icon="Grid">导出 Excel（可编辑后回导）</el-dropdown-item>
+							<el-dropdown-item command="backup" :icon="Document">导出备份文件（.miao）</el-dropdown-item>
+						</el-dropdown-menu>
+					</template>
+				</el-dropdown>
+				<el-tooltip :disabled="!clearDisabled" content="当前只有默认分组与内置规则，无需清空" placement="top">
+					<span>
+						<el-button type="danger" plain :icon="DeleteFilled" :disabled="clearDisabled" @click="handleClearAll">一键清空</el-button>
+					</span>
+				</el-tooltip>
 			</el-space>
 		</div>
 
@@ -83,6 +104,9 @@
 				</el-table-column>
 			</el-table>
 		</div>
+
+		<!-- Excel 导入规则弹窗 -->
+		<RuleExcelImportDialog v-model:visible="excelImportVisible" @success="handleExcelImportSuccess" />
 
 		<!-- 新增/编辑规则弹窗 -->
 		<el-dialog :title="dialogTitle" v-model="dialogVisible" width="600px" :before-close="handleDialogClose">
@@ -153,23 +177,58 @@
 				<el-button type="danger" @click="confirmDeleteGroup">确定删除</el-button>
 			</template>
 		</el-dialog>
+
+		<!-- 一键清空规则确认弹窗 -->
+		<el-dialog title="一键清空规则" v-model="clearConfirmVisible" width="560px" :before-close="handleClearDialogClose">
+			<el-alert type="error" show-icon :closable="false" title="该操作不可撤销，请先确认已备份">
+				<div class="clear-alert-line">将删除除「主动加分」「主动减分」之外的全部规则，并删除「{{ DEFAULT_RULE_GROUP_NAME }}」之外的全部分组。</div>
+			</el-alert>
+
+			<div class="clear-summary">
+				<div class="clear-row"><span>当前</span><b>{{ ruleGroups.length }} 个分组、{{ rules.length }} 条规则</b></div>
+				<div class="clear-row"><span>本次删除</span><b class="danger-text">{{ clearStats.rules }} 条规则、{{ clearStats.groups }} 个分组</b></div>
+				<div class="clear-row"><span>保留</span><b>「{{ DEFAULT_RULE_GROUP_NAME }}」+ 主动加分、主动减分（共 {{ clearStats.keep }} 条）</b></div>
+			</div>
+
+			<div class="clear-impact">
+				<div class="clear-impact-title">清空后会带来这些问题</div>
+				<ul>
+					<li><strong>规则不可恢复</strong>：如需保留，请先「导出备份文件」或「导出 Excel」再执行。</li>
+					<li><strong>历史积分记录不会丢失</strong>，但记录中引用的已删除规则，其规则名会显示为「主动执行」，在规则筛选树里归入「其他」，无法再按原规则名筛选。</li>
+					<li><strong>记分入口只剩两条规则</strong>：学生 / 小组按规则调整积分、周期记分等处的规则列表只剩「主动加分 / 主动减分」，需重新录入规则才能按原方式记分。</li>
+					<li><strong>数据分析会失真</strong>：行为画像（规则维度）、规则健康度（规则库维度）等按规则统计的图表，清空后只剩这两条规则的数据。</li>
+					<li><strong>分组结构需重建</strong>：「{{ DEFAULT_RULE_GROUP_NAME }}」之外的分类分组会一并删除，不保留分组名。</li>
+				</ul>
+			</div>
+
+			<el-checkbox v-model="clearAcknowledged" class="clear-check">
+				我已了解上述影响，确认清空（保留默认分组与内置规则）
+			</el-checkbox>
+
+			<template #footer>
+				<el-button @click="handleClearDialogClose">取消</el-button>
+				<el-button type="danger" :disabled="!clearAcknowledged" :loading="clearing" @click="confirmClear">确认清空</el-button>
+			</template>
+		</el-dialog>
 	</div>
 </template>
 
 <script setup lang="ts">
 import { ref, computed } from 'vue';
-import { Plus, Edit, Delete, Upload, Download, FolderOpened, FolderAdd } from '@element-plus/icons-vue';
+import { Plus, Edit, Delete, DeleteFilled, Upload, Download, FolderOpened, FolderAdd, ArrowDown, Grid, Document } from '@element-plus/icons-vue';
 import type { FormInstance } from 'element-plus';
 import { ElMessage } from 'element-plus';
 import { useAppStore } from '../../store/models/app';
 import { Rule, RuleGroup } from '../../database/class';
 import { useRule } from '../../database/utils/useRule';
 import { GroupPointsConfig, DEFAULT_TABLE_NAME, DEFAULT_RULE_GROUP_ID, DEFAULT_RULE_GROUP_NAME, saveRuleConfig, curWindow, isSystemRule } from '../../database';
+import { buildRuleWorkbook, downloadWorkbook, RULE_EXCEL_EXPORT_FILENAME } from '../../database/utils/ruleExcel';
+import RuleExcelImportDialog from './components/RuleExcelImportDialog.vue';
 import { openFile } from '../../utils';
 
 const {
 	createRule, deleteRule, updateRule, getRuleList, getRuleGroupList, getRuleById,
-	createRuleGroup, updateRuleGroup, deleteRuleGroup,
+	createRuleGroup, updateRuleGroup, deleteRuleGroup, clearRules,
 } = useRule();
 
 const appStore = useAppStore();
@@ -425,6 +484,42 @@ const confirmDeleteGroup = async () => {
 	deleteGroupRef.value = null;
 };
 
+// ---------- 一键清空 ----------
+const clearConfirmVisible = ref(false);
+const clearAcknowledged = ref(false);
+const clearing = ref(false);
+
+// 待删除的规则（系统内置规则会被保留）与分组（默认分组会被保留）
+const clearStats = computed(() => ({
+	rules: rules.value.filter(rule => !isSystemRule(rule.id)).length,
+	groups: ruleGroups.value.filter(group => group.id !== DEFAULT_RULE_GROUP_ID).length,
+	keep: rules.value.filter(rule => isSystemRule(rule.id)).length || 2,
+}));
+
+// 只剩默认分组与内置规则时，清空没有意义
+const clearDisabled = computed(() => clearStats.value.rules === 0 && clearStats.value.groups === 0);
+
+const handleClearAll = () => {
+	clearAcknowledged.value = false;
+	clearConfirmVisible.value = true;
+};
+
+const handleClearDialogClose = () => {
+	clearConfirmVisible.value = false;
+	clearAcknowledged.value = false;
+};
+
+const confirmClear = async () => {
+	clearing.value = true;
+	try {
+		const result = await clearRules();
+		ElMessage.success(`已清空 ${result.removedRules} 条规则、${result.removedGroups} 个分组，保留 ${result.kept} 条内置规则`);
+		handleClearDialogClose();
+	} finally {
+		clearing.value = false;
+	}
+};
+
 // ---------- 展示辅助 ----------
 const pointsText = (points: number | null) => {
 	if (points === null || points === undefined) return '自定义分值';
@@ -439,6 +534,44 @@ const getPointsTagType = (points: number | null) => {
 };
 
 // ---------- 导入 / 导出 ----------
+
+// Excel 导入弹窗
+const excelImportVisible = ref(false);
+
+const handleImportCommand = (command: string) => {
+	if (command === 'excel') {
+		excelImportVisible.value = true;
+		return;
+	}
+	handleImport();
+};
+
+// store 已更新，列表自动刷新，仅需提示
+const handleExcelImportSuccess = () => {
+	ElMessage.success('规则列表已更新');
+};
+
+const handleExportCommand = (command: string) => {
+	if (command === 'excel') {
+		handleExportExcel();
+		return;
+	}
+	handleExport();
+};
+
+// 导出 Excel：分组 + 规则一张表，可直接编辑后再用「从 Excel 导入」回导
+const handleExportExcel = () => {
+	try {
+		const workbook = buildRuleWorkbook(ruleGroups.value, rules.value, gradeList.value);
+		downloadWorkbook(workbook, RULE_EXCEL_EXPORT_FILENAME);
+		ElMessage.success('已导出 Excel，编辑后可通过「导入 → 从 Excel 导入规则」回导');
+	} catch (error) {
+		console.error('导出 Excel 失败:', error);
+		ElMessage.error('导出 Excel 失败');
+	}
+};
+
+// 导入备份文件（.miao，旧版扁平数组 / 新版 { groups, rules } 均兼容）
 const handleImport = async () => {
 	const info = await openFile([GroupPointsConfig.downloadSuffix]);
 	if (!info) return;
@@ -565,5 +698,66 @@ const handleExport = async () => {
 	color: #909399;
 	line-height: 1.4;
 	width: 100%;
+}
+
+/* ---- 一键清空弹窗 ---- */
+.clear-alert-line {
+	line-height: 1.6;
+}
+
+.clear-summary {
+	margin: 16px 0;
+	border: 1px solid var(--el-border-color-lighter);
+	border-radius: 4px;
+	overflow: hidden;
+}
+
+.clear-row {
+	display: flex;
+	align-items: baseline;
+	gap: 12px;
+	padding: 8px 12px;
+	font-size: 13px;
+}
+
+.clear-row + .clear-row {
+	border-top: 1px solid var(--el-border-color-lighter);
+}
+
+.clear-row span {
+	width: 56px;
+	flex: none;
+	color: #909399;
+}
+
+.clear-row b {
+	font-weight: 600;
+	line-height: 1.5;
+}
+
+.danger-text {
+	color: var(--el-color-danger);
+}
+
+.clear-impact-title {
+	font-size: 13px;
+	font-weight: 600;
+	margin-bottom: 6px;
+}
+
+.clear-impact ul {
+	margin: 0;
+	padding-left: 18px;
+	color: #606266;
+	font-size: 13px;
+	line-height: 1.7;
+}
+
+.clear-impact li + li {
+	margin-top: 4px;
+}
+
+.clear-check {
+	margin-top: 14px;
 }
 </style>

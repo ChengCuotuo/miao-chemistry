@@ -1,4 +1,4 @@
-import { saveRuleConfig, DEFAULT_RULE_GROUP_ID, isSystemRule } from "..";
+import { saveRuleConfig, DEFAULT_RULE_GROUP_ID, DEFAULT_RULE_GROUP_NAME, SYSTEM_RULE_IDS, isSystemRule } from "..";
 import { useAppStore } from "../../store/models/app";
 import { Rule, RuleGroup } from "../class";
 import { v4 as uuidv4 } from 'uuid';
@@ -10,6 +10,36 @@ export interface RuleTreeNode {
 	isGroup: boolean;
 	points?: number | null;
 	children?: RuleTreeNode[];
+}
+
+// Excel 批量导入的一行（分组按名称匹配，不存在时自动创建）
+export interface RuleImportItem {
+	groupName: string;
+	name: string;
+	points: number | null;
+	allow_grades: string[];
+	description: string;
+}
+
+// 同名规则的处理策略：skip 跳过 / overwrite 覆盖 / append 仍然新增
+export type RuleImportDuplicateStrategy = 'skip' | 'overwrite' | 'append';
+
+export interface RuleImportResult {
+	groupCreated: number;
+	added: number;
+	updated: number;
+	skipped: number;
+	failed: number;
+}
+
+// 一键清空结果
+export interface ClearRulesResult {
+	/** 被删除的规则条数 */
+	removedRules: number;
+	/** 被删除的分组个数（默认分组除外） */
+	removedGroups: number;
+	/** 清空后保留的系统规则条数（主动加分 / 主动减分） */
+	kept: number;
 }
 
 // 判断规则是否为自定义分值规则（points 为 null/undefined）
@@ -152,7 +182,113 @@ export const useRule = () => {
 		}
 	}
 
+	// 批量导入（Excel）：按分组名归组，分组不存在时自动创建；同名规则按策略处理
+	const importRules = async (
+		items: RuleImportItem[],
+		strategy: RuleImportDuplicateStrategy = 'skip',
+	): Promise<RuleImportResult> => {
+		const result: RuleImportResult = { groupCreated: 0, added: 0, updated: 0, skipped: 0, failed: 0 };
+		try {
+			if (!appStore.database.ruleGroupList) appStore.database.ruleGroupList = [];
+			if (!appStore.database.ruleList) appStore.database.ruleList = [];
+			// 新分组追加在当前最大 order 之后
+			const groupOrders = appStore.database.ruleGroupList.map(item => item.order ?? 0);
+			let maxGroupOrder = groupOrders.length ? Math.max(...groupOrders) : 0;
+
+			for (const item of items) {
+				const ruleName = (item?.name || '').trim();
+				if (!ruleName) {
+					result.failed++;
+					continue;
+				}
+				const groupName = (item.groupName || '').trim() || DEFAULT_RULE_GROUP_NAME;
+				let group = appStore.database.ruleGroupList.find(g => g.name === groupName);
+				if (!group) {
+					group = new RuleGroup({ id: uuidv4(), name: groupName, order: ++maxGroupOrder });
+					appStore.database.ruleGroupList.push(group);
+					result.groupCreated++;
+				}
+
+				const existing = appStore.database.ruleList.find(
+					rule => rule.group_id === group.id && rule.name === ruleName,
+				);
+				if (existing && strategy === 'skip') {
+					result.skipped++;
+					continue;
+				}
+				if (existing && strategy === 'overwrite') {
+					existing.description = item.description || '';
+					existing.points = item.points ?? null;
+					existing.allow_grades = item.allow_grades || [];
+					result.updated++;
+					continue;
+				}
+				appStore.database.ruleList.push(new Rule({
+					id: uuidv4(),
+					name: ruleName,
+					description: item.description || '',
+					points: item.points ?? null,
+					allow_grades: item.allow_grades || [],
+					group_id: group.id,
+					order: nextRuleOrder(group.id),
+				}));
+				result.added++;
+			}
+			sortRules();
+			await persist();
+			return result;
+		} catch (error) {
+			console.error('批量导入规则出错:', error);
+			return result;
+		}
+	}
+
 	// ---------- 规则 ----------
+
+	// 一键清空：仅保留默认分组中的系统内置规则（主动加分 / 主动减分），其余规则与分组全部删除
+	const clearRules = async (): Promise<ClearRulesResult> => {
+		const rules = appStore.database.ruleList || [];
+		const groups = appStore.database.ruleGroupList || [];
+		const result: ClearRulesResult = {
+			removedRules: rules.filter(rule => !isSystemRule(rule.id)).length,
+			removedGroups: groups.filter(group => group.id !== DEFAULT_RULE_GROUP_ID).length,
+			kept: 0,
+		};
+		try {
+			// 分组：仅保留默认分组（缺失时补回）
+			const defaultGroup = groups.find(group => group.id === DEFAULT_RULE_GROUP_ID)
+				|| new RuleGroup({ id: DEFAULT_RULE_GROUP_ID, name: DEFAULT_RULE_GROUP_NAME, order: 0 });
+			defaultGroup.name = defaultGroup.name || DEFAULT_RULE_GROUP_NAME;
+			defaultGroup.order = 0;
+			appStore.database.ruleGroupList = [defaultGroup];
+
+			// 规则：按系统规则顺序保留现对象（保留用户改过的名称与分值），缺失时补建默认值
+			const kept: Rule[] = [];
+			SYSTEM_RULE_IDS.forEach((id, index) => {
+				const found = rules.find(rule => rule.id === id);
+				const rule = found || new Rule({
+					id,
+					name: id === 'ACTIVE_ADD' ? '主动加分' : '主动减分',
+					description: id === 'ACTIVE_ADD' ? '默认主动加分规则' : '默认主动减分规则',
+					points: id === 'ACTIVE_ADD' ? 1 : -1,
+					allow_grades: [],
+					group_id: DEFAULT_RULE_GROUP_ID,
+					order: index,
+				});
+				// 系统规则回到默认分组并重排，保证列表顺序稳定
+				rule.group_id = DEFAULT_RULE_GROUP_ID;
+				rule.order = index;
+				kept.push(rule);
+			});
+			appStore.database.ruleList = kept;
+			result.kept = kept.length;
+			await persist();
+			return result;
+		} catch (error) {
+			console.error('清空规则出错:', error);
+			return result;
+		}
+	}
 
 	// 创建规则（points 传 null 表示自定义分值规则）
 	const createRule = async (name: string, description: string, points: number | null, allow_grades: string[] = [], group_id: string = DEFAULT_RULE_GROUP_ID) => {
@@ -257,5 +393,7 @@ export const useRule = () => {
 		getRuleList,
 		getRuleTree,
 		getRuleById,
+		importRules,
+		clearRules,
 	}
 }
