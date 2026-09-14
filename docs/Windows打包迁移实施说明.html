@@ -1,0 +1,425 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Windows 打包迁移实施说明 · Squirrel → electron-builder + NSIS</title>
+<style>
+  :root{
+    --paper:#f6f4f0;--card:#fbfaf8;--ink:#1b1a18;--ink-soft:#3d3a35;
+    --muted:#6b6862;--rule:#dcd7cf;--rule-strong:#bdb6ab;
+    --accent:#9c3b26;--accent-soft:#f0e4df;
+    --serif:"Songti SC","STSong","Source Han Serif SC","Noto Serif CJK SC",Georgia,serif;
+    --sans:"PingFang SC","Hiragino Sans GB","Microsoft YaHei","Source Han Sans SC",-apple-system,sans-serif;
+    --mono:"SF Mono",Menlo,Consolas,"Courier New",monospace;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--sans);font-size:16px;line-height:1.6;letter-spacing:.01em}
+  .wrap{max-width:1080px;margin:0 auto;padding:0 40px}
+
+  header.cover{padding:88px 0 40px;border-bottom:1px solid var(--rule-strong)}
+  .kicker{font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--accent);font-weight:600;margin-bottom:22px}
+  h1{font-family:var(--serif);font-weight:600;font-size:44px;line-height:1.14;letter-spacing:-.022em;margin:0 0 18px;max-width:26ch}
+  .lede{font-size:17px;color:var(--ink-soft);max-width:62ch;margin:0}
+  .meta{display:grid;grid-template-columns:repeat(auto-fit,minmax(178px,1fr));gap:0 32px;margin:38px 0 6px;border-top:1px solid var(--rule);padding-top:22px}
+  .meta dt{font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin-bottom:5px}
+  .meta dd{margin:0;font-size:14px;color:var(--ink-soft)}
+  nav.toc{margin:34px 0 0;padding:22px 0 0;border-top:1px solid var(--rule)}
+  nav.toc ol{margin:0;padding:0;list-style:none;columns:2;column-gap:44px}
+  nav.toc li{margin:0 0 7px;break-inside:avoid}
+  nav.toc a{color:var(--ink-soft);text-decoration:none;font-size:14px}
+  nav.toc a:hover{color:var(--accent)}
+  nav.toc .num{font-family:var(--mono);font-size:12px;color:var(--muted);margin-right:9px}
+
+  main{padding:14px 0 30px}
+  section{padding:52px 0 8px;border-bottom:1px solid var(--rule)}
+  section:last-of-type{border-bottom:0}
+  h2{font-family:var(--serif);font-weight:600;font-size:27px;line-height:1.25;letter-spacing:-.012em;margin:0 0 20px}
+  h2 .h2num{font-family:var(--mono);font-size:13px;color:var(--accent);display:block;margin-bottom:9px;letter-spacing:.1em}
+  h3{font-family:var(--sans);font-weight:600;font-size:16px;margin:30px 0 10px}
+  p{margin:0 0 14px;max-width:74ch}
+  ul,ol{max-width:74ch;padding-left:22px;margin:0 0 16px}
+  li{margin:0 0 8px}
+  code{font-family:var(--mono);font-size:13.5px;background:#eceae5;padding:1px 5px;border-radius:3px;word-break:break-all}
+  a{color:var(--accent)}
+  .note{color:var(--muted);font-size:14px}
+
+  .verdict{border-top:2px solid var(--ink);margin:0 0 8px}
+  .verdict .row{display:grid;grid-template-columns:170px 1fr;gap:24px;padding:18px 0;border-bottom:1px solid var(--rule)}
+  .verdict .label{font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:var(--accent);font-weight:600;padding-top:2px}
+  .verdict p{margin:0;max-width:none}
+
+  figure{margin:28px 0 6px}
+  figure svg{display:block;width:100%;height:auto}
+  figcaption{font-size:13px;color:var(--muted);margin-top:12px;border-top:1px solid var(--rule);padding-top:10px;max-width:74ch}
+
+  .tablewrap{overflow-x:auto;margin:22px 0 6px}
+  table{border-collapse:collapse;width:100%;font-size:14px;min-width:660px}
+  caption{text-align:left;font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);padding-bottom:10px}
+  th,td{text-align:left;vertical-align:top;padding:12px 16px 12px 0;border-bottom:1px solid var(--rule)}
+  th{font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-soft);border-bottom:1px solid var(--rule-strong)}
+  td:first-child{font-weight:600;white-space:nowrap}
+  tr:last-child td{border-bottom:0}
+
+  pre{background:#1f1d1a;color:#e8e4dc;padding:20px 22px;overflow-x:auto;margin:20px 0;font-family:var(--mono);font-size:12.5px;line-height:1.7;border-radius:3px}
+  pre .c{color:#9b948a}
+  pre .k{color:#e5a67f}
+  pre .s{color:#b6c98a}
+
+  .paths{border:1px solid var(--rule-strong);background:var(--card);padding:20px 24px;margin:20px 0}
+  .paths .t{font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:var(--accent);margin-bottom:12px}
+  .paths ul{list-style:none;padding:0;margin:0}
+  .paths li{padding:9px 0;border-bottom:1px solid var(--rule);font-family:var(--mono);font-size:13px}
+  .paths li:last-child{border-bottom:0}
+  .paths li span{font-family:var(--sans);font-size:12.5px;color:var(--muted);display:block;margin-top:3px;letter-spacing:0}
+
+  ul.check{list-style:none;padding:0;max-width:80ch}
+  ul.check li{position:relative;padding-left:30px;margin-bottom:11px}
+  ul.check li::before{content:"";position:absolute;left:0;top:6px;width:13px;height:13px;border:1px solid var(--rule-strong)}
+  ul.check li.ok::after{content:"";position:absolute;left:3px;top:9px;width:7px;height:4px;border-left:1.6px solid var(--accent);border-bottom:1.6px solid var(--accent);transform:rotate(-45deg)}
+  ul.check li.todo::before{border-style:dashed}
+
+  footer{padding:34px 0 70px;color:var(--muted);font-size:13px;border-top:1px solid var(--rule)}
+  footer p{max-width:78ch;margin:0 0 8px}
+  @media (max-width:720px){
+    .wrap{padding:0 22px}
+    h1{font-size:32px}
+    nav.toc ol{columns:1}
+    .verdict .row{grid-template-columns:1fr;gap:6px}
+    body{font-size:15.5px}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header class="cover">
+  <div class="kicker">打包与分发 · 实施说明 · 已落地并本地验证</div>
+  <h1>Windows 打包迁移实施说明：Squirrel → electron-builder + NSIS</h1>
+  <p class="lede">
+    编译与打包继续由 Electron Forge 负责（vite、asar、Fuses、语言包裁剪都一样），
+    只把 Windows 安装包这一步换成 electron-builder 的 NSIS 安装器。
+    升级动作从「杀掉进程 → 等 500 毫秒 → 删掉整个安装目录」变成「等待、提示、强杀、可重试，然后覆盖写入」。
+  </p>
+  <dl class="meta">
+    <div><dt>改动文件</dt><dd>6 改 + 3 新增</dd></div>
+    <div><dt>新增</dt><dd><code>electron-builder.yml</code> / <code>scripts/build-windows.mjs</code> / <code>build/installer.nsh</code></dd></div>
+    <div><dt>产物</dt><dd><code>dist/miao-chemistry-Setup-2.0.1.exe</code>（91 M）</dd></div>
+    <div><dt>本地验证</dt><dd>已跑通完整构建链路</dd></div>
+    <div><dt>真机验证</dt><dd>待做（见第 06 节）</dd></div>
+  </dl>
+  <nav class="toc">
+    <ol>
+      <li><a href="#s1"><span class="num">01</span>改了什么</a></li>
+      <li><a href="#s2"><span class="num">02</span>为什么这样分工</a></li>
+      <li><a href="#s3"><span class="num">03</span>命名约定（最容易踩的坑）</a></li>
+      <li><a href="#s4"><span class="num">04</span>构建与发布</a></li>
+      <li><a href="#s5"><span class="num">05</span>旧版本一次性迁移</a></li>
+      <li><a href="#s6"><span class="num">06</span>验证记录与待验证项</a></li>
+      <li><a href="#s7"><span class="num">07</span>回滚与后续可选项</a></li>
+    </ol>
+  </nav>
+</header>
+
+<main>
+
+<section id="s1">
+  <h2><span class="h2num">01</span>改了什么</h2>
+  <div class="tablewrap">
+    <table>
+      <caption>表 1 · 改动清单</caption>
+      <thead>
+        <tr><th>文件</th><th>改动</th><th>原因</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>electron-builder.yml <span class="note">（新增）</span></td>
+          <td>NSIS 安装包配置：每用户安装、不删用户数据、ASCII 产物名、挂自定义脚本</td>
+          <td>安装包的新入口</td>
+        </tr>
+        <tr>
+          <td>scripts/build-windows.mjs <span class="note">（新增）</span></td>
+          <td>先跑 Forge 打包，再让 electron-builder 接管产物生成 NSIS 安装包</td>
+          <td>两步串联；顺带避开中文路径在 shell 里被代码页搞坏</td>
+        </tr>
+        <tr>
+          <td>build/installer.nsh <span class="note">（新增）</span></td>
+          <td><code>customInit</code> 清旧快捷方式、<code>customInstall</code> 清旧安装目录与旧卸载项</td>
+          <td>新旧安装器互不知情，需一次性清理</td>
+        </tr>
+        <tr>
+          <td>forge.config.js</td>
+          <td>删掉 <code>maker-squirrel</code> 与平台上过滤逻辑，保留 macOS 的 dmg / zip</td>
+          <td>Windows 不再走 Forge 的 maker</td>
+        </tr>
+        <tr>
+          <td>package.json</td>
+          <td>三个 Windows 构建脚本改指向新脚本；加 <code>electron-builder</code>，移除 <code>maker-squirrel</code> 与 <code>electron-squirrel-startup</code></td>
+          <td>依赖与命令同步</td>
+        </tr>
+        <tr>
+          <td>src/main.js</td>
+          <td>移除 Squirrel 启动分支；加 <code>app.requestSingleInstanceLock()</code></td>
+          <td>NSIS 不会再有 Squirrel 事件；单实例可显著降低升级时文件占用</td>
+        </tr>
+        <tr>
+          <td>.github/workflows/build.yml</td>
+          <td>安装步骤适配当前锁文件；Windows 产物路径改 <code>dist</code>；Release 说明补充迁移提示</td>
+          <td>原步骤写死了 <code>package-lock.json</code>，而仓库现在用的是 <code>yarn.lock</code></td>
+        </tr>
+        <tr>
+          <td>README.md</td>
+          <td>安装说明表更新，补一段「从旧版本升级」提示</td>
+          <td>用户侧需要知道要卸载一次旧版本</td>
+        </tr>
+        <tr>
+          <td>yarn.lock</td>
+          <td>同步依赖（<code>yarn install</code> 生成）</td>
+          <td>CI 用 <code>--frozen-lockfile</code>，锁文件必须一致</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section id="s2">
+  <h2><span class="h2num">02</span>为什么这样分工</h2>
+  <p>
+    直觉上「换 electron-builder」应该是让 electron-builder 从头打包，但这个项目做不到 ——
+    Forge 的 vite 插件在构建时把 <code>MAIN_WINDOW_VITE_DEV_SERVER_URL</code>、
+    <code>MAIN_WINDOW_VITE_NAME</code> 这类全局变量注入到主进程产物里，
+    而项目里的 <code>vite.main.config.mjs</code> 本身是空的（<code>defineConfig({})</code>），
+    入口与注入全靠插件。换打包器就得把整套 vite 配置重做一遍。
+  </p>
+  <p>
+    所以采用「各管一段」的分工：<strong>Forge 编译打包，electron-builder 只做安装包</strong>，
+    两者用 <code>--prepackaged</code> 衔接。
+  </p>
+
+  <figure>
+    <svg viewBox="0 0 1080 196" role="img" aria-label="构建链路：npm run build:trial-win 调用脚本，先由 Electron Forge 编译打包到 out 目录，再交给 electron-builder 生成 NSIS 安装包到 dist 目录">
+      <defs>
+        <marker id="a1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+          <path d="M1 1 L9 5 L1 9" fill="none" stroke="#9c3b26" stroke-width="1.4"/>
+        </marker>
+      </defs>
+      <g font-family="PingFang SC, Microsoft YaHei, sans-serif" font-size="13" fill="#1b1a18">
+        <rect x="0" y="50" width="216" height="88" fill="#fbfaf8" stroke="#bdb6ab"/>
+        <text x="16" y="76">npm run build:trial-win</text>
+        <text x="16" y="98" font-size="12" fill="#6b6862">cross-env BUILD_TYPE=…</text>
+        <text x="16" y="117" font-size="12" fill="#6b6862">node scripts/build-windows.mjs</text>
+
+        <rect x="256" y="50" width="238" height="88" fill="#fbfaf8" stroke="#bdb6ab"/>
+        <text x="272" y="76">① electron-forge package</text>
+        <text x="272" y="98" font-size="12" fill="#6b6862">vite 构建 · asar · Fuses</text>
+        <text x="272" y="117" font-size="12" fill="#6b6862">语言包裁剪</text>
+
+        <rect x="534" y="50" width="238" height="88" fill="#fbfaf8" stroke="#bdb6ab"/>
+        <text x="550" y="76">② out/Miao积分管理-win32-x64</text>
+        <text x="550" y="98" font-size="12" fill="#6b6862">Miao积分管理.exe</text>
+        <text x="550" y="117" font-size="12" fill="#6b6862">+ resources/app.asar</text>
+
+        <rect x="812" y="50" width="268" height="88" fill="#f0e4df" stroke="#9c3b26"/>
+        <text x="828" y="76" fill="#9c3b26">③ electron-builder --win nsis</text>
+        <text x="828" y="98" font-size="12" fill="#9c3b26">--prepackaged 接管上面目录</text>
+        <text x="828" y="117" font-size="12" fill="#9c3b26">dist/miao-chemistry-Setup-*.exe</text>
+      </g>
+      <g stroke="#9c3b26" stroke-width="1.2" fill="none">
+        <line x1="220" y1="94" x2="250" y2="94" marker-end="url(#a1)"/>
+        <line x1="498" y1="94" x2="528" y2="94" marker-end="url(#a1)"/>
+        <line x1="776" y1="94" x2="806" y2="94" marker-end="url(#a1)"/>
+      </g>
+      <g font-family="PingFang SC, Microsoft YaHei, sans-serif" font-size="12" fill="#6b6862">
+        <text x="0" y="168">装配与加固集中在 ①，安装包与升级行为集中在 ③，职责不重叠 —— 因此 files / asar / electronFuses 都不需要在 ③ 里重复配置。</text>
+      </g>
+    </svg>
+    <figcaption>图 1 · 构建链路。第 ③ 步的输入就是第 ② 步的输出目录，所以 electron-builder 配置里不需要再描述「应用里包含什么」。</figcaption>
+  </figure>
+</section>
+
+<section id="s3">
+  <h2><span class="h2num">03</span>命名约定（最容易踩的坑）</h2>
+  <p>
+    NSIS 模板里安装器是这样算主程序文件名的：
+  </p>
+<pre><span class="c"># electron-builder · templates/nsis/common.nsh</span>
+!define APP_EXECUTABLE_FILENAME "${PRODUCT_FILENAME}.exe"
+</pre>
+  <p>
+    而 <code>PRODUCT_FILENAME</code> 取自 electron-builder 的 <code>productName</code>
+    （<code>appInfo.productFilename</code>，未设置 <code>executableName</code> 时用
+    <code>sanitizeFileName(productName)</code>）。也就是说，<strong>如果
+    <code>electron-builder.yml</code> 里的 <code>productName</code> 与 Forge 打出来的
+    exe 名不一致，快捷方式就会指向一个不存在的文件</strong>：
+    安装过程一切正常、没有任何报错，但用户点图标打不开 —— 这类错误在构建阶段完全看不出来。
+  </p>
+  <p>
+    因此 <code>productName</code> 必须与 <code>forge.config.js</code> 里
+    <code>packagerConfig.name</code> 保持同一个值（当前是 <code>Miao积分管理</code>）。
+    两个文件里都写了注释说明这条约束。
+  </p>
+  <div class="paths">
+    <div class="t">本次一致性核对结果</div>
+    <ul>
+      <li>out/Miao积分管理-win32-x64/Miao积分管理.exe
+        <span>Forge 实际打出来的主程序</span></li>
+      <li>sanitizeFileName("Miao积分管理") = "Miao积分管理"
+        <span>中文不会被过滤，PRODUCT_FILENAME 与上面对齐</span></li>
+      <li>=&gt; APP_EXECUTABLE_FILENAME = Miao积分管理.exe
+        <span>快捷方式目标正确</span></li>
+    </ul>
+  </div>
+  <p class="note">
+    唯一保留中文的标识是 exe 名与安装目录（<code>%LOCALAPPDATA%\Programs\Miao积分管理</code>）；
+    安装包文件名是 ASCII（<code>miao-chemistry-Setup-2.0.1.exe</code>）。
+    如果以后想把 exe 也改成 ASCII，需要同时改 <code>packagerConfig.name</code>，
+    注意那会一并影响 macOS 的 .app 名与 DMG 文件名，属于独立的一次改名，建议单独排期。
+  </p>
+</section>
+
+<section id="s4">
+  <h2><span class="h2num">04</span>构建与发布</h2>
+
+  <h3>本地构建</h3>
+<pre>npm run build:basic-win      <span class="c"># 基础试用版（7 天）</span>
+npm run build:trial-win      <span class="c"># 优惠体验版（30 天）</span>
+npm run build:official-win   <span class="c"># 正式版</span>
+
+<span class="c"># 需要其它架构时直接调脚本</span>
+node scripts/build-windows.mjs --arch=arm64
+</pre>
+  <p>国内网络下 electron-builder 首次运行要从 GitHub 下载 NSIS 工具链，慢或失败时可指定镜像：</p>
+<pre>ELECTRON_BUILDER_BINARIES_MIRROR=https://npmmirror.com/mirrors/electron-builder-binaries/ \
+  npm run build:trial-win
+</pre>
+
+  <h3>产物</h3>
+  <div class="paths">
+    <div class="t">dist/</div>
+    <ul>
+      <li>miao-chemistry-Setup-&lt;version&gt;.exe
+        <span>安装包，唯一需要分发的文件</span></li>
+      <li>miao-chemistry-Setup-&lt;version&gt;.exe.blockmap
+        <span>差分更新用，当前未启用自动更新，可不分发</span></li>
+      <li>builder-debug.yml
+        <span>生成的 NSIS 脚本与生效配置，排查安装器问题时的第一手资料</span></li>
+    </ul>
+  </div>
+
+  <h3>CI 变化</h3>
+  <div class="tablewrap">
+    <table>
+      <caption>表 2 · Windows 构建流程对照</caption>
+      <thead>
+        <tr><th>环节</th><th>改前</th><th>改后</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>依赖安装</td><td><code>npm ci</code>（假定有 <code>package-lock.json</code>）</td><td>有 npm lock 走 <code>npm ci</code>，只有 <code>yarn.lock</code> 走 <code>yarn install --frozen-lockfile</code></td></tr>
+        <tr><td>构建命令</td><td><code>npm run build:&lt;类型&gt;-win</code>（内部是 forge make）</td><td>命令名不变，内部改为 <code>node scripts/build-windows.mjs</code></td></tr>
+        <tr><td>产物校验</td><td>查 <code>out/make</code></td><td>查 <code>dist</code></td></tr>
+        <tr><td>上传</td><td><code>out/make/**/*.exe</code></td><td><code>dist/*.exe</code></td></tr>
+        <tr><td>Release 说明</td><td>「下载 .exe 直接安装」</td><td>补「从旧版本升级请先卸载旧版本」</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p class="note">
+    另外修了一处会导致 CI 自愈失效的小问题：Windows 的「Retry install on failure」步骤原先没指定
+    <code>shell: bash</code>，在 Windows 上会用 PowerShell 执行 <code>rm -rf node_modules</code>，
+    本身就跑不通，现已补上。macOS 侧构建未改动。
+  </p>
+</section>
+
+<section id="s5">
+  <h2><span class="h2num">05</span>旧版本一次性迁移</h2>
+  <p>
+    旧版是 Squirrel 安装的：程序在 <code>%LOCALAPPDATA%\student-score-system</code>，
+    卸载项写在 <code>HKCU\...\Uninstall\student-score-system</code>。两套安装器互不知情，
+    所以 <code>build/installer.nsh</code> 里挂了两个钩子做清理。
+  </p>
+  <div class="tablewrap">
+    <table>
+      <caption>表 3 · 两个钩子的时机与动作</caption>
+      <thead>
+        <tr><th>钩子</th><th>执行时机</th><th>做什么</th><th>为什么在这个时机</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><code>customInit</code></td>
+          <td>安装最早期，尚未写入任何文件</td>
+          <td>按通配删除桌面与开始菜单里旧版的「Miao积分管理*.lnk」</td>
+          <td>此刻我们自己的快捷方式还没创建，不会误删；通配能覆盖带版本后缀的命名</td>
+        </tr>
+        <tr>
+          <td><code>customInstall</code></td>
+          <td>文件落盘、快捷方式创建完成之后</td>
+          <td>删掉旧安装目录与旧卸载注册表项</td>
+          <td>此时 electron-builder 已把仍在运行的旧版本进程关掉，目录才删得干净</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+  <p>
+    全部清理都是 best-effort：NSIS 的 <code>RMDir</code> / <code>Delete</code> 失败只设置错误标志、
+    不中断安装。最坏情况是留下一个可手动删除的残留目录，安装本身不受影响。
+    <strong>用户数据不受影响</strong> —— 班级、学生、积分都在 <code>%APPDATA%\miao-chemistry</code>，
+    与安装目录无关，<code>deleteAppDataOnUninstall</code> 也已显式设为 <code>false</code>。
+  </p>
+</section>
+
+<section id="s6">
+  <h2><span class="h2num">06</span>验证记录与待验证项</h2>
+  <h3>已在本机跑通的（macOS + Node 20）</h3>
+  <ul class="check">
+    <li class="ok">Forge 打包步骤正常，产物为 <code>out/Miao积分管理-win32-x64</code>，主程序名与预期一致</li>
+    <li class="ok">脚本能正确定位产物目录并把中文路径原样传给 electron-builder</li>
+    <li class="ok">NSIS 安装包构建成功：<code>dist/miao-chemistry-Setup-2.0.1.exe</code>，91 M，<code>oneClick=false perMachine=false</code> 均已生效</li>
+    <li class="ok">自定义脚本确实被注入在钩子使用点之前 —— 已从生成的脚本中确认 <code>!include ".../build/installer.nsh"</code> 出现在 <code>!ifmacrodef customInit</code> 之前</li>
+    <li class="ok">exe 名一致性链条核对通过（见第 03 节）</li>
+    <li class="ok">锁文件同步：<code>yarn install --frozen-lockfile</code> 通过，CI 安装路径可用</li>
+    <li class="ok">改动后的 <code>src/main.js</code> 通过 vite 编译（Forge 打包步骤即验证）</li>
+  </ul>
+
+  <h3>需要在 Windows 上确认的</h3>
+  <ul class="check">
+    <li class="todo">全新安装：向导界面、快捷方式、是否无需管理员权限</li>
+    <li class="todo">覆盖升级：<strong>先启动旧版再运行新安装包</strong>，确认能自动关闭旧版并装完（本地无法验证安装器运行时行为）</li>
+    <li class="todo">一次性迁移：确有旧 Squirrel 版本时，确认控制面板只剩一条卸载项、桌面无重复图标、得分数据仍在</li>
+    <li class="todo">卸载：确认程序目录被清理、<code>%APPDATA%\miao-chemistry</code> 保留</li>
+    <li class="todo">杀软：360 / 火绒 / Defender 下能否正常安装（未签名安装包仍可能被拦，见第 07 节）</li>
+  </ul>
+  <p class="note">
+    本地能跑通的是「构建产物是否正确」，跑不了的是「Windows 安装器的运行时行为」。
+    这些必须在真机或 CI 的 windows 机器上过一遍，建议在发版前用一台干净机器 + 一台装过旧版本的机器各测一次。
+  </p>
+</section>
+
+<section id="s7">
+  <h2><span class="h2num">07</span>回滚与后续可选项</h2>
+  <h3>回滚</h3>
+<pre>git revert &lt;本次提交&gt;        <span class="c"># 或按文件恢复</span>
+git checkout HEAD -- forge.config.js package.json src/main.js \
+  .github/workflows/build.yml README.md yarn.lock
+rm -f electron-builder.yml scripts/build-windows.mjs build/installer.nsh
+</pre>
+  <p class="note">回滚后 Windows 侧仍会走原来的 Squirrel 流程（脚本命令名未变，只是内部实现换回 forge make）。</p>
+
+  <h3>后续可选</h3>
+  <ul>
+    <li><strong>代码签名</strong>（收益最大）：配好 <code>CSC_LINK</code> / <code>CSC_KEY_PASSWORD</code> 即自动生效，SmartScreen 提示与杀软误报会明显减少。</li>
+    <li><strong>绿色版</strong>：放开 <code>electron-builder.yml</code> 里注释掉的 <code>portable</code> 段，多产出免安装 exe，给权限受限的机器兜底。</li>
+    <li><strong>自动更新</strong>：接 electron-updater（NSIS 场景成熟）或用 Velopack；后者支持 GiteaSource，正好复用现有 Gitee 同步脚本。建议单独排期。</li>
+    <li><strong>标识 ASCII 化</strong>：把 <code>packagerConfig.name</code> 与 <code>productName</code> 一起改成 ASCII，可顺带简化安装目录与日志排查，但会影响 macOS 的 .app 名，属于独立改名。</li>
+    <li><strong>「Build Windows」的 BUILD_TYPE 回退值</strong>：workflow 里 <code>github.event.inputs.build_type || 'trial'</code> 会让 tag 推送打成 trial（30 天），与注释里写的「默认 official」不符 —— 本次未动，需要时改成 <code>|| 'official'</code> 即可。</li>
+  </ul>
+</section>
+
+</main>
+
+<footer>
+  <p><strong>依据来源</strong>：electron-builder 26.15.3 本地构建实测输出（<code>dist/builder-debug.yml</code> 中生成的 NSIS 脚本）、模板源码 <code>templates/nsis/common.nsh</code> 与 <code>include/allowOnlyOneInstallerInstance.nsh</code>、<code>src/appInfo.ts</code>、<code>src/targets/win/nsis/</code>；本地仓库 <code>forge.config.js</code>、<code>package.json</code>、<code>src/main.js</code>、<code>.github/workflows/build.yml</code>。</p>
+  <p>本次改动已落地到工作区但未提交；<code>dist/</code> 与 <code>out/</code> 已在 .gitignore 中，不会进入版本库。</p>
+</footer>
+
+</div>
+</body>
+</html>

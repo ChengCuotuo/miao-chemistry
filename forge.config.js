@@ -1,31 +1,12 @@
 const { FusesPlugin } = require('@electron-forge/plugin-fuses');
 const { FuseV1Options, FuseVersion } = require('@electron/fuses');
-const { pathToFileURL } = require('url');
 const path = require('path');
 const fs = require('fs');
 
-// 根据当前运行平台动态生成 makers
-// maker-squirrel / maker-wix 依赖 Windows 环境，无法在 macOS 上运行
-const isMacOS = process.platform === 'darwin';
-
+// Windows 安装包已改为 electron-builder + NSIS（见 electron-builder.yml 与
+// scripts/build-windows.mjs），所以这里不再保留 maker-squirrel。
+// Forge 在 Windows 流程里只负责「编译 + 打包」，安装包交给 electron-builder。
 const makers = [
-  // Windows：exe + zip
-  {
-    name: '@electron-forge/maker-squirrel', // exe 安装包
-    platforms: ['win32'],
-    config: {
-      name: 'student-score-system',
-      productName: 'Miao积分管理',
-      // iconUrl 必须是合法 URL（NuGet nuspec 要求），用 file:// 协议转换本地路径
-      iconUrl: pathToFileURL(path.resolve('./build/icon.ico')).href,
-      setupIcon: './build/icon.ico',
-    },
-  },
-  {
-    name: '@electron-forge/maker-zip', // Windows 绿色 zip
-    platforms: ['win32'],
-  },
-
   // macOS：dmg + zip
   {
     name: '@electron-forge/maker-dmg', // dmg 安装包
@@ -40,11 +21,6 @@ const makers = [
     platforms: ['darwin'],
   },
 ];
-
-// macOS 上跨平台构建 win32 时，过滤掉无法运行的 maker（maker-squirrel 依赖 Windows 环境）
-const filteredMakers = isMacOS
-  ? makers.filter((m) => m.name !== '@electron-forge/maker-squirrel')
-  : makers;
 
 module.exports = {
   packagerConfig: {
@@ -79,7 +55,7 @@ module.exports = {
     ],
   },
   rebuildConfig: {},
-  makers: filteredMakers,
+  makers,
   plugins: [
     {
       name: '@electron-forge/plugin-vite',
