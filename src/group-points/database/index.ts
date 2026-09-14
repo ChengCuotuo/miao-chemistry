@@ -11,6 +11,8 @@ import {
 	MonitorAccount,
 	Team,
 	TeamRecord,
+	RECORD_STATUS,
+	getRecordStatus,
 } from './class';
 import { Basic } from './class/main/Basic';
 import ruleConfigJson from './defaultRule.json';
@@ -73,6 +75,57 @@ export const DEFAULT_RULE_GROUP_NAME = '默认分组';
 // 系统内置规则（主动加分 / 主动减分）：由程序按需自动补齐，不允许删除
 export const SYSTEM_RULE_IDS = ['ACTIVE_ADD', 'ACTIVE_SUB'];
 export const isSystemRule = (id?: string) => !!id && SYSTEM_RULE_IDS.includes(id);
+
+// 全量操作汇总记录：学生管理的全量设置/加/减积分不属于任何一个学生，用虚拟规则 id 记一条汇总记录
+// （不对应规则库里的规则，记录列表会把它归到「其他」分组展示）
+export const BATCH_RECORD_PREFIX = 'batch_';
+export const BATCH_RECORD_NAMES: Record<string, string> = {
+	'batch_set': '全量设置积分',
+	'batch_add': '全量加积分',
+	'batch_sub': '全量减积分',
+};
+// 是否为全量操作汇总记录
+export const isBatchRecord = (ruleId?: string) => !!ruleId && ruleId.startsWith(BATCH_RECORD_PREFIX);
+
+// 是否为「真正走过审批流程」的记录：仅班委提交的记录算（含待审批 / 已通过 / 已驳回）
+// 教师直接记分、全量操作汇总记录、旧数据（无提交人且状态为默认已通过）都不算，
+// 这些记录在积分记录列表里不展示审批状态，避免凭空多出一个「已通过」
+export const isApprovalRecord = (record?: { submitter_id?: string, status?: number } | null): boolean =>
+	!!record?.submitter_id || getRecordStatus(record) !== RECORD_STATUS.APPROVED;
+
+// 全量操作汇总记录的人均变动值（记录里 points 存的是全班总变动量，展示时换算成人均）
+export const batchPerPersonPoints = (points?: number, count?: number): number => {
+	const people = Number(count) > 0 ? Number(count) : 1;
+	return Number(((Number(points) || 0) / people).toFixed(2));
+};
+
+// 全量操作汇总记录的展示文案
+// - 加/减积分：每人的变动量是统一的 → 「全班 +5 分/人」
+// - 设置积分值：各人原分值不同、差值不统一 → 直接展示设置的目标值「全班设为 0 分」
+// （batch_value 存的是本次输入值：设置模式为设置值，加/减模式为增减量）
+export const formatBatchRecordText = (
+	ruleId: string,
+	points?: number,
+	count?: number,
+	batchValue?: number | null,
+): string => {
+	const mode = (ruleId || '').replace(BATCH_RECORD_PREFIX, '');
+	const raw = (batchValue === null || batchValue === undefined) ? null : Number(batchValue);
+	const value = raw === null || Number.isNaN(raw) ? null : raw;
+	const per = batchPerPersonPoints(points, count);
+	const signed = (num: number) => `${num > 0 ? '+' : ''}${num}`;
+	if (mode === 'set') {
+		// 旧数据没有 batch_value 时，退回展示差值合计
+		return value === null ? `全班合计 ${signed(Number(points) || 0)} 分` : `全班设为 ${value} 分`;
+	}
+	if (mode === 'sub') {
+		const delta = value === null ? per : -value;
+		return `全班 ${signed(delta)} 分/人`;
+	}
+	// add（默认）
+	const delta = value === null ? per : value;
+	return `全班 ${signed(delta)} 分/人`;
+};
 
 export const BUILD_TYPE = {
 	trial: 'trial',
@@ -209,6 +262,12 @@ export async function loadGroupPointsConfig() {
 
 		// 兼容旧版本配置：减分快捷键隐藏开关，默认隐藏
 		basicConfigData.hideQuickSubtract = basicConfigData.hideQuickSubtract ?? true;
+
+		// 班委记分审批开关：默认开启（开启后班委提交需管理员审批才计入积分）
+		basicConfigData.monitorApproval = basicConfigData.monitorApproval ?? true;
+
+		// 班委记分开关：默认开启（关闭后仅管理员可周期记分，不创建/不使用班委账号）
+		basicConfigData.monitorAccountEnabled = basicConfigData.monitorAccountEnabled ?? true;
 
 		// 正式版构建运行时，如果持久化的配置信息还是体验版，则覆盖为正式版
 		if (buildType === BUILD_TYPE.official && basicConfigData.buildType !== BUILD_TYPE.official) {

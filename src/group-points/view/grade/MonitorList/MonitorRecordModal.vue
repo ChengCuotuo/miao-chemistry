@@ -1,6 +1,8 @@
 <template>
 	<el-dialog :title="dialogTitle" :model-value="visible" width="520px" @update:model-value="handleVisibleChange">
 		<el-form ref="formRef" :model="form" label-width="100px">
+			<el-alert v-if="needApproval" type="warning" show-icon :closable="false" class="approval-tip"
+				title="提交后需管理员审批，通过后才会计入学生积分" />
 			<el-form-item label="记分对象">
 				<el-tag type="info">{{ targetName }}</el-tag>
 				<span class="count-text">（{{ studentCount }} 人）</span>
@@ -31,7 +33,9 @@
 		</el-form>
 		<template #footer>
 			<el-button @click="handleVisibleChange(false)">取消</el-button>
-			<el-button type="primary" @click="handleSubmit" :disabled="rules.length === 0 || !selectedRule">确定</el-button>
+			<el-button type="primary" @click="handleSubmit" :disabled="rules.length === 0 || !selectedRule">
+				{{ needApproval ? '提交审批' : '确定' }}
+			</el-button>
 		</template>
 	</el-dialog>
 </template>
@@ -41,6 +45,7 @@ import { computed, ref, watch } from 'vue';
 import { ElMessage, type FormInstance } from 'element-plus';
 import { MonitorCycle, Rule, RuleGroup } from '../../../database/class';
 import { isNoPointsRule, getRulePoints } from '../../../database/utils/useRule';
+import { useAppStore } from '../../../store/models/app';
 import RuleTreeSelect from '../../components/RuleTreeSelect.vue';
 
 const props = withDefaults(defineProps<{
@@ -61,6 +66,11 @@ const emit = defineEmits<{
 }>();
 
 const formRef = ref<FormInstance>();
+const appStore = useAppStore();
+// 班委记分需审批时，提交按钮与提示文案变化
+const needApproval = computed(() => appStore.currentRole === 'monitor'
+	&& (appStore.database.basicConfig?.monitorAccountEnabled ?? true)
+	&& (appStore.database.basicConfig?.monitorApproval ?? true));
 const form = ref<{
 	ruleId: string;
 	points: number | undefined;
@@ -83,7 +93,7 @@ const singlePoints = computed(() => {
 // 积分预览：单次分值 × 次数
 const previewPoints = computed(() => singlePoints.value * form.value.count);
 
-const dialogTitle = computed(() => '周期规则记分');
+const dialogTitle = computed(() => needApproval.value ? '周期规则记分（提交审批）' : '周期规则记分');
 
 const handleVisibleChange = (v: boolean) => {
 	emit('update:visible', v);
@@ -120,6 +130,10 @@ const handleSubmit = () => {
 	margin-left: 10px;
 	font-size: 12px;
 	color: #909399;
+}
+
+.approval-tip {
+	margin-bottom: 12px;
 }
 
 .count-text {

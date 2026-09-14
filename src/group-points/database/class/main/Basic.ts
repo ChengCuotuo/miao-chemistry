@@ -39,8 +39,12 @@ export class Basic {
 	analysisChartOrder: string[];
 	// 是否隐藏减分快捷键（关联分组/独立分组中学生个人减分与小组批量减分按钮），默认隐藏
 	hideQuickSubtract: boolean;
+	// 班委记分是否需管理员审批，默认开启
+	monitorApproval: boolean;
+	// 是否启用班委记分（周期记分开启时生效），默认开启；关闭后仅管理员可周期记分
+	monitorAccountEnabled: boolean;
 
-	constructor(params: { step: number, buildType: string, password: string, firstRun: number, startTime: number, duration: number, moduleVisibility?: Partial<Basic['moduleVisibility']>, moduleOrder?: string[], analysisChartVisibility?: Partial<Basic['analysisChartVisibility']>, analysisChartOrder?: string[], hideQuickSubtract?: boolean }) {
+	constructor(params: { step: number, buildType: string, password: string, firstRun: number, startTime: number, duration: number, moduleVisibility?: Partial<Basic['moduleVisibility']>, moduleOrder?: string[], analysisChartVisibility?: Partial<Basic['analysisChartVisibility']>, analysisChartOrder?: string[], hideQuickSubtract?: boolean, monitorApproval?: boolean, monitorAccountEnabled?: boolean }) {
 		this.step = params.step;
 		this.buildType = params.buildType;
 		this.password = params.password;
@@ -67,6 +71,8 @@ export class Basic {
 		};
 		this.analysisChartOrder = params.analysisChartOrder || [];
 		this.hideQuickSubtract = params.hideQuickSubtract ?? true;
+		this.monitorApproval = params.monitorApproval ?? true;
+		this.monitorAccountEnabled = params.monitorAccountEnabled ?? true;
 	}
 
 	toJSON() {

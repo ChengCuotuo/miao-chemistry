@@ -1,6 +1,8 @@
 import { useAppStore } from "../../store/models/app";
-import { Student } from "../class";
+import { Student, RuleRecord, RECORD_STATUS, OPERATOR_ROLE } from "../class";
 import { useGrade } from "./useGrade";
+import { BATCH_RECORD_PREFIX } from "..";
+import { dayjs } from "element-plus";
 
 export const useStudent = () => {
 	const appStore = useAppStore();
@@ -93,6 +95,7 @@ export const useStudent = () => {
 	};
 
 	// 批量更新全部学生积分（mode: set 全量设置 / add 全量加 / sub 全量减）
+	// 同时写一条汇总记录（不对应单个学生）：记下模式、总变动量、影响人数、操作人与时间，便于追溯
 	const batchUpdatePoints = async (mode: 'set' | 'add' | 'sub', value: number) => {
 		try {
 			if (!activeGrade) {
@@ -106,6 +109,10 @@ export const useStudent = () => {
 				return false;
 			}
 
+			// 先记下原积分，用于算总变动量（set 模式下每个学生的变动量不同）
+			const beforePoints = new Map<string, number>();
+			list.forEach(student => beforePoints.set(student.id, Number(student.points) || 0));
+
 			list.forEach(student => {
 				if (mode === 'set') {
 					student.points = value;
@@ -115,6 +122,30 @@ export const useStudent = () => {
 					student.points = student.points - value;
 				}
 			});
+
+			// 汇总记录：points 记全班总变动量，count 记影响人数
+			const totalDelta = list.reduce((acc, student) => {
+				const before = beforePoints.get(student.id) ?? 0;
+				return acc + ((Number(student.points) || 0) - before);
+			}, 0);
+			const recordIndex = activeGrade.gradeInfo.indexMap.record ?? 0;
+			activeGrade.gradeInfo.recordList.push(new RuleRecord({
+				id: recordIndex,
+				// 汇总记录不属于任何单个学生，因此 stu_id 留空（学生详情弹窗与删除学生都不会误伤它）
+				stu_id: '',
+				rule_id: `${BATCH_RECORD_PREFIX}${mode}`,
+				points: totalDelta,
+				time: dayjs().format('YYYY-MM-DD HH:mm:ss'),
+				// source=0：不归属任何周期，也不参与周期删除时的积分回退
+				source: 0,
+				count: list.length,
+				status: RECORD_STATUS.APPROVED,
+				// 存本次输入的原始值：设置模式为设置值，加/减模式为增减量（展示与追溯都需要）
+				batch_value: Number(value) || 0,
+				operator_name: '管理员',
+				operator_role: OPERATOR_ROLE.TEACHER,
+			}));
+			activeGrade.gradeInfo.indexMap.record = recordIndex + 1;
 
 			// 更新班级信息到文件
 			await updateGradeInfoById(activeGrade.id, activeGrade);

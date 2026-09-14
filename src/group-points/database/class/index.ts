@@ -1,7 +1,7 @@
 import { Grade } from './grade/Grade';
 import { Group } from './grade/Group';
 import { Prize } from './main/Prize';
-import { RuleRecord } from './grade/RuleRecord';
+import { RuleRecord, RECORD_STATUS, OPERATOR_ROLE, getRecordStatus, isPendingRecord, isApprovedRecord, isRejectedRecord } from './grade/RuleRecord';
 import { Rule } from './main/Rule';
 import { RuleGroup } from './main/RuleGroup';
 import { Student } from './grade/Student';
@@ -19,6 +19,12 @@ export {
 	RuleGroup,
 	Prize,
 	RuleRecord,
+	RECORD_STATUS,
+	OPERATOR_ROLE,
+	getRecordStatus,
+	isPendingRecord,
+	isApprovedRecord,
+	isRejectedRecord,
 	Student,
 	StudentGroup,
 	Basic,

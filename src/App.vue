@@ -60,6 +60,9 @@ const handleMenuClick = (key: string) => {
 watch(() => appStore.needLock, (v) => {
   if (v) {
     appStore.setNeedLock(false);
+    // 班委退出：清空当前班委账号，避免下次直接复用
+    appStore.setCurrentMonitor(undefined);
+    appStore.setCurrentRole('teacher');
     activeKey.value = 'lock';
   }
 });

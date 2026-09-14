@@ -10,9 +10,13 @@
 		</div>
 		<el-divider border-style="dashed" style="margin: 10px 0;" />
 		<div class="main-content">
-			<el-tabs v-model="activeName">
+			<el-tabs v-if="orderedTabs.length" v-model="activeName">
 				<el-tab-pane v-for="tab in orderedTabs" :key="tab.name" :label="tab.label" :name="tab.name"/>
 			</el-tabs>
+			<div v-if="!orderedTabs.length" class="no-tab-wrap">
+				<el-empty :description="isMonitor ? '班委记分已被管理员关闭，无法继续记分，请联系管理员' : '暂无可见模块，请在基础设置中开启'" />
+				<el-button v-if="isMonitor" type="warning" plain :icon="SwitchButton" @click="handleMonitorLogout">退出登录</el-button>
+			</div>
 			<div v-if="activeName === 'student'" class="info-container">
 				<StudentList></StudentList>
 			</div>
@@ -80,11 +84,13 @@ const moduleVisibility = computed(() => appStore.database.basicConfig?.moduleVis
 });
 // 各模块可见性统一从 moduleVisibility 读取
 const monitorVisible = computed(() => appStore.database.basicConfig?.moduleVisibility?.monitorManage ?? true);
+// 是否启用班委记分：关闭后班委侧不再可见周期记分 tab
+const monitorAccountEnabled = computed(() => appStore.database.basicConfig?.monitorAccountEnabled ?? true);
 const studentVisible = computed(() => appStore.database.basicConfig?.moduleVisibility?.studentManage ?? true);
 
 const isTabVisible = (name: string): boolean => {
-	// 班委角色：仅周期记分 tab 可见
-	if (isMonitor.value) return name === 'monitor';
+	// 班委角色：仅周期记分 tab 可见，且需周期记分模块与班委记分开关同时开启
+	if (isMonitor.value) return name === 'monitor' && monitorVisible.value && monitorAccountEnabled.value;
 	if (name === 'student') return studentVisible.value;
 	if (name === 'monitor') return monitorVisible.value;
 	if (name === 'group') return moduleVisibility.value.groupManage;
@@ -117,7 +123,7 @@ const getFirstVisibleName = () => {
 const activeName = ref(getFirstVisibleName());
 
 // 配置变化时，若当前 tab 已被隐藏，自动切到第一个可见 tab
-watch(() => [appStore.database.basicConfig?.moduleVisibility, appStore.database.basicConfig?.moduleOrder], () => {
+watch(() => [appStore.database.basicConfig?.moduleVisibility, appStore.database.basicConfig?.moduleOrder, appStore.database.basicConfig?.monitorAccountEnabled], () => {
 	const name = activeName.value;
 	if (!orderedTabs.value.some(tab => tab.name === name)) {
 		activeName.value = getFirstVisibleName();
@@ -175,6 +181,15 @@ const handleMonitorLogout = () => {
 	flex: 1 1;
 	min-height: 0;
 	overflow: hidden;
+}
+
+.no-tab-wrap {
+	flex: 1 1;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	gap: 10px;
 }
 
 .role-badge {

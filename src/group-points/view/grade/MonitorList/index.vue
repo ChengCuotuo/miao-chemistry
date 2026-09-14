@@ -20,7 +20,10 @@
 			</el-space>
 			<el-space>
 				<el-button :icon="Document" @click="handleViewRecords">周期记录</el-button>
-				<el-button v-if="!isMonitor" :icon="UserFilled" type="success" @click="handleManageAccounts">班委账号</el-button>
+				<el-button v-if="approvalEntryVisible" :type="pendingCount ? 'danger' : 'warning'" plain :icon="Stamp" @click="handleOpenApproval">
+					待审批记录{{ pendingCount ? `（${pendingCount}）` : '' }}
+				</el-button>
+				<el-button v-if="!isMonitor && monitorAccountEnabled" :icon="UserFilled" type="success" @click="handleManageAccounts">班委账号</el-button>
 			</el-space>
 		</div>
 
@@ -33,6 +36,14 @@
 			<el-alert v-if="currentCycle" :closable="false" class="cycle-tip"
 				:type="currentCycle.status === 0 ? 'info' : 'warning'"
 				:title="cycleTip" />
+
+			<!-- 班委：开关已关闭时只读提示 -->
+			<el-alert v-if="isMonitor && !monitorAccountEnabled" :closable="false" class="cycle-tip" type="error"
+				title="管理员已关闭班委记分，当前仅可查看记录，无法提交记分" />
+
+			<!-- 班委：展示自己的提交状态（待审批 / 已驳回） -->
+			<el-alert v-if="isMonitor && (myPendingCount || myRejectedCount)" :closable="false" class="cycle-tip" type="warning"
+				:title="monitorPendingTip" />
 
 			<!-- 内容区：按组记录 + 按学生记录 -->
 			<div class="content-area">
@@ -134,22 +145,30 @@
 				:title="`${currentCycle.name}${currentCycle.startTime ? `（${currentCycle.startTime} ~ ${currentCycle.endTime}）` : ''}`" />
 			<el-table :data="detailStats" border max-height="420" size="small">
 				<el-table-column prop="ruleName" label="规则名称" min-width="160" show-overflow-tooltip />
-				<el-table-column prop="count" label="次数" width="70" align="center" sortable />
-				<el-table-column prop="count" label="积分" width="70" align="center">
+				<el-table-column prop="approvedCount" label="已通过次数" width="110" align="center" sortable />
+				<el-table-column prop="approvedPoints" label="已通过积分" width="110" align="center" sortable>
 					<template #default="scope">
-						<span class="count-badge">
-								{{ singlePoints(scope.row) > 0 ? '+' : '' }}{{ singlePoints(scope.row) }} 分
-								</span>
+						<span :class="scope.row.approvedPoints > 0 ? 'text-success' : scope.row.approvedPoints < 0 ? 'text-danger' : 'text-muted'">
+							{{ scope.row.approvedPoints > 0 ? '+' : '' }}{{ scope.row.approvedPoints }}
+						</span>
 					</template>
 				</el-table-column>
-				<el-table-column label="积分合计" width="100" align="center" sortable prop="points">
+				<el-table-column label="待审批" width="90" align="center">
 					<template #default="scope">
-						<span :class="scope.row.points > 0 ? 'text-success' : scope.row.points < 0 ? 'text-danger' : 'text-muted'">
-							{{ scope.row.points > 0 ? '+' : '' }}{{ scope.row.points }}
+						<span :class="scope.row.pendingCount ? 'text-warning' : 'text-muted'">
+							{{ scope.row.pendingCount ? `${scope.row.pendingCount} 条` : '—' }}
+						</span>
+					</template>
+				</el-table-column>
+				<el-table-column label="已驳回" width="80" align="center">
+					<template #default="scope">
+						<span :class="scope.row.rejectedCount ? 'text-danger' : 'text-muted'">
+							{{ scope.row.rejectedCount ? `${scope.row.rejectedCount} 条` : '—' }}
 						</span>
 					</template>
 				</el-table-column>
 			</el-table>
+			<div class="detail-tip-text">仅展示已通过的积分；待审批的记分要等管理员审批后才会计入学生积分</div>
 			<el-empty v-if="detailStats.length === 0" description="当前周期暂无规则记录" :image-size="60" />
 		</el-dialog>
 
@@ -172,6 +191,9 @@
 
 		<MonitorAccountDialog v-model:visible="accountFormVisible" :mode="accountFormMode"
 			:account="accountFormTarget" @confirm="handleAccountConfirm" />
+
+		<!-- 班委记分审批弹窗（仅教师可见入口） -->
+		<MonitorApprovalDialog v-if="approvalEntryVisible" v-model:visible="approvalVisible" @success="handleApprovalSuccess" />
 	</div>
 </template>
 
@@ -181,17 +203,19 @@ import { useAppStore } from '../../../store/models/app';
 import { useMonitorCycle } from '../../../database/utils/useMonitorCycle';
 import { useRule } from '../../../database/utils/useRule';
 import { ElMessage, ElMessageBox, dayjs, type FormInstance } from 'element-plus';
-import { Plus, Edit, Delete, Ticket, Search, Document, View, UserFilled } from '@element-plus/icons-vue';
-import { RuleRecord, Student } from '../../../database/class';
+import { Plus, Edit, Delete, Ticket, Search, Document, View, UserFilled, Stamp } from '@element-plus/icons-vue';
+import { Student, RECORD_STATUS, isPendingRecord } from '../../../database/class';
 import { useMonitorAccount } from '../../../database/utils/useMonitorAccount';
 import MonitorRecordModal from './MonitorRecordModal.vue';
 import MonitorAccountDialog from './MonitorAccountDialog.vue';
+import MonitorApprovalDialog from './MonitorApprovalDialog.vue';
 import RecordList from '../RecordList/index.vue';
 
 const appStore = useAppStore();
 const {
 	getMonitorCycleList, createMonitorCycle, updateMonitorCycle,
-	startMonitorCycle, finishMonitorCycle, deleteMonitorCycle, adjustPointsByRule, autoFinishExpiredCycles,
+	startMonitorCycle, finishMonitorCycle, deleteMonitorCycle, adjustPointsByRule, autoFinishExpiredCycles, isCycleExpired,
+	countPendingRecords,
 } = useMonitorCycle();
 const { getRuleList, getRuleGroupList } = useRule();
 const { getMonitorAccountList, createMonitorAccount, updateMonitorAccountPassword, deleteMonitorAccount } = useMonitorAccount();
@@ -199,17 +223,44 @@ const { getMonitorAccountList, createMonitorAccount, updateMonitorAccountPasswor
 const rules = computed(() => getRuleList(appStore.activeGrade?.id) || []);
 const ruleGroups = computed(() => getRuleGroupList() || []);
 const isMonitor = computed(() => appStore.currentRole === 'monitor');
+// 班委记分是否需管理员审批（默认开启）
+const approvalEnabled = computed(() => appStore.database.basicConfig?.monitorApproval ?? true);
+// 是否启用班委记分（关闭后不建账号、无待审批入口，仅管理员记分）
+const monitorAccountEnabled = computed(() => appStore.database.basicConfig?.monitorAccountEnabled ?? true);
+// 班委提交时是否进入待审批：班委角色且开关开启
+const submitNeedsApproval = computed(() => isMonitor.value && monitorAccountEnabled.value && approvalEnabled.value);
+// 当前登录的班委账号
+const currentMonitor = computed(() => appStore.currentMonitor);
 // 班委仅可见未结束周期；教师可见全部
 const allCycleList = computed(() => getMonitorCycleList());
-const cycleList = computed(() => isMonitor.value ? allCycleList.value.filter(c => c.status === 0) : allCycleList.value);
+// 班委仅可见未结束且未过期的周期；教师可见全部
+// （班委侧不写周期状态，已过期周期只是不展示，避免“进入页面”这一只读行为改动周期状态）
+const cycleList = computed(() => isMonitor.value
+	? allCycleList.value.filter(c => c.status === 0 && !isCycleExpired(c))
+	: allCycleList.value);
 const selectedCycleId = ref('');
 const currentCycle = computed(() => cycleList.value.find(item => item.id === selectedCycleId.value));
 
-// 单次规则分值 = 总积分 / 次数（count>=1 时 points 恒为 rule.points × count）
-const singlePoints = (record: RuleRecord): number => {
-	const count = record.count > 1 ? record.count : 1;
-	return record.points / count;
-};
+// 待审批总数（教师端入口角标）
+const pendingCount = computed(() => countPendingRecords());
+
+// 审批入口：仅教师；启用班委记分时显示，或虽已关闭但仍有待审批记录（避免旧记录卡死无人可处理）
+const approvalEntryVisible = computed(() => !isMonitor.value && (monitorAccountEnabled.value || pendingCount.value > 0));
+
+// 班委本人提交的待审批 / 已驳回条数
+const myRecords = computed(() => {
+	const monitorId = currentMonitor.value?.id || '';
+	return (appStore.activeGrade?.gradeInfo?.recordList || []).filter(item => item.source === 1
+		&& (!monitorId || item.submitter_id === monitorId));
+});
+const myPendingCount = computed(() => myRecords.value.filter(item => isPendingRecord(item)).length);
+const myRejectedCount = computed(() => myRecords.value.filter(item => item.status === RECORD_STATUS.REJECTED).length);
+const monitorPendingTip = computed(() => {
+	const parts: string[] = [];
+	if (myPendingCount.value) parts.push(`${myPendingCount.value} 条待管理员审批（尚未计入积分）`);
+	if (myRejectedCount.value) parts.push(`${myRejectedCount.value} 条已被驳回`);
+	return `你提交的记分：${parts.join('，')}`;
+});
 
 // 默认选中最新周期（或进行中的周期）
 const syncSelectedCycle = () => {
@@ -224,14 +275,20 @@ const syncSelectedCycle = () => {
 watch(() => cycleList.value.length, () => { syncSelectedCycle(); }, { immediate: true });
 
 // 进入页面时自动结束已过期的进行中周期
+// 进入页面时自动结束已过期的进行中周期（仅教师侧触发，班委侧不写数据）
 onMounted(async () => {
+	if (isMonitor.value) return;
 	const count = await autoFinishExpiredCycles();
 	if (count > 0) {
 		syncSelectedCycle();
 	}
 });
 
-const canRecord = computed(() => !!currentCycle.value && currentCycle.value.status === 0 && rules.value.length > 0);
+// 可记分：周期未结束、有规则；且班委角色下需「启用班委记分」为开启
+const canRecord = computed(() => !!currentCycle.value
+	&& currentCycle.value.status === 0
+	&& rules.value.length > 0
+	&& (!isMonitor.value || monitorAccountEnabled.value));
 
 // 模块可见性配置（默认全部展示，兼容旧数据）
 const moduleVisibility = computed(() => appStore.database.basicConfig?.moduleVisibility || {
@@ -261,8 +318,15 @@ const handleAddCycle = () => {
 
 const handleEditCycle = () => {
 	if (!currentCycle.value) return;
+	const cycle = currentCycle.value;
+	openCycleEditor(cycle, cycle.startTime && cycle.endTime ? [cycle.startTime, cycle.endTime] : null);
+};
+
+// 打开周期编辑弹窗（新增/编辑/重新开始引导共用）
+const restartAfterSave = ref(false);
+const openCycleEditor = (cycle: { id: string, name: string, startTime?: string, endTime?: string }, range: [string, string] | null) => {
 	isEditCycle.value = true;
-	cycleForm.value = { id: currentCycle.value.id, name: currentCycle.value.name, range: currentCycle.value.startTime && currentCycle.value.endTime ? [currentCycle.value.startTime, currentCycle.value.endTime] : null };
+	cycleForm.value = { id: cycle.id, name: cycle.name, range };
 	cycleDialogVisible.value = true;
 };
 
@@ -310,6 +374,22 @@ const handleCycleSubmit = () => {
 			ElMessage.warning(`时间范围与周期「${overlapCycle}」重叠，请调整`);
 			return;
 		}
+		// 编辑周期时间范围：普通记录（source=0）是按时间范围归属周期的，改范围会重新划分历史记录归属
+		if (id) {
+			const origin = allCycleList.value.find(item => item.id === id);
+			const rangeChanged = !!origin && (origin.startTime !== startTime || origin.endTime !== endTime);
+			if (rangeChanged) {
+				try {
+					await ElMessageBox.confirm(
+						'修改时间范围会重新归属该时间段内的普通记分记录（班委周期记录按周期归属，不受影响），数据分析的趋势与周期记录数字可能变化。确认保存？',
+						'修改周期时间范围',
+						{ type: 'warning', confirmButtonText: '确认保存', cancelButtonText: '取消' },
+					);
+				} catch {
+					return;
+				}
+			}
+		}
 		const res = id ? await updateMonitorCycle(id, name, startTime, endTime) : await createMonitorCycle(name, startTime, endTime);
 		if (res) {
 			ElMessage.success(id ? '周期已更新' : '周期已创建');
@@ -319,6 +399,13 @@ const handleCycleSubmit = () => {
 				// 新建后选中新周期
 				const list = getMonitorCycleList();
 				selectedCycleId.value = list[list.length - 1]?.id || '';
+			}
+			// 「重新开始」引导过来的编辑：保存新时间范围后直接重新开始
+			if (restartAfterSave.value && id) {
+				restartAfterSave.value = false;
+				if (await startMonitorCycle(id)) {
+					ElMessage.success('时间范围已更新，周期已重新开始');
+				}
 			}
 		} else {
 			ElMessage.error('操作失败，请重试');
@@ -338,11 +425,25 @@ const handleFinishCycle = () => {
 };
 
 const handleStartCycle = () => {
-	if (!currentCycle.value) return;
-	ElMessageBox.confirm(`重新开始周期「${currentCycle.value.name}」后可继续记分（历史记录保留），确认？`, '重新开始', {
+	const cycle = currentCycle.value;
+	if (!cycle) return;
+	// 时间范围已过去的周期：直接重新开始会被「进页面自动结束过期周期」立刻关掉，必须先设置新时间范围
+	const outOfRange = !!cycle.endTime && dayjs().format('YYYY-MM-DD') > cycle.endTime;
+	if (outOfRange) {
+		ElMessageBox.confirm(
+			`周期「${cycle.name}」的时间范围已过期（${cycle.startTime || '未设置'} ~ ${cycle.endTime}），直接重新开始会被自动结束。请先设置新的时间范围。`,
+			'重新开始周期',
+			{ type: 'warning', confirmButtonText: '设置新的时间范围', cancelButtonText: '取消' },
+		).then(() => {
+			restartAfterSave.value = true;
+			openCycleEditor(cycle, null);
+		}).catch(() => { });
+		return;
+	}
+	ElMessageBox.confirm(`重新开始周期「${cycle.name}」后可继续记分（历史记录保留），确认？`, '重新开始', {
 		type: 'info', confirmButtonText: '确认', cancelButtonText: '取消',
 	}).then(async () => {
-		if (await startMonitorCycle(currentCycle.value!.id)) {
+		if (await startMonitorCycle(cycle.id)) {
 			ElMessage.success('周期已重新开始');
 		}
 	}).catch(() => { });
@@ -354,7 +455,11 @@ const handleDeleteCycle = () => {
 		ElMessage.warning('已结束的周期不允许删除');
 		return;
 	}
-	ElMessageBox.confirm(`删除周期「${currentCycle.value.name}」将同时删除该周期的所有积分记录，并回退学生在周期内被调整的积分，确认删除？`, '删除周期', {
+	// 提示待审批记录（三种状态会被一并删除，班委的未审批提交也会消失）
+	const cyclePending = (appStore.activeGrade?.gradeInfo?.recordList || []).filter(item => item.source === 1
+		&& item.cycle_id === currentCycle.value!.id && isPendingRecord(item)).length;
+	const pendingTip = cyclePending ? `其中包含 ${cyclePending} 条待审批记录，将一并删除。` : '';
+	ElMessageBox.confirm(`删除周期「${currentCycle.value.name}」将同时删除该周期的所有积分记录，并回退学生在周期内被调整的积分。${pendingTip}确认删除？`, '删除周期', {
 		type: 'warning', confirmButtonText: '确认', cancelButtonText: '取消',
 	}).then(async () => {
 		if (await deleteMonitorCycle(currentCycle.value!.id)) {
@@ -448,12 +553,30 @@ const handleRecordConfirm = async (payload: { ruleId: string, count: number, poi
 		groupId: target.groupId || '',
 		count: payload.count,
 		pointsPerCount: payload.points,
+		// 班委提交：记录提交账号；开关开启时进入待审批（不立即入账）
+		submitter: currentMonitor.value,
+		needApproval: submitNeedsApproval.value,
 	});
 	if (res.success) {
-		ElMessage.success(res.message);
+		if (res.pendingCount) {
+			ElMessage.info(res.message);
+		} else {
+			ElMessage.success(res.message);
+		}
 	} else {
 		ElMessage.warning(res.message);
 	}
+};
+
+// ---------- 班委记分审批（仅教师） ----------
+const approvalVisible = ref(false);
+
+const handleOpenApproval = () => {
+	approvalVisible.value = true;
+};
+
+const handleApprovalSuccess = () => {
+	// 列表积分依赖 store，审批后自动刷新
 };
 
 // ---------- 周期记录 ----------
@@ -512,7 +635,8 @@ const handleViewDetail = (student: Student) => {
 	detailDialogVisible.value = true;
 };
 
-// 当前周期内该学生每种规则的记分次数与积分合计（含 0 次规则，便于看全貌；有记录的排前面）
+// 当前周期内该学生每种规则的记分：已通过 / 待审批 / 已驳回分开展示
+// （已通过的才计入学生积分，三态分开才能与真实积分对得上）
 const detailStats = computed(() => {
 	if (!currentCycle.value || !detailStudent.value) return [];
 	const cycleId = currentCycle.value.id;
@@ -522,13 +646,16 @@ const detailStats = computed(() => {
 	);
 	return rules.value.map(rule => {
 		const ruleRecords = records.filter(item => item.rule_id === rule.id);
+		const approved = ruleRecords.filter(item => item.status === RECORD_STATUS.APPROVED);
 		return {
 			ruleId: rule.id,
 			ruleName: rule.name,
-			count: ruleRecords.reduce((acc, cur) => acc + (cur.count || 1), 0),
-			points: ruleRecords.reduce((acc, cur) => acc + cur.points, 0),
+			approvedCount: approved.reduce((acc, cur) => acc + (cur.count || 1), 0),
+			approvedPoints: approved.reduce((acc, cur) => acc + cur.points, 0),
+			pendingCount: ruleRecords.filter(item => isPendingRecord(item)).length,
+			rejectedCount: ruleRecords.filter(item => item.status === RECORD_STATUS.REJECTED).length,
 		};
-	}).sort((a, b) => b.count - a.count);
+	}).sort((a, b) => b.approvedCount - a.approvedCount);
 });
 </script>
 
@@ -705,6 +832,17 @@ const detailStats = computed(() => {
 }
 
 .count-badge {
+	color: #909399;
+}
+
+.text-warning {
+	color: #e6a23c;
+	font-weight: 600;
+}
+
+.detail-tip-text {
+	margin-top: 8px;
+	font-size: 12px;
 	color: #909399;
 }
 </style>
