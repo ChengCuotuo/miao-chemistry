@@ -120,6 +120,7 @@ app.whenReady().then(() => {
     applicationName: 'Miao积分管理',
     applicationVersion: getAppVersion(),
     copyright: 'Copyright © 2026 Miao积分管理',
+    credits: '送给亲爱的苗',
     // credits: '小红书：232875531；QQ：1433893622',
   });
 });
