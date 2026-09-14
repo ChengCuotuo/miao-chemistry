@@ -1,0 +1,484 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Windows 安装包报错排查 · Squirrel 链路分析</title>
+<style>
+  :root{
+    --paper:#f6f4f0;
+    --card:#fbfaf8;
+    --ink:#1b1a18;
+    --ink-soft:#3d3a35;
+    --muted:#6b6862;
+    --rule:#dcd7cf;
+    --rule-strong:#bdb6ab;
+    --accent:#9c3b26;
+    --accent-soft:#f0e4df;
+    --serif:"Songti SC","STSong","Source Han Serif SC","Noto Serif CJK SC",Georgia,serif;
+    --sans:"PingFang SC","Hiragino Sans GB","Microsoft YaHei","Source Han Sans SC",-apple-system,sans-serif;
+    --mono:"SF Mono",Menlo,Consolas,"Courier New",monospace;
+  }
+  *{box-sizing:border-box}
+  html{-webkit-text-size-adjust:100%}
+  body{
+    margin:0;background:var(--paper);color:var(--ink);font-family:var(--sans);
+    font-size:16px;line-height:1.6;letter-spacing:.01em;
+  }
+  .wrap{max-width:1080px;margin:0 auto;padding:0 40px}
+
+  /* ---------- 封面 ---------- */
+  header.cover{padding:88px 0 40px;border-bottom:1px solid var(--rule-strong)}
+  .kicker{
+    font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--accent);
+    font-weight:600;margin-bottom:22px
+  }
+  h1{
+    font-family:var(--serif);font-weight:600;font-size:46px;line-height:1.14;
+    letter-spacing:-.022em;margin:0 0 18px;max-width:22ch
+  }
+  .lede{font-size:17px;color:var(--ink-soft);max-width:62ch;margin:0}
+  .meta{
+    display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));
+    gap:0 32px;margin:38px 0 6px;border-top:1px solid var(--rule);padding-top:22px
+  }
+  .meta div{padding:6px 0}
+  .meta dt{font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin-bottom:5px}
+  .meta dd{margin:0;font-size:14px;color:var(--ink-soft)}
+  .meta dd code{font-family:var(--mono);font-size:13px}
+
+  /* ---------- 目录 ---------- */
+  nav.toc{margin:34px 0 0;padding:22px 0 0;border-top:1px solid var(--rule)}
+  nav.toc ol{margin:0;padding:0;list-style:none;columns:2;column-gap:44px}
+  nav.toc li{margin:0 0 7px;break-inside:avoid}
+  nav.toc a{color:var(--ink-soft);text-decoration:none;font-size:14px;border-bottom:1px solid transparent}
+  nav.toc a:hover{color:var(--accent);border-bottom-color:var(--accent)}
+  nav.toc .num{font-family:var(--mono);font-size:12px;color:var(--muted);margin-right:9px}
+
+  /* ---------- 章节 ---------- */
+  main{padding:14px 0 30px}
+  section{padding:52px 0 8px;border-bottom:1px solid var(--rule)}
+  section:last-of-type{border-bottom:0}
+  h2{
+    font-family:var(--serif);font-weight:600;font-size:27px;line-height:1.25;
+    letter-spacing:-.012em;margin:0 0 20px
+  }
+  h2 .h2num{font-family:var(--mono);font-size:13px;color:var(--accent);display:block;margin-bottom:9px;letter-spacing:.1em}
+  h3{font-family:var(--sans);font-weight:600;font-size:16px;letter-spacing:.005em;margin:30px 0 10px}
+  p{margin:0 0 14px;max-width:74ch}
+  ul,ol{max-width:74ch;padding-left:22px;margin:0 0 16px}
+  li{margin:0 0 8px}
+  strong{font-weight:600}
+  code{font-family:var(--mono);font-size:13.5px;background:#eceae5;padding:1px 5px;border-radius:3px;word-break:break-all}
+  a{color:var(--accent)}
+  .note{color:var(--muted);font-size:14px}
+
+  /* ---------- 结论块 ---------- */
+  .verdict{border-top:2px solid var(--ink);margin:0 0 8px}
+  .verdict .row{display:grid;grid-template-columns:150px 1fr;gap:24px;padding:18px 0;border-bottom:1px solid var(--rule)}
+  .verdict .label{font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:var(--accent);font-weight:600;padding-top:2px}
+  .verdict p{margin:0;max-width:none}
+
+  /* ---------- 图 ---------- */
+  figure{margin:28px 0 6px}
+  figure svg{display:block;width:100%;height:auto}
+  figcaption{font-size:13px;color:var(--muted);margin-top:12px;border-top:1px solid var(--rule);padding-top:10px;max-width:74ch}
+
+  /* ---------- 表格 ---------- */
+  .tablewrap{overflow-x:auto;margin:22px 0 6px}
+  table{border-collapse:collapse;width:100%;font-size:14px;min-width:660px}
+  caption{
+    text-align:left;font-size:12px;letter-spacing:.1em;text-transform:uppercase;
+    color:var(--muted);padding-bottom:10px
+  }
+  th,td{text-align:left;vertical-align:top;padding:12px 16px 12px 0;border-bottom:1px solid var(--rule)}
+  th{font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-soft);border-bottom:1px solid var(--rule-strong)}
+  td:first-child{font-weight:600;white-space:nowrap}
+  td code{font-size:12.5px}
+  tr:last-child td{border-bottom:0}
+
+  /* ---------- 日志路径块 ---------- */
+  .paths{border:1px solid var(--rule-strong);background:var(--card);padding:20px 24px;margin:20px 0}
+  .paths .t{font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:var(--accent);margin-bottom:12px}
+  .paths ul{list-style:none;padding:0;margin:0}
+  .paths li{padding:9px 0;border-bottom:1px solid var(--rule);font-family:var(--mono);font-size:13px}
+  .paths li:last-child{border-bottom:0}
+  .paths li span{font-family:var(--sans);font-size:12.5px;color:var(--muted);display:block;margin-top:3px;letter-spacing:0}
+
+  /* ---------- 代码引用 ---------- */
+  pre{
+    background:#1f1d1a;color:#e8e4dc;padding:18px 20px;overflow-x:auto;margin:20px 0;
+    font-family:var(--mono);font-size:12.5px;line-height:1.65;border-radius:3px
+  }
+  pre .c{color:#9b948a}
+  pre .k{color:#e5a67f}
+
+  /* ---------- 清单 ---------- */
+  ol.steps{counter-reset:s;list-style:none;padding:0;max-width:78ch}
+  ol.steps li{counter-increment:s;position:relative;padding:0 0 20px 46px;border-bottom:1px solid var(--rule);margin-bottom:20px}
+  ol.steps li:last-child{border-bottom:0}
+  ol.steps li::before{
+    content:counter(s);position:absolute;left:0;top:1px;width:26px;height:26px;
+    border:1px solid var(--accent);color:var(--accent);border-radius:50%;
+    font-family:var(--mono);font-size:12.5px;display:flex;align-items:center;justify-content:center
+  }
+  ol.steps b{display:block;margin-bottom:5px}
+
+  footer{padding:34px 0 70px;color:var(--muted);font-size:13px;border-top:1px solid var(--rule)}
+  footer p{max-width:78ch;margin:0 0 8px}
+  @media (max-width:720px){
+    .wrap{padding:0 22px}
+    h1{font-size:33px}
+    nav.toc ol{columns:1}
+    .verdict .row{grid-template-columns:1fr;gap:6px}
+    body{font-size:15.5px}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header class="cover">
+  <div class="kicker">打包与分发 · 故障分析 · 仅分析不改动</div>
+  <h1>Windows 安装包报错排查：Squirrel 安装链路分析</h1>
+  <p class="lede">
+    每次发布新版本，用户直接运行安装包会弹「There was an error while installing the application.
+    Check the setup log for more information and contact the author.」。
+    这条消息不是包里有什么坏文件，而是 Squirrel 安装器在最后一步落盘失败后，把内部错误码翻译成的一句通用话术。
+    真正的原因写在安装过程自己的日志里。
+  </p>
+  <dl class="meta">
+    <div><dt>项目</dt><dd>miao-chemistry（Miao积分管理）v2.0.1</dd></div>
+    <div><dt>打包器</dt><dd>Electron Forge + <code>maker-squirrel</code></dd></div>
+    <div><dt>安装器</dt><dd>Squirrel.Windows（Setup.exe + Update.exe）</dd></div>
+    <div><dt>分析时间</dt><dd>2026-09-14</dd></div>
+    <div><dt>本次范围</dt><dd>只定位原因与规避方式，不改动代码与配置</dd></div>
+  </dl>
+  <nav class="toc">
+    <ol>
+      <li><a href="#s1"><span class="num">01</span>结论先行</a></li>
+      <li><a href="#s2"><span class="num">02</span>这条报错是谁弹的</a></li>
+      <li><a href="#s3"><span class="num">03</span>Update.exe 的全部失败分支</a></li>
+      <li><a href="#s4"><span class="num">04</span>现场取证：日志在哪</a></li>
+      <li><a href="#s5"><span class="num">05</span>为什么「每次新版本」必现</a></li>
+      <li><a href="#s6"><span class="num">06</span>规避清单</a></li>
+      <li><a href="#s7"><span class="num">07</span>顺带发现的问题</a></li>
+    </ol>
+  </nav>
+</header>
+
+<main>
+
+<section id="s1">
+  <h2><span class="h2num">01</span>结论先行</h2>
+  <div class="verdict">
+    <div class="row">
+      <div class="label">是谁报的</div>
+      <p>Squirrel.Windows 的 <code>Setup.exe</code> 自己。<code>Setup.exe</code> 是个自解压外壳：先把内嵌的 updater 解到临时目录，再执行 <code>Update.exe --install .</code>，只有这个子进程退出码不为 0 才弹这句。</p>
+    </div>
+    <div class="row">
+      <div class="label">最常见的真因</div>
+      <p>安装新版本时，Squirrel 会把 <code>%LOCALAPPDATA%\student-score-system</code> <strong>整个目录删掉重装</strong>。只要其中任何一个文件被占用（旧版进程没退干净、杀软扫到一半、资源管理器/网盘持有句柄），删除就失败，退出码非 0，于是弹窗。</p>
+    </div>
+    <div class="row">
+      <div class="label">和签名强相关</div>
+      <p>本项目的 Windows 安装包<strong>完全没有做 Authenticode 签名</strong>，<code>Update.exe</code> 与主程序都容易被 360 / 火绒 / Defender 拦下或改写，落到日志里就是「找不到文件」「无法拷贝」。electron-winstaller 官方 README 对未签名包的原话就是「many anti-virus vendors will consider your app as malware」。</p>
+    </div>
+    <div class="row">
+      <div class="label">一个可以先排除的误区</div>
+      <p>发布时<strong>只上传那个 exe 是够的</strong>。<code>Setup.exe</code> 内部已嵌入应用负载（构建时由 <code>WriteZipToSetup.exe</code> 写入），旁边的 <code>*-full.nupkg</code> 和 <code>RELEASES</code> 只服务于「自动更新服务端」场景。所以「缺 nupkg 导致安装失败」这条可以先划掉。</p>
+    </div>
+  </div>
+</section>
+
+<section id="s2">
+  <h2><span class="h2num">02</span>这条报错是谁弹的</h2>
+  <p>
+    报错文案里的关键词是 <strong>setup log</strong> 和 <strong>contact the author</strong>，这是 Squirrel.Windows
+    安装器自带的话术。在本机安装链路上，你双击的那个安装包做的是下面五件事，
+    任何一步失败都会走到同一句弹窗上。
+  </p>
+
+  <figure>
+    <svg viewBox="0 0 1080 208" role="img" aria-label="Squirrel 安装链路：Setup.exe 自解压 → 临时目录 → Update.exe --install → 删除旧目录并解包新版本 → 退出码非 0 时弹窗">
+      <defs>
+        <marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+          <path d="M1 1 L9 5 L1 9" fill="none" stroke="#9c3b26" stroke-width="1.4"/>
+        </marker>
+      </defs>
+      <!-- boxes -->
+      <g font-family="PingFang SC, Microsoft YaHei, sans-serif" font-size="13.5" fill="#1b1a18">
+        <rect x="2" y="52" width="184" height="88" fill="#fbfaf8" stroke="#bdb6ab" stroke-width="1"/>
+        <text x="18" y="80">① 双击</text>
+        <text x="18" y="102" font-size="12.5" fill="#3d3a35">Miao积分管理-2.0.1</text>
+        <text x="18" y="121" font-size="12.5" fill="#3d3a35">Setup.exe</text>
+
+        <rect x="226" y="52" width="184" height="88" fill="#fbfaf8" stroke="#bdb6ab" stroke-width="1"/>
+        <text x="242" y="80">② 自解压 updater</text>
+        <text x="242" y="102" font-size="12.5" fill="#3d3a35">%LOCALAPPDATA%</text>
+        <text x="242" y="121" font-size="12.5" fill="#3d3a35">\SquirrelTemp</text>
+
+        <rect x="450" y="52" width="184" height="88" fill="#fbfaf8" stroke="#bdb6ab" stroke-width="1"/>
+        <text x="466" y="80">③ 执行</text>
+        <text x="466" y="102" font-size="12.5" fill="#3d3a35">Update.exe</text>
+        <text x="466" y="121" font-size="12.5" fill="#3d3a35">--install .</text>
+
+        <rect x="674" y="52" width="184" height="88" fill="#fbfaf8" stroke="#bdb6ab" stroke-width="1"/>
+        <text x="690" y="80">④ 删旧目录后重装</text>
+        <text x="690" y="102" font-size="12.5" fill="#3d3a35">\student-score-system</text>
+        <text x="690" y="121" font-size="12.5" fill="#3d3a35">→ 解包 app-2.0.1</text>
+
+        <rect x="898" y="52" width="180" height="88" fill="#f0e4df" stroke="#9c3b26" stroke-width="1"/>
+        <text x="914" y="80">⑤ 退出码 ≠ 0</text>
+        <text x="914" y="102" font-size="12.5" fill="#9c3b26">弹出这条错误</text>
+        <text x="914" y="121" font-size="12.5" fill="#6b6862">日志已写好</text>
+      </g>
+      <!-- arrows -->
+      <g stroke="#9c3b26" stroke-width="1.2" fill="none">
+        <line x1="190" y1="96" x2="220" y2="96" marker-end="url(#ar)"/>
+        <line x1="414" y1="96" x2="444" y2="96" marker-end="url(#ar)"/>
+        <line x1="638" y1="96" x2="668" y2="96" marker-end="url(#ar)"/>
+        <line x1="862" y1="96" x2="892" y2="96" marker-end="url(#ar)"/>
+      </g>
+      <g font-family="PingFang SC, Microsoft YaHei, sans-serif" font-size="12" fill="#6b6862">
+        <text x="2" y="176">失败点集中在这一段：目录删不掉、文件拷不进、注册表项写不了</text>
+        <text x="2" y="196" font-family="SF Mono, Menlo, monospace" fill="#9c3b26">→ %LOCALAPPDATA%\SquirrelTemp\SquirrelSetup.log</text>
+      </g>
+    </svg>
+    <figcaption>图 1 · Squirrel.Windows 的本地安装链路。前面几步（自解压、启动 updater）在报错弹窗出现时已经成功，问题几乎必然落在第 ④ 步之后的落盘动作。</figcaption>
+  </figure>
+
+  <h3>源头代码</h3>
+  <p>这句话在 Squirrel.Windows 源码里只有一处，判据是子进程退出码：</p>
+  <pre><span class="c">// src/Setup/UpdateRunner.cpp · CUpdateRunner::ExtractUpdaterAndRun</span>
+swprintf_s(cmd, L"\"%s\" --install . %s", updateExePath, lpCommandLine);
+CreateProcess(NULL, cmd, NULL, NULL, false, 0, NULL, targetDir, &amp;si, &amp;pi);
+WaitForSingleObject(pi.hProcess, INFINITE);
+GetExitCodeProcess(pi.hProcess, &amp;dwExitCode);
+
+<span class="k">if (dwExitCode != 0) {</span>
+    DisplayErrorMessage(CString(
+        L"There was an error while installing the application. "
+        L"Check the setup log for more information and contact the author."), logFile);
+<span class="k">}</span></pre>
+  <p class="note">
+    注意 <code>targetDir</code> 同时是子进程的工作目录，也就是 <code>--install .</code> 里的那个「.」——
+    updater 解出来的 <code>RELEASES</code>、<code>packages\*.nupkg</code> 都来自这里，所以安装包本身是自包含的。
+  </p>
+</section>
+
+<section id="s3">
+  <h2><span class="h2num">03</span>Update.exe 的全部失败分支</h2>
+  <p>
+    <code>Update.exe --install</code> 的每一步都有明确的 <code>ErrorIfThrows</code> 包装，失败即抛出并让退出码非 0。
+    下面把它的分支、日志关键字和本项目相关度放在一起，方便拿到日志后对号入座。
+  </p>
+
+  <div class="tablewrap">
+    <table>
+      <caption>表 1 · Update.exe --install 的失败分支</caption>
+      <thead>
+        <tr><th>步骤</th><th>日志关键字</th><th>典型触发条件</th><th>本项目相关度</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>烧掉旧目录</td>
+          <td><code>Install path ... already exists, burning it to the ground</code><br>↓<br><code>Failed to remove existing directory on full install, is the app still running???</code></td>
+          <td>升级安装时整目录被删失败：老版本进程仍在（含后台/托盘）、updater 杀进程后只等 500 ms 的竞态、杀软或资源管理器占用句柄</td>
+          <td>高。「每次新版本都报」最匹配这一条</td>
+        </tr>
+        <tr>
+          <td>重建目录</td>
+          <td><code>Couldn't recreate app directory, perhaps Antivirus is blocking it</code></td>
+          <td>杀软/EDR 对未签名程序拦截，或目录 ACL、组策略限制</td>
+          <td>高。Win 侧无签名</td>
+        </tr>
+        <tr>
+          <td>拷贝 updater</td>
+          <td><code>Failed to copy Update.exe to ...</code></td>
+          <td><code>Update.exe</code> 被隔离或运行中被锁（Squirrel 的 Update.exe 在国内杀软里属于高危长相）</td>
+          <td>高</td>
+        </tr>
+        <tr>
+          <td>写卸载注册表项</td>
+          <td><code>Failed to create uninstaller registry entry</code></td>
+          <td><code>HKCU</code> 被策略或安全软件拦写；上一版残留键值权限异常</td>
+          <td>中。校园/单位机器常见</td>
+        </tr>
+        <tr>
+          <td>建快捷方式</td>
+          <td><code>Can't write shortcut: ...</code></td>
+          <td>桌面/开始菜单被安全软件保护、快捷方式被占用</td>
+          <td>中</td>
+        </tr>
+        <tr>
+          <td>解包新版本</td>
+          <td>解包中途被中断、<code>.not-finished</code> 残留</td>
+          <td>杀软吃掉临时文件、磁盘空间不足、解压被打断</td>
+          <td>中</td>
+        </tr>
+        <tr>
+          <td>前置检查（更早）</td>
+          <td><code>Failed to install the .NET Framework ...</code><br><code>Unable to write to ... - IT policies may be restricting access ...</code></td>
+          <td>缺 .NET Framework 4.5.2+；<code>%LOCALAPPDATA%</code> 被重定向或不可写</td>
+          <td>低-中。这两条有独立文案，可据此区分</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section id="s4">
+  <h2><span class="h2num">04</span>现场取证：日志在哪</h2>
+  <p>
+    不要再靠猜。这条弹窗上有一个 <strong>Open Setup Log</strong> 按钮，点它打开的就是唯一权威现场。
+    也可以直接去下面两个路径找，第一个是主路径，第二个是 <code>%TEMP%</code> 不可写时的回退路径。
+  </p>
+  <div class="paths">
+    <div class="t">SquirrelSetup.log</div>
+    <ul>
+      <li>%LOCALAPPDATA%\SquirrelTemp\SquirrelSetup.log
+        <span>主路径：C:\Users\&lt;用户名&gt;\AppData\Local\SquirrelTemp\SquirrelSetup.log</span></li>
+      <li>C:\ProgramData\&lt;用户名&gt;\SquirrelTemp\SquirrelSetup.log
+        <span>回退路径：主路径无法写入时使用</span></li>
+    </ul>
+  </div>
+  <p>
+    拿到日志后按第 03 节的关键字对号入座即可。<code>Setup.exe</code> 自己只把「退出码非 0」翻译成一句通用话术，
+    不会透露是哪一步挂的——信息全在日志里。
+  </p>
+</section>
+
+<section id="s5">
+  <h2><span class="h2num">05</span>为什么「每次新版本」必现</h2>
+  <p>
+    「每次新版本都报」这个说法有两种读法，判据不同，指向的原因也不同。先分清楚是哪一种，再决定查哪个方向。
+  </p>
+  <div class="tablewrap">
+    <table>
+      <caption>表 2 · 两种情形的判据与方向</caption>
+      <thead>
+        <tr><th>情形</th><th>现象特征</th><th>更可能的真因</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>首次安装（干净机器）就失败</td>
+          <td>这台机器上从没装过本应用，<code>%LOCALAPPDATA%\student-score-system</code> 不存在</td>
+          <td>环境性问题：杀软拦截未签名安装器、缺少 .NET Framework 4.5.2+、<code>%LOCALAPPDATA%</code> 被策略重定向或不可写、安装包下载不完整（校验 hash）</td>
+        </tr>
+        <tr>
+          <td>覆盖升级失败（老版本已装）</td>
+          <td>首次能装，装新版本时才报；或者是同一版本重复安装</td>
+          <td>旧目录删不掉的占用问题（本项目最高概率）、旧版进程/残留实例、版本号未严格递增导致的残留状态</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+  <p>
+    之所以本项目在「覆盖升级」这一侧风险偏高，有三个叠加因素：
+  </p>
+  <ul>
+    <li><strong>没有单实例锁。</strong>全库检索 <code>requestSingleInstanceLock</code> 零命中，用户可以同时开多个窗口，升级时被占用的概率被放大。</li>
+    <li><strong>每一次升级都是「整目录删掉重装」。</strong>这是 Squirrel 的设计，不是 bug；任何句柄占用都会直接失败，容错远低于覆盖式安装。</li>
+    <li><strong>没有签名。</strong>未签名程序被安全软件扫描、隔离、改写的概率显著更高，正好都发生在「删目录 / 拷文件」这两步。</li>
+  </ul>
+</section>
+
+<section id="s6">
+  <h2><span class="h2num">06</span>规避清单</h2>
+  <p>按「先定位、再止血、最后根治」的顺序，性价比从高到低。</p>
+  <ol class="steps">
+    <li><b>先取一次日志，别猜</b>让出问题的用户点弹窗上的 Open Setup Log，回传 <code>SquirrelSetup.log</code>。日志里那一行决定了后面该做什么；没有日志就去改配置属于盲改。</li>
+    <li><b>规范装机动作</b>安装前彻底退出旧版（含托盘/后台），任务管理器确认没有 <code>Miao积分管理.exe</code> 残留；随后<strong>直接双击</strong>安装包，不要右键「以管理员身份运行」——Squirrel 明确拒绝提权运行，会走另一条报错分支。文件仍在占用时，重启一次再装是最省事的兜底。</li>
+    <li><b>给安装链路加白名单</b>在教师机器的安全软件里放行安装目录 <code>%LOCALAPPDATA%\student-score-system</code>、临时目录 <code>%LOCALAPPDATA%\SquirrelTemp</code>，并说明这是本应用安装器。这一步不需要改代码，但能消掉相当比例的现场。</li>
+    <li><b>补上单实例锁</b>加 <code>app.requestSingleInstanceLock()</code>，减少多实例并存；同时确保退出时释放数据文件句柄。这既降低升级失败率，也避免数据互相覆盖。</li>
+    <li><b>版本号每次严格递增</b>tag（如 <code>v2.0.2</code>）必须同步成 <code>package.json</code> 的新版本号，不要复用旧号重发。发布前在一台干净 Windows 上做一次「覆盖安装 + 卸载重装」回归。</li>
+    <li><b>给安装包和主程序做代码签名</b>这是这类问题最根本的一刀：SmartScreen 提示、杀软误报、被拦截改写，基本都源于未签名。OV/EV 代码签名证书都能用；成本换来的是一整类问题消失。</li>
+    <li><b>评估换装安装器（根治）</b>Squirrel.Windows 已停止维护，官方推荐的迁移目标是 Velopack；或改用 electron-builder 的 NSIS。两者都是覆盖式安装，不再「整目录删掉重装」，对句柄占用和杀软干扰的容错明显更高。</li>
+  </ol>
+
+  <div class="tablewrap">
+    <table>
+      <caption>表 3 · 安装器方案对比（升级可靠性视角）</caption>
+      <thead>
+        <tr><th>方案</th><th>升级方式</th><th>优势</th><th>代价</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>现状：Squirrel.Windows</td>
+          <td>删掉整个安装目录再解包新版本</td>
+          <td>Electron Forge 原生集成，配置最少</td>
+          <td>任何句柄占用即失败；已停止维护</td>
+        </tr>
+        <tr>
+          <td>electron-builder + NSIS</td>
+          <td>覆盖写入，可控安装目录</td>
+          <td>升级容错高、可自定义卸载/静默参数，生态成熟</td>
+          <td>需要迁移打包配置与 CI 产物命名</td>
+        </tr>
+        <tr>
+          <td>Velopack（Squirrel 官方后继）</td>
+          <td>增量更新 + 更稳的落盘策略</td>
+          <td>迁移路径官方给出，保留 Squirrel 的使用习惯</td>
+          <td>仍需重新接一遍打包与发布流程</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section id="s7">
+  <h2><span class="h2num">07</span>顺带发现的问题</h2>
+  <p>排查过程中在配置里看到几处会干扰定位、或本身就值得修的点，一并列出（本次不改动）。</p>
+  <div class="tablewrap">
+    <table>
+      <caption>表 4 · 配置层可疑项</caption>
+      <thead>
+        <tr><th>位置</th><th>问题</th><th>影响</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>forge.config.js</td>
+          <td>maker 里 <code>name: 'student-score-system'</code>，而 <code>packagerConfig.name</code> 与 <code>productName</code> 是 <code>Miao积分管理</code></td>
+          <td>安装目录名、nupkg 包名、快捷方式 AppUserModelId、日志里的应用名互不对应。排障时容易看错对象，也是这类「玄学失败」的高发区。建议包标识统一为 ASCII，中文只做展示名</td>
+        </tr>
+        <tr>
+          <td>forge.config.js</td>
+          <td>Windows maker 无任何签名配置（无 <code>certificateFile</code> / <code>signWithParams</code> / <code>windowsSign</code>）</td>
+          <td>直接对应第 03 节里多条高概率分支</td>
+        </tr>
+        <tr>
+          <td>forge.config.js</td>
+          <td><code>iconUrl</code> 用了 <code>file://</code> 本地绝对路径</td>
+          <td>该值会写进 nupkg 元数据，换机器后控制面板里的图标引用失效。不影响安装，但属同类不规范</td>
+        </tr>
+        <tr>
+          <td>.github/workflows/build.yml</td>
+          <td><code>BUILD_TYPE: ${{ github.event.inputs.build_type || 'trial' }}</code></td>
+          <td>tag 推送时手动输入为空，会退化成 <code>trial</code>（30 天），与文件里「tag 推送默认 official」的注释相矛盾。发布正式版前需确认这一点</td>
+        </tr>
+        <tr>
+          <td>src/main.js</td>
+          <td>无 <code>requestSingleInstanceLock</code></td>
+          <td>多实例并存放大升级期的文件占用风险</td>
+        </tr>
+        <tr>
+          <td>分发产物</td>
+          <td>CI 只把 <code>*.exe</code> 与 <code>*.dmg</code> 传进 Release</td>
+          <td>对本地安装无影响（Setup.exe 自包含）；只有将来接自动更新时，才需要额外托管 <code>RELEASES</code> 与 <code>*-full.nupkg</code></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+</main>
+
+<footer>
+  <p><strong>依据来源</strong>：Squirrel.Windows 源码 <code>src/Setup/UpdateRunner.cpp</code>、<code>src/Update/Program.cs</code>、<code>src/Squirrel/UpdateManager.ApplyReleases.cs</code>；本地仓库 <code>forge.config.js</code>、<code>package.json</code>、<code>src/main.js</code>、<code>.github/workflows/build.yml</code>、<code>node_modules/@electron-forge/maker-squirrel/dist/MakerSquirrel.js</code>、<code>node_modules/electron-winstaller/lib/index.js</code>。</p>
+  <p>本文只做原因定位与规避建议，未改动任何代码、配置或发布流程。</p>
+</footer>
+
+</div>
+</body>
+</html>
