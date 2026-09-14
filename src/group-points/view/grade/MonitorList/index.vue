@@ -2,7 +2,7 @@
 	<div class="monitor-list-container">
 		<!-- 顶部：周期选择与管理 -->
 		<div class="action-bar">
-			<el-space>
+			<el-space wrap>
 				<span class="label-text">积分周期：</span>
 				<el-select v-model="selectedCycleId" placeholder="请选择周期" style="width: 200px">
 					<el-option v-for="cycle in cycleList" :key="cycle.id" :label="cycle.name" :value="cycle.id">
@@ -668,10 +668,15 @@ const detailStats = computed(() => {
 	overflow: hidden;
 }
 
+/* 头部功能区：与「规则设置」页 .search-bar 一致——
+   宽度足够时一行两端对齐；宽度缩窄时自动换行成两行，
+   第二行承载「周期记录 / 待审批记录 / 班委账号」这组按钮 */
 .action-bar {
 	display: flex;
 	justify-content: space-between;
 	align-items: center;
+	flex-wrap: wrap;
+	gap: 10px 12px;
 	margin-bottom: 12px;
 }
 

@@ -103,3 +103,6 @@ TOOLS.md
 .openclaw/
 .opencode/
 .openclaw-*/
+memory/
+CHANGELOG.md
+MEMORY.md
