@@ -4,6 +4,7 @@ import started from 'electron-squirrel-startup';
 import { encryptJSON, decryptJSON } from './utils.js';
 
 const fs = require('fs').promises; // 使用 promise 版本的 fs 更方便
+const { readFileSync } = require('fs'); // 同步读取：启动时要立即拿到 package.json 版本号
 
 // Handle creating/removing shortcuts on Windows when installing/uninstalling.
 if (started) {
@@ -84,6 +85,22 @@ const menuTemplate = [
 const menu = Menu.buildFromTemplate(menuTemplate);
 Menu.setApplicationMenu(menu);
 
+// 应用版本号：直接从 package.json 读取（开发时为项目根目录，打包后在 app.asar 内），
+// 升级版本只需改 package.json，不用再同步维护这里；读取失败时回退到 app.getVersion()
+const getAppVersion = () => {
+  try {
+    const packageJsonPath = path.join(app.getAppPath(), 'package.json');
+    const { version } = JSON.parse(readFileSync(packageJsonPath, 'utf8'));
+    return version || app.getVersion();
+  } catch (error) {
+    console.warn(
+      '[main] 读取 package.json 版本失败，回退 app.getVersion()：',
+      error.message,
+    );
+    return app.getVersion();
+  }
+};
+
 // This method will be called when Electron has finished
 // initialization and is ready to create browser windows.
 // Some APIs can only be used after this event occurs.
@@ -101,9 +118,9 @@ app.whenReady().then(() => {
   // 设置关于面板内容
   app.setAboutPanelOptions({
     applicationName: 'Miao积分管理',
-    applicationVersion: '1.0.0',
-    copyright: 'Copyright © 2025 Miao积分管理',
-    credits: '小红书：232875531；QQ：1433893622',
+    applicationVersion: getAppVersion(),
+    copyright: 'Copyright © 2026 Miao积分管理',
+    // credits: '小红书：232875531；QQ：1433893622',
   });
 });
 
