@@ -127,6 +127,22 @@ export const useGrade = () => {
 		return target as DatabaseInfoType['gradeList'][0]
 	}
 
+	// 导入冲突检测：返回与导入数据冲突的班级
+	// 冲突规则：① 同一个班级 id（含已删除的，导入即恢复）② 未删除班级中同名
+	const findImportConflict = (gradeData?: { id?: string, name?: string } | null) => {
+		if (!gradeData) return undefined;
+		const list = appStore.database.gradeList || [];
+		return list.find(item => !!gradeData.id && item.id === gradeData.id)
+			|| list.find(item => item.delete === 0 && !!gradeData.name && item.name === gradeData.name);
+	}
+
+	// 班级名是否已被占用（用于「创建新班级」时的重名校验；excludeId 允许排除自身）
+	const isGradeNameTaken = (name: string, excludeId?: string) => {
+		const target = (name || '').trim();
+		if (!target) return false;
+		return (appStore.database.gradeList || []).some(item => item.delete === 0 && item.id !== excludeId && item.name === target);
+	}
+
 	// 更新班级配置信息
 	const updateGradeInfoById = async (gradeId: string, gradeInfo: DatabaseInfoType['gradeList'][0]) => {
 		// 只读会话（班委账号）禁止写班级数据文件（数据层兜底，UI 层已隐藏写入口）
@@ -135,5 +151,5 @@ export const useGrade = () => {
 		return true;
 	}
 
-	return { createGrade, deleteGrade, updateGrade, getGradeInfoById, updateGradeInfoById }
+	return { createGrade, deleteGrade, updateGrade, getGradeInfoById, updateGradeInfoById, findImportConflict, isGradeNameTaken }
 }

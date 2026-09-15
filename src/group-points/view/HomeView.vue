@@ -38,8 +38,6 @@
 			<el-button type="primary" @click="handleSubmit(formRef)">确定</el-button>
 		</template>
 	</el-dialog>
-
-	<ImportGradeDialog :visible="importDialogVisible" :grade-data="importGradeData" @success="handleImportSuccess" />
 </template>
 
 <script setup lang="ts">
@@ -70,7 +68,7 @@ const importGradeData = ref<GradeData | null>(null);
 
 const appStore = useAppStore();
 const router = useRouter();
-const { createGrade, deleteGrade, updateGrade, getGradeInfoById } = useGrade();
+const { createGrade, deleteGrade, updateGrade, getGradeInfoById, findImportConflict } = useGrade();
 const validGradeList = computed(() => appStore.database.gradeList.filter(item => item.delete === 0));
 
 const dialogVisible = ref(false);
@@ -196,8 +194,9 @@ const handleUploadFile = async () => {
 		const uploadGrade = JSON.parse(decryptedText);
 		uploadGrade.delete = 0;
 
-		const existingGrade = validGradeList.value.find(item => item.name === uploadGrade.name || item.id === uploadGrade.id);
-		if (existingGrade) {
+		// 与现有班级重名 / 同 ID：交给导入弹窗让用户选择「创建新班级」或「覆盖原班级数据」
+		const conflictGrade = findImportConflict(uploadGrade);
+		if (conflictGrade) {
 			importDialogVisible.value = true;
 			importGradeData.value = uploadGrade;
 		} else {
