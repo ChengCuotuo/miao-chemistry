@@ -19,7 +19,7 @@ on:
 permissions:
   contents: write
 
-# 全局构建类型：tag 推送默认 official，手动触发使用输入值
+# 全局构建类型:tag 推送默认 official,手动触发使用输入值
 env:
   BUILD_TYPE: ${{ github.event.inputs.build_type || 'trial' }}
   DURATION: ${{ (github.event.inputs.build_type == 'trial' && '30') || (github.event.inputs.build_type == 'basic' && '7') || '' }}
@@ -47,33 +47,45 @@ jobs:
       # 防护：将 lockfile 中的私有仓库 URL 替换为公共源，避免 CI 认证失败
       - name: Normalize registry URLs
         run: |
-          sed -i '' 's|https://nexus.mcd.com.cn/repository/npm-group/|https://registry.npmjs.org/|g' package-lock.json
-          sed -i '' 's|https://registry.npmmirror.com|https://registry.npmjs.org/|g' package-lock.json
+          # 仓库里的 lockfile 可能是 package-lock.json 或 yarn.lock，存在才处理
+          for lockfile in package-lock.json yarn.lock; do
+            [ -f "$lockfile" ] || continue
+            sed -i '' 's|https://nexus.mcd.com.cn/repository/npm-group/|https://registry.npmjs.org/|g' "$lockfile"
+            sed -i '' 's|https://registry.npmmirror.com|https://registry.npmjs.org/|g' "$lockfile"
+          done
           # CI 上强制使用官方 registry（覆盖仓库内 .npmrc 的镜像配置，避免镜像缺包/拼接异常）
           sed -i '' 's|^registry=.*|registry=https://registry.npmjs.org/|' .npmrc
           sed -i '' '/^electron_mirror=/d; /^electron_custom_dir=/d; /^esbuild_download_host=/d' .npmrc
 
+      # 按仓库实际使用的锁文件选安装方式（npm ci 需要 package-lock.json）
       - name: Install dependencies
-        run: npm ci
+        run: |
+          if [ -f package-lock.json ]; then
+            npm ci
+          elif [ -f yarn.lock ]; then
+            yarn install --frozen-lockfile
+          else
+            npm install
+          fi
       # npm 可选依赖 bug 兜底（npm/cli#4828）：失败时清理后重装
       - name: Retry install on failure
         if: failure()
         run: |
           rm -rf node_modules
-          npm ci
+          if [ -f package-lock.json ]; then npm ci; else npm install; fi
 
-      # 从 tag 名同步版本号到 package.json（forge.config.js 读取 npm_package_version）
+      # 从 tag 名同步版本号到 package.json(forge.config.js 读取 npm_package_version)
       - name: Sync version from tag
         if: startsWith(github.ref, 'refs/tags/v')
         run: npm version ${{ github.ref_name }} --no-git-tag-version --allow-same-version
 
-      # 构建：package → ad-hoc 签名 → make（免证书签名，将"已损坏"变为可右键打开）
+      # 构建:package → ad-hoc 签名 → make(免证书签名,将"已损坏"变为可右键打开)
       - name: Build macOS
         run: |
           # 1. Package
           npx electron-forge package --platform=darwin
 
-          # 2. Ad-hoc sign（codesign -s - 无需开发者证书）
+          # 2. Ad-hoc sign(codesign -s - 无需开发者证书)
           APP_PATH=$(find out -maxdepth 2 -name "*.app" -type d | head -1)
           if [ -n "$APP_PATH" ]; then
             codesign --force --deep --sign - "$APP_PATH"
@@ -83,10 +95,10 @@ jobs:
             exit 1
           fi
 
-          # 3. Make（跳过重新打包，使用已签名的 app 创建 DMG）
+          # 3. Make(跳过重新打包,使用已签名的 app 创建 DMG)
           npx electron-forge make --platform=darwin --skip-package
 
-      # 验证产物存在，不存在则终止
+      # 验证产物存在,不存在则终止
       - name: Verify build output
         run: |
           files=$(find out/make -type f 2>/dev/null)
@@ -123,26 +135,41 @@ jobs:
       - name: Normalize registry URLs
         shell: bash
         run: |
-          sed -i 's|https://nexus.mcd.com.cn/repository/npm-group/|https://registry.npmjs.org/|g' package-lock.json
-          sed -i 's|https://registry.npmmirror.com|https://registry.npmjs.org/|g' package-lock.json
+          # 仓库里的 lockfile 可能是 package-lock.json 或 yarn.lock，存在才处理
+          for lockfile in package-lock.json yarn.lock; do
+            [ -f "$lockfile" ] || continue
+            sed -i 's|https://nexus.mcd.com.cn/repository/npm-group/|https://registry.npmjs.org/|g' "$lockfile"
+            sed -i 's|https://registry.npmmirror.com|https://registry.npmjs.org/|g' "$lockfile"
+          done
           # CI 上强制使用官方 registry（覆盖仓库内 .npmrc 的镜像配置，避免镜像缺包/拼接异常）
           sed -i 's|^registry=.*|registry=https://registry.npmjs.org/|' .npmrc
           sed -i '/^electron_mirror=/d; /^electron_custom_dir=/d; /^esbuild_download_host=/d' .npmrc
 
+      # 按仓库实际使用的锁文件选安装方式（npm ci 需要 package-lock.json）
       - name: Install dependencies
-        run: npm ci
+        shell: bash
+        run: |
+          if [ -f package-lock.json ]; then
+            npm ci
+          elif [ -f yarn.lock ]; then
+            yarn install --frozen-lockfile
+          else
+            npm install
+          fi
       # npm 可选依赖 bug 兜底（npm/cli#4828）：失败时清理后重装
+      # 注意必须指定 bash：Windows 默认是 PowerShell，rm -rf 在那里不成立
       - name: Retry install on failure
         if: failure()
+        shell: bash
         run: |
           rm -rf node_modules
-          npm ci
+          if [ -f package-lock.json ]; then npm ci; else npm install; fi
 
       - name: Sync version from tag
         if: startsWith(github.ref, 'refs/tags/v')
         run: npm version ${{ github.ref_name }} --no-git-tag-version --allow-same-version
 
-      # 执行 package.json 中对应的构建命令：npm run build:{BUILD_TYPE}-win
+      # 执行 package.json 中对应的构建命令:npm run build:{BUILD_TYPE}-win
       - name: Build Windows
         shell: bash
         run: npm run build:${BUILD_TYPE}-win
@@ -150,9 +177,9 @@ jobs:
       - name: Verify build output
         shell: bash
         run: |
-          files=$(find out/make -type f 2>/dev/null)
+          files=$(find dist -type f 2>/dev/null)
           if [ -z "$files" ]; then
-            echo "::error::out/make 中未找到构建产物"
+            echo "::error::dist 中未找到构建产物"
             exit 1
           fi
           echo "=== Windows 构建产物 ==="
@@ -163,7 +190,7 @@ jobs:
         with:
           name: windows-build
           path: |
-            out/make/**/*.exe
+            dist/*.exe
           if-no-files-found: error
 
   # ─────────────────────────────────────────────
@@ -195,7 +222,7 @@ jobs:
           name: windows-build
           path: windows-files
 
-      # 将所有产物平铺到 release/ 目录（消除子目录层级）
+      # 将所有产物平铺到 release/ 目录(消除子目录层级)
       - name: Collect release files
         run: |
           mkdir -p release
@@ -203,7 +230,7 @@ jobs:
           echo "=== Release 文件列表 ==="
           ls -lh release/
 
-      # 无文件则终止，防止创建空 Release
+      # 无文件则终止,防止创建空 Release
       - name: Verify release assets
         run: |
           count=$(find release -type f | wc -l)
@@ -213,7 +240,7 @@ jobs:
           fi
           echo "共 $count 个文件待发布"
 
-      # 仅 tag 推送时创建 Release，手动触发只构建不发布
+      # 仅 tag 推送时创建 Release,手动触发只构建不发布
       - name: Create GitHub Release
         if: startsWith(github.ref, 'refs/tags/v')
         uses: softprops/action-gh-release@v2
@@ -222,24 +249,29 @@ jobs:
           body: |
             ## macOS 安装说明
 
-            下载 `.dmg` 安装后，如果提示"已损坏，无法打开"：
+            下载 `.dmg` 安装后,如果提示"已损坏,无法打开":
 
-            **方式一**：终端执行（推荐）
+            **方式一**:终端执行(推荐)
             ```bash
             xattr -cr "/Applications/Miao积分管理.app"
             ```
 
-            **方式二**：右键点击 App → 选择"打开" → 点击"确定"
+            **方式二**:右键点击 App → 选择"打开" → 点击"确定"
 
             ## Windows 安装说明
 
-            下载 `.exe` 安装包直接运行，如出现 SmartScreen 提示点击"仍要运行"。
+            下载 `.exe` 安装包直接运行，如出现 SmartScreen 提示点击“仍要运行”。
+
+            > **从旧版本升级**：本版起 Windows 安装包改用 NSIS（此前为 Squirrel）。
+            > 如果机器上已装过旧版本，请先卸载旧版本再运行新安装包，
+            > 否则控制面板里会同时出现两条 “Miao积分管理” 卸载项。
+            > 卸载旧版本不会删除班级与积分数据。
           generate_release_notes: true
           prerelease: ${{ contains(github.ref_name, '-') }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      # 同步 Release 产物到 Gitee（国内用户下载更快）
+      # 同步 Release 产物到 Gitee(国内用户下载更快)
       - name: Sync to Gitee Release
         if: startsWith(github.ref, 'refs/tags/v')
         env:
@@ -251,7 +283,7 @@ jobs:
           set +e
 
           if [ -z "$GITEE_TOKEN" ]; then
-            echo "GITEE_TOKEN 未配置，跳过 Gitee 同步"
+            echo "GITEE_TOKEN 未配置,跳过 Gitee 同步"
             exit 0
           fi
 
@@ -260,10 +292,10 @@ jobs:
           echo "=== 同步到 Gitee Release: ${API_BASE} ${TAG_NAME} ==="
           echo "API: ${API_BASE}"
 
-          # 0. 确保 Gitee 上存在该 Tag（搜索全部 Tag，不只看第一个）
+          # 0. 确保 Gitee 上存在该 Tag(搜索全部 Tag,不只看第一个)
           TAG_EXISTS=$(curl -s "${API_BASE}/tags?access_token=${GITEE_TOKEN}&per_page=100" | jq -r '.[].name' | grep -Fx "$TAG_NAME" || true)
           if [ -z "$TAG_EXISTS" ]; then
-            echo "Gitee 上未找到 Tag ${TAG_NAME}，尝试创建..."
+            echo "Gitee 上未找到 Tag ${TAG_NAME},尝试创建..."
             DEFAULT_BRANCH=$(curl -s "${API_BASE}?access_token=${GITEE_TOKEN}" | jq -r '.default_branch // "master"')
             echo "默认分支: ${DEFAULT_BRANCH}"
             TAG_CREATE=$(curl -s -X POST "${API_BASE}/tags" \
@@ -273,7 +305,7 @@ jobs:
             if [ "$TAG_CREATE_NAME" = "$TAG_NAME" ]; then
               echo "Tag ${TAG_NAME} 创建成功"
             elif echo "$TAG_CREATE" | jq -r '.message // empty' | grep -q "已存在"; then
-              echo "Tag ${TAG_NAME} 已存在（跳过创建）"
+              echo "Tag ${TAG_NAME} 已存在(跳过创建)"
             else
               echo "::warning::Gitee Tag 创建失败: $TAG_CREATE"
               echo "请先手动推送 Tag 到 Gitee: git push gitee ${TAG_NAME}"
@@ -289,14 +321,14 @@ jobs:
             -H "Accept: application/vnd.github+json" \
             "${GH_API}/releases/tags/${TAG_NAME}")
           BODY_LINES=$(echo "$GH_RELEASE" | jq -r '
-            "## 下载地址（GitHub Release）\n\n" +
+            "## 下载地址(GitHub Release)\n\n" +
             ([.assets[] | "- [\(.name)](\(.browser_download_url)) (\(.size / 1048576 | floor)M)"] | join("\n")) +
             "\n\n## 安装说明\n\nmacOS: 下载 .dmg 后执行 xattr -cr \"/Applications/Miao积分管理.app\"\nWindows: 下载 .exe 直接安装"
           ')
           echo "Release Body:"
           echo "$BODY_LINES"
 
-          # 2. 创建 Gitee Release（信息页，文件从 GitHub 下载）
+          # 2. 创建 Gitee Release(信息页,文件从 GitHub 下载)
           RELEASE_RESPONSE=$(jq -n \
             --arg token "$GITEE_TOKEN" \
             --arg tag "$TAG_NAME" \

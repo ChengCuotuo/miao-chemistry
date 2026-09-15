@@ -1,7 +1,7 @@
 {
   "name": "miao-chemistry",
   "productName": "miao-chemistry",
-  "version": "2.2.0",
+  "version": "2.0.2",
   "description": "Miao积分管理",
   "main": ".vite/build/main.js",
   "scripts": {
@@ -9,11 +9,11 @@
     "start:official": "cross-env BUILD_TYPE=official electron-forge start",
     "package": "cross-env BUILD_TYPE=trial electron-forge package",
     "build:basic-mac": "cross-env BUILD_TYPE=trial DURATION=7 electron-forge make --platform=darwin",
-    "build:basic-win": "cross-env BUILD_TYPE=trial DURATION=7 electron-forge make --platform=win32 --arch=x64",
+    "build:basic-win": "cross-env BUILD_TYPE=trial DURATION=7 node scripts/build-windows.mjs",
     "build:trial-mac": "cross-env BUILD_TYPE=trial DURATION=30 electron-forge make --platform=darwin",
-    "build:trial-win": "cross-env BUILD_TYPE=trial DURATION=30 electron-forge make --platform=win32 --arch=x64",
+    "build:trial-win": "cross-env BUILD_TYPE=trial DURATION=30 node scripts/build-windows.mjs",
     "build:official-mac": "cross-env BUILD_TYPE=official electron-forge make --platform=darwin",
-    "build:official-win": "cross-env BUILD_TYPE=official electron-forge make --platform=win32 --arch=x64"
+    "build:official-win": "cross-env BUILD_TYPE=official node scripts/build-windows.mjs"
   },
   "keywords": [],
   "author": {
@@ -24,7 +24,6 @@
   "devDependencies": {
     "@electron-forge/cli": "^7.10.2",
     "@electron-forge/maker-dmg": "^7.10.2",
-    "@electron-forge/maker-squirrel": "^7.10.2",
     "@electron-forge/maker-zip": "^7.10.2",
     "@electron-forge/plugin-auto-unpack-natives": "^7.10.2",
     "@electron-forge/plugin-fuses": "^7.10.2",
@@ -44,7 +43,7 @@
     "cross-env": "^10.1.0",
     "echarts": "^6.0.0",
     "electron": "39.2.6",
-    "electron-squirrel-startup": "^1.0.1",
+    "electron-builder": "^26.15.3",
     "element-plus": "^2.12.0",
     "pinia": "^3.0.4",
     "sass-embedded": "^1.96.0",

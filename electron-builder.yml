@@ -1,0 +1,54 @@
+# electron-builder 配置
+#
+# 分工：
+#   - Electron Forge 负责「编译 + 打包」（vite 构建、asar、Electron Fuses、语言包裁剪）
+#   - electron-builder 只负责「Windows 安装包（NSIS）」
+# 两者通过 --prepackaged 衔接：electron-builder 直接接管 Forge 产出的
+# out/<packagerConfig.name>-win32-<arch> 目录，见 scripts/build-windows.mjs。
+#
+# 因此本文件里不需要（也不应该）配置 files / asar / electronFuses ——
+# 那些已经在 Forge 的 packagerConfig 与 FusesPlugin 里生效了。
+
+appId: com.chengcuotuo.miao-chemistry
+
+# productName 必须与 forge.config.js 的 packagerConfig.name 保持一致。
+# 原因：NSIS 模板里 APP_EXECUTABLE_FILENAME = "${PRODUCT_FILENAME}.exe"，
+# 而 PRODUCT_FILENAME 默认取 productName。若两者不一致，快捷方式会指向
+# 一个不存在的 exe（装完点图标打不开），这种错误在构建阶段不会报错。
+productName: Miao积分管理
+
+directories:
+  output: dist
+  buildResources: build
+
+win:
+  icon: build/icon.ico
+  target:
+    - target: nsis
+      arch:
+        - x64
+  # 可选：需要「绿色版」（免安装 exe，权限受限的机器可用）时，
+  # 在 target 里追加 { target: portable, arch: [x64] }，并放开文件末尾的 portable 段。
+  #
+  # 代码签名：设置环境变量 CSC_LINK（证书路径或 base64）与 CSC_KEY_PASSWORD 即自动生效；
+  # 不签名时 Windows SmartScreen 会提示「未知发布者」，部分杀软也会拦截安装过程。
+
+nsis:
+  oneClick: false # 显示安装向导，用户能看到安装过程与进度
+  perMachine: false # 每用户安装 → 不需要管理员权限（与 Squirrel 的行为保持一致）
+  allowToChangeInstallationDirectory: true
+  createDesktopShortcut: true
+  createStartMenuShortcut: true
+  shortcutName: Miao积分管理
+  uninstallDisplayName: Miao积分管理 ${version}
+  runAfterFinish: true # 装完直接启动应用
+  # 卸载时保留 %APPDATA%\miao-chemistry —— 班级、学生、积分数据都在那里
+  deleteAppDataOnUninstall: false
+  # ASCII 文件名：中文文件名在下载器、命令行、杀软白名单里都会变成新的麻烦
+  artifactName: miao-chemistry-Setup-${version}.${ext}
+  # 自定义脚本：清理旧 Squirrel 版本的残留（一次性迁移用）
+  include: build/installer.nsh
+
+# 可选的绿色版目标（需同时在上面的 win.target 里追加 portable）
+# portable:
+#   artifactName: miao-chemistry-${version}-portable.${ext}
