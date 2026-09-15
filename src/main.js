@@ -1,14 +1,26 @@
 import { app, BrowserWindow, ipcMain, dialog, Menu } from 'electron';
 import path from 'node:path';
-import started from 'electron-squirrel-startup';
 import { encryptJSON, decryptJSON } from './utils.js';
 
 const fs = require('fs').promises; // 使用 promise 版本的 fs 更方便
 const { readFileSync } = require('fs'); // 同步读取：启动时要立即拿到 package.json 版本号
 
-// Handle creating/removing shortcuts on Windows when installing/uninstalling.
-if (started) {
+// 单实例锁：
+// 1. 安装新版本时，安装器需要先关掉正在运行的旧版本才能覆盖文件；允许多开会让
+//    「文件被占用导致安装失败」的概率明显上升；
+// 2. 同时开多个实例也会造成数据互相覆盖。
+// 第二次启动不再开新窗口，而是把已有窗口拉到前面。
+if (!app.requestSingleInstanceLock()) {
   app.quit();
+} else {
+  app.on('second-instance', () => {
+    const [existingWindow] = BrowserWindow.getAllWindows();
+    if (existingWindow) {
+      if (existingWindow.isMinimized()) existingWindow.restore();
+      existingWindow.show();
+      existingWindow.focus();
+    }
+  });
 }
 
 const createWindow = () => {
