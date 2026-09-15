@@ -34,6 +34,16 @@ const require = createRequire(import.meta.url);
 const archArg = process.argv.slice(2).find((arg) => arg.startsWith('--arch='));
 const arch = archArg ? archArg.split('=')[1] : 'x64';
 
+// 国内网络兜底：本地构建时默认走 npmmirror 镜像下载 electron-builder 二进制（NSIS 工具链等）。
+// CI（GitHub Actions）直连 GitHub 更快，不设置；用户已显式设置的优先尊重。
+if (!process.env.CI && !process.env.ELECTRON_BUILDER_BINARIES_MIRROR) {
+  process.env.ELECTRON_BUILDER_BINARIES_MIRROR =
+    'https://npmmirror.com/mirrors/electron-builder-binaries/';
+  console.log(
+    'ℹ 未检测到 CI，已自动启用 npmmirror 镜像（ELECTRON_BUILDER_BINARIES_MIRROR）\n'
+  );
+}
+
 /**
  * 解析依赖包的可执行入口。
  * 不用 node_modules/.bin（Windows 上是 .cmd 包装，需要 shell 中转，
