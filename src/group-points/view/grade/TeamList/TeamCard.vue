@@ -6,7 +6,7 @@
 					<el-tag type="warning" size="large" class="team-points">{{ team.points }} 分</el-tag>
 					<span class="team-name">{{ team.name }}</span>
 				</div>
-				<div class="card-actions">
+				<div class="card-actions" v-if="!readonly">
 					<el-button type="primary" :icon="Edit" circle size="small" @click="handleEdit" />
 					<el-button type="danger" :icon="Delete" circle size="small" @click="handleDelete" />
 				</div>
@@ -26,7 +26,7 @@
 					<el-tag :type="student.points >= 0 ? 'success' : 'danger'" size="small" class="clickable-tag"
 						@click="handleViewRecords(student)">{{ student.points }} 分</el-tag>
 				</div>
-				<div class="member-actions">
+				<div class="member-actions" v-if="!readonly">
 					<el-button type="success" style="margin: 0px;" :icon="Plus" circle size="small"
 						@click="handleAddPoints(student)" />
 					<el-button v-if="showSubtract" type="danger" style="margin: 0px;" :icon="Minus" circle size="small"
@@ -41,15 +41,17 @@
 			<div class="card-footer">
 				<div class="footer-label">小组操作：</div>
 				<div class="team-actions">
-					<el-tooltip content="小组加分" placement="top">
-						<el-button type="success" style="margin: 0px;" :icon="Plus" circle size="small" @click="handleTeamAddPoints" />
-					</el-tooltip>
-					<el-tooltip v-if="showSubtract" content="小组减分" placement="top">
-						<el-button type="danger" style="margin: 0px;" :icon="Minus" circle size="small" @click="handleTeamSubtractPoints" />
-					</el-tooltip>
-					<el-tooltip content="按规则调整小组积分" placement="top">
-						<el-button type="warning" style="margin: 0px;" :icon="Ticket" circle size="small" @click="handleTeamAdjustPoints" />
-					</el-tooltip>
+					<template v-if="!readonly">
+						<el-tooltip content="小组加分" placement="top">
+							<el-button type="success" style="margin: 0px;" :icon="Plus" circle size="small" @click="handleTeamAddPoints" />
+						</el-tooltip>
+						<el-tooltip v-if="showSubtract" content="小组减分" placement="top">
+							<el-button type="danger" style="margin: 0px;" :icon="Minus" circle size="small" @click="handleTeamSubtractPoints" />
+						</el-tooltip>
+						<el-tooltip content="按规则调整小组积分" placement="top">
+							<el-button type="warning" style="margin: 0px;" :icon="Ticket" circle size="small" @click="handleTeamAdjustPoints" />
+						</el-tooltip>
+					</template>
 					<el-tooltip content="查看小组积分记录" placement="top">
 						<el-button type="info" style="margin: 0px;" :icon="List" circle size="small" @click="handleTeamViewRecords" />
 					</el-tooltip>
@@ -72,6 +74,8 @@ const showSubtract = computed(() => !(appStore.database.basicConfig as any)?.hid
 
 const props = defineProps<{
 	team: TeamInfo;
+	// 只读会话（班委）：隐藏全部写入口，仅保留查看
+	readonly?: boolean;
 }>();
 
 // 搜索关键词

@@ -33,31 +33,17 @@
     </el-space>
     <el-divider border-style="dashed" style="margin: 14px 0" />
     <el-space>
-      <span>启用班委记分：</span>
-      <el-tooltip :content="monitorModuleEnabled
-        ? '开启后：可以创建班委账号、锁屏页可选择「班委登录」、周期记分页显示「待审批记录」入口；关闭后仅管理员自己周期记分'
-        : '需先在下方「班级管理模块展示设置」中开启「周期记分」模块'" placement="top">
+      <span>启用班委账号：</span>
+      <el-tooltip content="开启后：可以在「学生管理」页创建班委账号（并可授权其可见模块），锁屏页可选择「班委登录」，班委登录后为只读身份；关闭后仅管理员登录" placement="top">
         <el-icon class="module-tip-icon"><InfoFilled /></el-icon>
       </el-tooltip>
-      <el-switch v-model="basicConfig.monitorAccountEnabled" :disabled="!monitorModuleEnabled"
-        @change="handleMonitorAccountEnabledChange" />
-      <el-tag v-if="monitorModuleEnabled && !basicConfig.monitorAccountEnabled" size="small" type="info" effect="plain">
-        仅管理员可周期记分
+      <el-switch v-model="basicConfig.monitorAccountEnabled" @change="handleMonitorAccountEnabledChange" />
+      <el-tag v-if="!basicConfig.monitorAccountEnabled" size="small" type="info" effect="plain">
+        仅管理员登录
       </el-tag>
     </el-space>
-    <el-divider border-style="dashed" style="margin: 14px 0" />
-    <el-space>
-      <span>班委记分需管理员审批：</span>
-      <el-tooltip content="开启后：班委在周期记分页提交的记分先进入待审批，需管理员审批通过后才计入学生积分；关闭后班委提交直接生效" placement="top">
-        <el-icon class="module-tip-icon"><InfoFilled /></el-icon>
-      </el-tooltip>
-      <el-switch v-model="basicConfig.monitorApproval" :disabled="!basicConfig.monitorAccountEnabled"
-        @change="handleMonitorApprovalChange" />
-      <el-tag v-if="basicConfig.monitorApproval" size="small" type="warning" effect="plain">班委提交需审批</el-tag>
-      <span v-if="!basicConfig.monitorAccountEnabled" class="switch-disabled-tip">未启用班委记分，无需审批</span>
-    </el-space>
     <div class="setting-tip">
-      说明：「启用班委记分」控制班委这条线是否可用（班委账号 / 锁屏「班委登录」/ 待审批入口）；「班委记分需管理员审批」只控制班委提交是否需要审批。关闭审批开关<strong>不会</strong>自动通过已存在的待审批记录，需手动处理。
+      「启用班委账号」控制班委这条线是否可用：关闭后不再创建/使用班委账号，锁屏页直接进入管理员密码登录。
     </div>
     <el-divider border-style="dashed" style="margin: 14px 0" />
     <div class="module-setting">
@@ -81,8 +67,7 @@
               v-if="element.key === 'monitor'"
               content="关闭后：关联分组/独立分组隐藏积分周期、数据分析自动隐藏、锁屏直接管理员登录"
               placement="top"
-            >
-              <el-icon class="module-tip-icon"><InfoFilled /></el-icon>
+            >              <el-icon class="module-tip-icon"><InfoFilled /></el-icon>
             </el-tooltip>
             <el-tooltip
               v-if="element.key === 'group' || element.key === 'team'"
@@ -134,7 +119,7 @@ import { useAppStore } from '../../store/models/app';
 import { useBasic } from '../../database/utils/useBasic';
 import { Edit, Rank, InfoFilled } from '@element-plus/icons-vue';
 import { ElMessage, ElMessageBox } from 'element-plus';
-import { ref, computed } from 'vue';
+import { ref } from 'vue';
 import draggable from 'vuedraggable';
 import PasswordChangeDialog from './PasswordChangeDialog.vue';
 import md5 from 'blueimp-md5';
@@ -311,35 +296,13 @@ const handleHideQuickSubtractChange = async (val: boolean) => {
   ElMessage.success(val ? '已隐藏减分快捷键' : '已显示减分快捷键');
 };
 
-// 班委记分审批开关变更：关闭时二次确认（不会自动通过已有待审批记录）
-const handleMonitorApprovalChange = async (val: boolean) => {
-  if (!val) {
-    try {
-      await ElMessageBox.confirm(
-        '关闭后班委提交的记分将直接计入学生积分，不再需要审批。已存在的待审批记录不会自动通过，仍需你在周期记分页手动审批或驳回。确认关闭？',
-        '关闭班委记分审批',
-        { type: 'warning', confirmButtonText: '确认关闭', cancelButtonText: '取消' },
-      );
-    } catch {
-      basicConfig.monitorApproval = true;
-      return;
-    }
-  }
-  basicConfig.monitorApproval = val;
-  await updateBasicConfig({ ...basicConfig });
-  ElMessage.success(val ? '班委记分已开启审批，需管理员通过后才计入积分' : '班委记分已关闭审批，提交后直接生效（已有待审批记录需手动处理）');
-};
-
-// 周期记分模块是否开启（班委记分开关依赖它）
-const monitorModuleEnabled = computed(() => basicConfig?.moduleVisibility?.monitorManage ?? true);
-
-// 启用班委记分开关变更：关闭前二次确认（避免还有未处理的待审批记录）
+// 启用班委账号开关变更：关闭前二次确认
 const handleMonitorAccountEnabledChange = async (val: boolean) => {
   if (!val) {
     try {
       await ElMessageBox.confirm(
-        '关闭后：班委将无法登录记分，周期记分页的「班委账号」与「待审批记录」入口会隐藏，只能由管理员自己记分。若还有未处理的待审批记录，请先处理完。',
-        '关闭班委记分',
+        '关闭后：无法再创建班委账号，锁屏页的「班委登录」也会隐藏，只能使用管理员密码登录。确认关闭？',
+        '关闭班委账号',
         { type: 'warning', confirmButtonText: '确认关闭', cancelButtonText: '取消' },
       );
     } catch {
@@ -350,7 +313,11 @@ const handleMonitorAccountEnabledChange = async (val: boolean) => {
   }
   basicConfig.monitorAccountEnabled = val;
   await updateBasicConfig({ ...basicConfig });
-  ElMessage.success(val ? '已启用班委记分（可创建账号并让班委登录记分）' : '已关闭班委记分，仅管理员可周期记分');
+  // 关闭后当前班委会话立即失效：退出到锁屏（与管理员改密码不回踢不同，这里是权限本身被撤销）
+  const kicked = val ? false : appStore.exitMonitorSessionIfCurrent();
+  ElMessage.success(val
+    ? '已启用班委账号（可创建账号并让班委登录）'
+    : (kicked ? '已关闭班委账号，当前班委登录已退出' : '已关闭班委账号，仅管理员登录'));
 };
 
 // 密码修改相关
@@ -491,11 +458,6 @@ const handleModuleChange = () => {
 
 .module-name {
   flex: 1;
-}
-
-.switch-disabled-tip {
-  font-size: 12px;
-  color: #909399;
 }
 
 .setting-tip {

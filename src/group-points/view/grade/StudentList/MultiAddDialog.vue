@@ -62,8 +62,10 @@ import { useAppStore } from '../../../store/models/app';
 import type { FunctionalComponent } from 'vue'
 import type { Column, InputInstance } from 'element-plus'
 import { saveGradeInfo } from '../../../database';
+import { usePermission } from '../../../database/utils/usePermission';
 
 const appStore = useAppStore();
+const { isReadOnlySession } = usePermission();
 const studentList = ref<any[]>([]);
 const visible = ref(false);
 const batchPointsVisible = ref(false);
@@ -268,6 +270,11 @@ const downloadTemp = async () => {
 }
 
 const handleSubmit = async () => {
+	// 只读会话（班委账号）禁止写入（本组件直接落盘，需自带闸门）
+	if (isReadOnlySession()) {
+		ElMessage.warning('班委账号为只读权限，无法执行该操作');
+		return;
+	}
 	// 提交表单
 	if (appStore.activeGrade) {
 		const students = studentList.value.map(stu => {

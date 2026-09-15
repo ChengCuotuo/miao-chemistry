@@ -51,18 +51,18 @@ const handleMenuClick = (key: string) => {
         router.push({ name: 'lock' })
       }
     }
+  } else if (key === 'lock') {
+    // 手动锁屏：同时退出当前班级会话（角色 / 账号 / 当前班级一起复位），避免状态残留
+    appStore.exitSession();
   } else {
     activeKey.value = key;
   }
 }
 
-// 班委退出登录：切回锁屏并复位
+// 班委退出登录：切回锁屏并复位（会话复位已由 store 的 exitSession 完成，这里只切界面）
 watch(() => appStore.needLock, (v) => {
   if (v) {
     appStore.setNeedLock(false);
-    // 班委退出：清空当前班委账号，避免下次直接复用
-    appStore.setCurrentMonitor(undefined);
-    appStore.setCurrentRole('teacher');
     activeKey.value = 'lock';
   }
 });

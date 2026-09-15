@@ -9,12 +9,14 @@
 			<div></div>
 		</div>
 		<el-divider border-style="dashed" style="margin: 10px 0;" />
+		<el-alert v-if="readOnly" class="readonly-tip" type="info" show-icon :closable="false"
+			title="班委账号为只读权限：仅可查看被授权的模块，不能新增/修改/删除任何数据" />
 		<div class="main-content">
 			<el-tabs v-if="orderedTabs.length" v-model="activeName">
 				<el-tab-pane v-for="tab in orderedTabs" :key="tab.name" :label="tab.label" :name="tab.name"/>
 			</el-tabs>
 			<div v-if="!orderedTabs.length" class="no-tab-wrap">
-				<el-empty :description="isMonitor ? '班委记分已被管理员关闭，无法继续记分，请联系管理员' : '暂无可见模块，请在基础设置中开启'" />
+				<el-empty :description="isMonitor ? '当前账号未授权任何可见模块，请联系管理员' : '暂无可见模块，请在基础设置中开启'" />
 				<el-button v-if="isMonitor" type="warning" plain :icon="SwitchButton" @click="handleMonitorLogout">退出登录</el-button>
 			</div>
 			<div v-if="activeName === 'student'" class="info-container">
@@ -45,6 +47,7 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue';
 import { useAppStore } from '../../store/models/app';
+import { usePermission } from '../../database/utils/usePermission';
 import { Back, SwitchButton } from '@element-plus/icons-vue';
 import { useRouter } from 'vue-router';
 import { ElMessageBox } from 'element-plus';
@@ -72,8 +75,12 @@ const TAB_DEFS: Record<string, string> = {
 };
 const DEFAULT_TAB_ORDER = ['student','group', 'team',  'monitor', 'analysis', 'record', 'lottery'];
 
-// 当前角色：班委仅显示「周期记分」tab
+// 当前角色：班委登录后为「只读 + 按授权可见模块」身份
 const isMonitor = computed(() => appStore.currentRole === 'monitor');
+// 只读会话（班委）与账号授权模块；管理员不受账号授权限制
+const { isReadOnlySession, currentMonitorTabs } = usePermission();
+const readOnly = computed(() => isReadOnlySession());
+const authorizedTabs = computed(() => currentMonitorTabs());
 
 // 各模块可见性
 const moduleVisibility = computed(() => appStore.database.basicConfig?.moduleVisibility || {
@@ -84,13 +91,12 @@ const moduleVisibility = computed(() => appStore.database.basicConfig?.moduleVis
 });
 // 各模块可见性统一从 moduleVisibility 读取
 const monitorVisible = computed(() => appStore.database.basicConfig?.moduleVisibility?.monitorManage ?? true);
-// 是否启用班委记分：关闭后班委侧不再可见周期记分 tab
-const monitorAccountEnabled = computed(() => appStore.database.basicConfig?.monitorAccountEnabled ?? true);
 const studentVisible = computed(() => appStore.database.basicConfig?.moduleVisibility?.studentManage ?? true);
 
 const isTabVisible = (name: string): boolean => {
-	// 班委角色：仅周期记分 tab 可见，且需周期记分模块与班委记分开关同时开启
-	if (isMonitor.value) return name === 'monitor' && monitorVisible.value && monitorAccountEnabled.value;
+	// 班委：先过账号授权（管理员授权为 null，不受限）
+	const allowed = authorizedTabs.value;
+	if (allowed && !allowed.includes(name)) return false;
 	if (name === 'student') return studentVisible.value;
 	if (name === 'monitor') return monitorVisible.value;
 	if (name === 'group') return moduleVisibility.value.groupManage;
@@ -122,17 +128,18 @@ const getFirstVisibleName = () => {
 
 const activeName = ref(getFirstVisibleName());
 
-// 配置变化时，若当前 tab 已被隐藏，自动切到第一个可见 tab
-watch(() => [appStore.database.basicConfig?.moduleVisibility, appStore.database.basicConfig?.moduleOrder, appStore.database.basicConfig?.monitorAccountEnabled], () => {
+// 全局配置或账号授权变化时，若当前 tab 已不可见，自动切到第一个可见 tab
+// （orderedTabs 依赖全局模块配置与账号可见模块，任一变化都会触发）
+watch(orderedTabs, () => {
 	const name = activeName.value;
 	if (!orderedTabs.value.some(tab => tab.name === name)) {
 		activeName.value = getFirstVisibleName();
 	}
-}, { deep: true });
+});
 
 const handleBack = () => {
 	appStore.setIsCollapse(false);
-	appStore.setCurrentRole('teacher');
+	appStore.enterTeacherSession();
 	router.back();
 }
 
@@ -141,10 +148,8 @@ const handleMonitorLogout = () => {
 	ElMessageBox.confirm('确认退出班委登录？', '退出登录', {
 		type: 'warning', confirmButtonText: '退出', cancelButtonText: '取消',
 	}).then(() => {
-		appStore.setCurrentRole('teacher');
-		appStore.setActiveGrade(undefined);
-		appStore.setIsCollapse(false);
-		appStore.setNeedLock(true);
+		// 退出班级会话并回锁屏（角色 / 账号 / 当前班级 / 侧栏状态一次性复位）
+		appStore.exitSession();
 	}).catch(() => { });
 };
 
@@ -190,6 +195,10 @@ const handleMonitorLogout = () => {
 	align-items: center;
 	justify-content: center;
 	gap: 10px;
+}
+
+.readonly-tip {
+	margin-bottom: 8px;
 }
 
 .role-badge {

@@ -2,12 +2,15 @@ import { appendPrizeConfig } from "..";
 import { useAppStore } from "../../store/models/app";
 import { Prize } from "../class";
 import { v4 as uuidv4 } from 'uuid';
+import { usePermission } from "./usePermission";
 
 export const usePrize = () => {
 	const appStore = useAppStore();
+	const { isReadOnlySession } = usePermission();
 
 	// 创建奖品
 	const createPrize = async (params: { name: string, description: string, points: number, image: string, quantity: number, allow_grades: string[] }) => {
+		if (isReadOnlySession()) return false;
 		const { name, description, points, image, quantity, allow_grades = [] } = params;
 		try {
 			const uuid = uuidv4() as string;
@@ -33,6 +36,7 @@ export const usePrize = () => {
 
 	// 删除奖品
 	const deletePrize = async (id: string) => {
+		if (isReadOnlySession()) return false;
 		try {
 			const index = appStore.database.prizeList.findIndex(item => item.id === id);
 			if (index === -1) {
@@ -50,6 +54,7 @@ export const usePrize = () => {
 
 	// 更新奖品
 	const updatePrize = async (params: { id: string, name: string, description: string, points: number, image: string, quantity: number, allow_grades: string[] }) => {
+		if (isReadOnlySession()) return false;
 		const { id, name, description, points, image, quantity, allow_grades = [] } = params;
 		try {
 			const prize = appStore.database.prizeList.find(item => item.id === id);

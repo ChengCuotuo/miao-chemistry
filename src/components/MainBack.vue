@@ -135,9 +135,7 @@ const router = useRouter()
 const { getGradeInfoById } = useGrade()
 const { verifyMonitorAccount } = useMonitorAccount()
 const currentPassword = computed(() => appStore.database.basicConfig?.password || '')
-// 是否开启周期记分（未开启则无班委角色，直接管理员登录）
-const monitorEnabled = computed(() => appStore.database.basicConfig?.moduleVisibility?.monitorManage ?? true)
-// 是否启用班委记分（周期记分开启时才有效）
+// 是否启用班委账号（关闭后锁屏页直接管理员密码登录）
 const monitorAccountEnabled = computed(() => appStore.database.basicConfig?.monitorAccountEnabled ?? true)
 
 // 未删除的班级列表
@@ -187,8 +185,8 @@ const handleMenuClick = () => {
       return
     }
   }
-  // 已设置密码：未开启周期记分、或未启用班委记分时，直接管理员登录；否则弹出角色选择
-  if (!monitorEnabled.value || !monitorAccountEnabled.value) {
+  // 已设置密码：未启用班委账号时直接管理员登录；否则弹出角色选择
+  if (!monitorAccountEnabled.value) {
     passwordDialogVisible.value = true
   } else {
     roleDialogVisible.value = true
@@ -219,8 +217,7 @@ const expiredDialogVisible = ref(false)
 
 const verifyPassword = async() => {
   if (md5(inputPassword.value) === currentPassword.value) {
-    appStore.setCurrentRole('teacher')
-    appStore.setCurrentMonitor(undefined)
+    appStore.enterTeacherSession()
     props.onMenu('menu')
     passwordDialogVisible.value = false
     inputPassword.value = ''
@@ -259,7 +256,7 @@ const handleMonitorLoginSubmit = async () => {
     const res = verifyMonitorAccount(monitorName.value, monitorPassword.value);
     if (res.success) {
       appStore.setCurrentRole('monitor');
-      // 记录当前登录的班委账号，后续记分提交时写入记录的「操作人」
+      // 记录当前登录的班委账号（登录后权限与管理员一致，账号仅用于身份标识与记录留痕）
       appStore.setCurrentMonitor(res.account ? { id: res.account.id, name: res.account.name } : undefined);
       appStore.setIsCollapse(true);
       monitorLoginVisible.value = false;

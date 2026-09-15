@@ -1,5 +1,6 @@
 import { saveRuleConfig, DEFAULT_RULE_GROUP_ID, DEFAULT_RULE_GROUP_NAME, SYSTEM_RULE_IDS, isSystemRule } from "..";
 import { useAppStore } from "../../store/models/app";
+import { usePermission } from "./usePermission";
 import { Rule, RuleGroup } from "../class";
 import { v4 as uuidv4 } from 'uuid';
 
@@ -97,6 +98,7 @@ export const buildRuleTree = (rules: Rule[] = [], groups: RuleGroup[] = []): Rul
 
 export const useRule = () => {
 	const appStore = useAppStore();
+	const { isReadOnlySession } = usePermission();
 
 	// 当前分组列表（按 order 排序）
 	const getRuleGroupList = (): RuleGroup[] => {
@@ -131,6 +133,7 @@ export const useRule = () => {
 
 	// 创建分组
 	const createRuleGroup = async (name: string) => {
+		if (isReadOnlySession()) return false;
 		try {
 			if (!appStore.database.ruleGroupList) appStore.database.ruleGroupList = [];
 			const orders = appStore.database.ruleGroupList.map(item => item.order ?? 0);
@@ -147,6 +150,7 @@ export const useRule = () => {
 
 	// 更新分组名称
 	const updateRuleGroup = async (id: string, name: string) => {
+		if (isReadOnlySession()) return false;
 		try {
 			const group = (appStore.database.ruleGroupList || []).find(item => item.id === id);
 			if (!group) {
@@ -164,6 +168,7 @@ export const useRule = () => {
 
 	// 删除分组：组内规则移动到默认分组后删除（默认分组不可删除）
 	const deleteRuleGroup = async (id: string) => {
+		if (isReadOnlySession()) return false;
 		try {
 			if (id === DEFAULT_RULE_GROUP_ID) {
 				console.error('默认分组不可删除');
@@ -188,6 +193,7 @@ export const useRule = () => {
 		strategy: RuleImportDuplicateStrategy = 'skip',
 	): Promise<RuleImportResult> => {
 		const result: RuleImportResult = { groupCreated: 0, added: 0, updated: 0, skipped: 0, failed: 0 };
+		if (isReadOnlySession()) return result;
 		try {
 			if (!appStore.database.ruleGroupList) appStore.database.ruleGroupList = [];
 			if (!appStore.database.ruleList) appStore.database.ruleList = [];
@@ -247,6 +253,7 @@ export const useRule = () => {
 
 	// 一键清空：仅保留默认分组中的系统内置规则（主动加分 / 主动减分），其余规则与分组全部删除
 	const clearRules = async (): Promise<ClearRulesResult> => {
+		if (isReadOnlySession()) return { removedRules: 0, removedGroups: 0, kept: 0 };
 		const rules = appStore.database.ruleList || [];
 		const groups = appStore.database.ruleGroupList || [];
 		const result: ClearRulesResult = {
@@ -292,6 +299,7 @@ export const useRule = () => {
 
 	// 创建规则（points 传 null 表示自定义分值规则）
 	const createRule = async (name: string, description: string, points: number | null, allow_grades: string[] = [], group_id: string = DEFAULT_RULE_GROUP_ID) => {
+		if (isReadOnlySession()) return false;
 		try {
 			const uuid = uuidv4() as string
 			const rule = new Rule({
@@ -315,6 +323,7 @@ export const useRule = () => {
 
 	// 删除规则（系统内置规则不可删除）
 	const deleteRule = async (id: string) => {
+		if (isReadOnlySession()) return false;
 		try {
 			if (isSystemRule(id)) {
 				console.error('系统内置规则不可删除:', id);
@@ -336,6 +345,7 @@ export const useRule = () => {
 
 	// 更新规则（group_id 传入时一并迁移分组）
 	const updateRule = async (id: string, name: string, description: string, points: number | null, allow_grades: string[] = [], group_id?: string) => {
+		if (isReadOnlySession()) return false;
 		try {
 			const rule = appStore.database.ruleList.find(item => item.id === id);
 			if (!rule) {

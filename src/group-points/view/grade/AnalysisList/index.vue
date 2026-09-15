@@ -6,10 +6,6 @@
 		</div>
 
 		<div v-else class="card-grid">
-			<!-- 口径提示：班委待审批记录未入账，不计入统计 -->
-			<el-alert v-if="pendingRecordCount" class="pending-tip" type="warning" show-icon :closable="false"
-				:title="`当前有 ${pendingRecordCount} 条班委记分待审批，尚未计入学生积分，因此不在下列图表与导出中`" />
-
 			<!-- 1. 趋势分析（周期对比） -->
 			<section class="chart-card" v-if="isChartVisible('trend')" :style="{ order: chartOrderIndex('trend') }">
 				<div class="card-title">趋势分析（周期对比）</div>
@@ -85,7 +81,7 @@
 					</div>
 					<div class="card-tools">
 						<el-input v-model="studentSearch" placeholder="按学生名称搜索" clearable prefix-icon="Search" class="card-search" />
-						<el-button type="primary" plain :icon="Download" @click="handleExportStudent">导出 Excel</el-button>
+						<el-button v-if="!readOnly" type="primary" plain :icon="Download" @click="handleExportStudent">导出 Excel</el-button>
 					</div>
 				</div>
 				<AnalysisChart :option="studentOption" height="340px" />
@@ -100,7 +96,7 @@
 					</div>
 					<div class="card-tools">
 						<el-input v-model="matrixSearch" placeholder="按学生名称搜索" clearable prefix-icon="Search" class="card-search" />
-						<el-button type="primary" plain :icon="Download" @click="handleExportMatrix">导出 Excel</el-button>
+						<el-button v-if="!readOnly" type="primary" plain :icon="Download" @click="handleExportMatrix">导出 Excel</el-button>
 					</div>
 				</div>
 				<el-table :data="matrixData" size="small" max-height="420" border>
@@ -178,25 +174,23 @@ import AnalysisChart from './AnalysisChart.vue';
 import { TrendCharts, Download, DataAnalysis } from '@element-plus/icons-vue';
 import { utils, writeFile as writeExcelFile } from 'xlsx';
 import { ElMessage } from 'element-plus';
-import { isApprovedRecord, isPendingRecord } from '../../../database/class';
 import { isBatchRecord } from '../../../database';
+import { usePermission } from '../../../database/utils/usePermission';
 
 const appStore = useAppStore();
+// 只读会话（班委账号）：禁止导出班级数据
+const { isReadOnlySession } = usePermission();
+const readOnly = computed(() => isReadOnlySession());
 const ruleCycleId = ref('');
 const ruleHealthCycleId = ref('');
 
 const studentList = computed(() => appStore.activeGrade?.gradeInfo?.studentList || []);
 const groupList = computed(() => appStore.activeGrade?.gradeInfo?.groupList || []);
 const studentGroupList = computed(() => appStore.activeGrade?.gradeInfo?.studentGroupList || []);
-// 统计口径：只计入「已通过」的记录
-// （班委提交的待审批 / 已驳回记分从未计入学生积分，若参与统计会与真实积分对不上）
+// 统计口径：记录均已在记分时生效
 // 全量操作汇总记录（全量设置/加/减积分）属于系统级调整，不进图表，避免把班级整体调整当成记分行为
 const recordList = computed(() => (appStore.activeGrade?.gradeInfo?.recordList || [])
-	.filter(item => isApprovedRecord(item))
 	.filter(item => !isBatchRecord(item.rule_id)));
-// 待审批条数（仅用于口径提示，不参与统计）
-const pendingRecordCount = computed(() => (appStore.activeGrade?.gradeInfo?.recordList || [])
-	.filter(item => item.source === 1 && isPendingRecord(item)).length);
 const cycleList = computed(() => appStore.activeGrade?.gradeInfo?.monitorCycleList || []);
 const ruleList = computed(() => appStore.database.ruleList || []);
 const moduleVisibility = computed(() => appStore.database.basicConfig?.moduleVisibility || {
@@ -597,10 +591,7 @@ const studentTrendOption = computed(() => {
 	flex-direction: column;
 }
 
-/* 口径提示条 */
-.pending-tip {
-	margin-bottom: 10px;
-}
+/* 卡片网格 */
 
 .empty-wrap {
 	flex: 1;

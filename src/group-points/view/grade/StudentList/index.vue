@@ -8,22 +8,28 @@
 				<el-button type="info" @click="handleReset">重置</el-button>
 			</el-space>
 			<el-space>
-				<!-- 随机点名组件 -->
+				<!-- 随机点名组件（只读，不修改数据） -->
 				<el-button type="success" :icon="Pointer" @click="randomCallVisible = true">随机点名</el-button>
-				 <!-- 批量添加学生 -->
-				<MultiAddDialog />
-				<el-button type="primary" :icon="Plus" @click="handleAdd">新增学生</el-button>
-				<!-- 全量操作 -->
-				<el-dropdown trigger="click" @command="handleBatchCommand">
-					<el-button type="warning" :icon="Operation">全量操作<el-icon class="el-icon--right"><arrow-down /></el-icon></el-button>
-					<template #dropdown>
-						<el-dropdown-menu>
-							<el-dropdown-item command="set" :icon="SetUp">全量设置积分值</el-dropdown-item>
-							<el-dropdown-item command="add" :icon="CirclePlus" divided>全量加积分</el-dropdown-item>
-							<el-dropdown-item command="sub" :icon="Remove" divided>全量减积分</el-dropdown-item>
-						</el-dropdown-menu>
-					</template>
-				</el-dropdown>
+				<!-- 只读会话（班委）下隐藏所有写入口 -->
+				<template v-if="!readOnly">
+					 <!-- 批量添加学生 -->
+					<MultiAddDialog />
+					<el-button type="primary" :icon="Plus" @click="handleAdd">新增学生</el-button>
+					<!-- 全量操作 -->
+					<el-dropdown trigger="click" @command="handleBatchCommand">
+						<el-button type="warning" :icon="Operation">全量操作<el-icon class="el-icon--right"><arrow-down /></el-icon></el-button>
+						<template #dropdown>
+							<el-dropdown-menu>
+								<el-dropdown-item command="set" :icon="SetUp">全量设置积分值</el-dropdown-item>
+								<el-dropdown-item command="add" :icon="CirclePlus" divided>全量加积分</el-dropdown-item>
+								<el-dropdown-item command="sub" :icon="Remove" divided>全量减积分</el-dropdown-item>
+							</el-dropdown-menu>
+						</template>
+					</el-dropdown>
+				</template>
+				<!-- 班委账号管理（管理员功能；班委为只读身份，不显示入口） -->
+				<el-button v-if="!readOnly && monitorAccountEnabled" :icon="UserFilled" type="success"
+					@click="accountDialogVisible = true">班委账号</el-button>
 			</el-space>
 		</div>
 
@@ -42,11 +48,11 @@
 					{{ activeGrade?.name || '' }}
 				</template>
 			</el-table-column>
-			<el-table-column label="操作" width="260" align="center">
+			<el-table-column label="操作" :width="readOnly ? 100 : 260" align="center">
 				<template #default="scope">
-					<el-button size="small" type="primary" text :icon="Edit" @click="handleEdit(scope.row)">编辑</el-button>
+					<el-button v-if="!readOnly" size="small" type="primary" text :icon="Edit" @click="handleEdit(scope.row)">编辑</el-button>
 					<el-button size="small" text :icon="Document" @click="handleViewRecords(scope.row)">记录</el-button>
-					<el-button size="small" text type="danger" :icon="Delete" @click="handleDelete(scope.row)">删除</el-button>
+					<el-button v-if="!readOnly" size="small" text type="danger" :icon="Delete" @click="handleDelete(scope.row)">删除</el-button>
 				</template>
 			</el-table-column>
 		</el-table>
@@ -90,6 +96,9 @@
 		<!-- 随机点名弹窗 -->
 		<RandomCallDialog v-model:visible="randomCallVisible" :students="students" />
 
+		<!-- 班委账号管理弹窗（管理员） -->
+		<MonitorAccountManager v-model:visible="accountDialogVisible" />
+
 		<!-- 全量操作弹窗 -->
 		<el-dialog :title="batchDialogTitle" v-model="batchDialogVisible" width="420px">
 			<el-alert type="warning" show-icon :closable="false" style="margin-bottom: 14px;">
@@ -115,20 +124,29 @@
 
 <script setup lang="ts">
 import { ref, computed } from 'vue';
-import { Plus, Edit, Delete, Pointer, Document, Operation, SetUp, CirclePlus, Remove, ArrowDown } from '@element-plus/icons-vue';
+import { Plus, Edit, Delete, Pointer, Document, Operation, SetUp, CirclePlus, Remove, ArrowDown, UserFilled } from '@element-plus/icons-vue';
 import { ElMessage } from 'element-plus';
 import type { FormInstance, TableColumnCtx } from 'element-plus';
 import { useAppStore } from '../../../store/models/app';
 import { Student } from '../../../database/class';
 import { useStudent } from '../../../database/utils/useStudent';
+import { usePermission } from '../../../database/utils/usePermission';
 import MultiAddDialog from './MultiAddDialog.vue';
 import RandomCallDialog from './RandomCallDialog.vue';
 import RecordList from '../RecordList/index.vue';
+import MonitorAccountManager from '../MonitorAccount/index.vue';
 
 const { createStudent, deleteStudent, updateStudent, batchUpdatePoints, getStudentList, getStudentIndex } = useStudent();
+// 只读会话（班委账号）：隐藏写入口
+const { isReadOnlySession } = usePermission();
+const readOnly = computed(() => isReadOnlySession());
 
 const appStore = useAppStore();
 const activeGrade = computed(() => appStore.activeGrade);
+// 是否启用班委账号（关闭后不建账号、锁屏页无「班委登录」）
+const monitorAccountEnabled = computed(() => appStore.database.basicConfig?.monitorAccountEnabled ?? true);
+// 班委账号管理弹窗
+const accountDialogVisible = ref(false);
 
 const students = ref<Student[]>(getStudentList());
 const studentIndex = computed(() => getStudentIndex());

@@ -1,16 +1,20 @@
 import { useAppStore } from "../../store/models/app";
-import { Student, RuleRecord, RECORD_STATUS, OPERATOR_ROLE } from "../class";
+import { Student, RuleRecord } from "../class";
 import { useGrade } from "./useGrade";
 import { BATCH_RECORD_PREFIX } from "..";
 import { dayjs } from "element-plus";
+import { usePermission } from "./usePermission";
 
 export const useStudent = () => {
 	const appStore = useAppStore();
 	const { updateGradeInfoById } = useGrade();
+	const { isReadOnlySession } = usePermission();
 	const activeGrade = appStore.activeGrade;
 
 	// 创建学生
 	const createStudent = async (name: string, points: number = 0) => {
+		// 只读会话（班委账号）禁止写入
+		if (isReadOnlySession()) return false;
 		try {
 			if (!activeGrade) {
 				console.error('当前没有选中的班级');
@@ -38,6 +42,7 @@ export const useStudent = () => {
 
 	// 删除学生
 	const deleteStudent = async (studentId: string) => {
+		if (isReadOnlySession()) return false;
 		try {
 			if (!activeGrade) {
 				console.error('当前没有选中的班级');
@@ -68,6 +73,7 @@ export const useStudent = () => {
 
 	// 更新学生
 	const updateStudent = async (params: { studentId: string, name: string, points: number }, updateStore: boolean = true) => {
+		if (isReadOnlySession()) return false;
 		const { studentId, name, points } = params;
 		try {
 			if (!activeGrade) {
@@ -97,6 +103,7 @@ export const useStudent = () => {
 	// 批量更新全部学生积分（mode: set 全量设置 / add 全量加 / sub 全量减）
 	// 同时写一条汇总记录（不对应单个学生）：记下模式、总变动量、影响人数、操作人与时间，便于追溯
 	const batchUpdatePoints = async (mode: 'set' | 'add' | 'sub', value: number) => {
+		if (isReadOnlySession()) return false;
 		try {
 			if (!activeGrade) {
 				console.error('当前没有选中的班级');
@@ -139,11 +146,9 @@ export const useStudent = () => {
 				// source=0：不归属任何周期，也不参与周期删除时的积分回退
 				source: 0,
 				count: list.length,
-				status: RECORD_STATUS.APPROVED,
 				// 存本次输入的原始值：设置模式为设置值，加/减模式为增减量（展示与追溯都需要）
 				batch_value: Number(value) || 0,
 				operator_name: '管理员',
-				operator_role: OPERATOR_ROLE.TEACHER,
 			}));
 			activeGrade.gradeInfo.indexMap.record = recordIndex + 1;
 

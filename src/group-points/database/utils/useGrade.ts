@@ -2,12 +2,15 @@ import { appendGradeConfig, DatabaseInfoType, loadGradeInfoById, saveGradeInfo }
 import { useAppStore } from "../../store/models/app";
 import { Grade } from "../class"
 import { v4 as uuidv4 } from 'uuid';
+import { usePermission } from "./usePermission";
 
 export const useGrade = () => {
 	const appStore = useAppStore();
+	const { isReadOnlySession } = usePermission();
 
 	// 创建班级
 	const createGrade = async (name: string) => {
+		if (isReadOnlySession()) return false;
 		try {
 			const uuid = uuidv4() as string
 			const grade = new Grade({
@@ -54,6 +57,7 @@ export const useGrade = () => {
 
 	// 删除班级
 	const deleteGrade = async (id: string) => {
+		if (isReadOnlySession()) return false;
 		try {
 			const grade = appStore.database.gradeList.find(item => item.id === id);
 			if (!grade) {
@@ -72,6 +76,7 @@ export const useGrade = () => {
 
 	// 更新班级名称
 	const updateGrade = async (id: string, name: string) => {
+		if (isReadOnlySession()) return false;
 		try {
 			const grade = appStore.database.gradeList.find(item => item.id === id);
 			if (!grade) {
@@ -124,7 +129,10 @@ export const useGrade = () => {
 
 	// 更新班级配置信息
 	const updateGradeInfoById = async (gradeId: string, gradeInfo: DatabaseInfoType['gradeList'][0]) => {
+		// 只读会话（班委账号）禁止写班级数据文件（数据层兜底，UI 层已隐藏写入口）
+		if (isReadOnlySession()) return false;
 		await saveGradeInfo(gradeId, JSON.stringify(gradeInfo));
+		return true;
 	}
 
 	return { createGrade, deleteGrade, updateGrade, getGradeInfoById, updateGradeInfoById }

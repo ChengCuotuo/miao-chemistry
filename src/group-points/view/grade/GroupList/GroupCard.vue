@@ -6,7 +6,7 @@
 					<el-tag type="primary" size="large" class="group-points">{{ group.points }} 分</el-tag>
 					<span class="group-name">{{ group.name }}</span>
 				</div>
-				<div class="card-actions">
+				<div class="card-actions" v-if="!readonly">
 					<el-button type="primary" :icon="Edit" circle size="small" @click="handleEdit" />
 					<el-button type="danger" :icon="Delete" circle size="small" @click="handleDelete" />
 				</div>
@@ -26,7 +26,7 @@
 							<span class="student-name">{{ student.name }}</span>
 							<el-tag :type="student.points >= 0 ? 'success' : 'danger'" size="small" class="clickable-tag" @click="handleViewRecords(student)">{{ student.points }} 分</el-tag>
 						</div>
-				<div class="student-actions">
+				<div class="student-actions" v-if="!readonly">
 					<el-button type="success" style="margin: 0px;" :icon="Plus" circle size="small"
 						@click="handleAddPoints(student)" />
 					<el-button v-if="showSubtract" type="danger" style="margin: 0px;" :icon="Minus" circle size="small"
@@ -38,7 +38,7 @@
 			</div>
 			<el-empty v-if="filteredStudents.length === 0" description="暂无匹配成员" :image-size="60" />
 		</div>
-		<template #footer>
+		<template #footer v-if="!readonly">
 			<div class="card-footer">
 				<div>批量操作：</div>
 				<div class="student-actions">
@@ -68,6 +68,8 @@ const showSubtract = computed(() => !(appStore.database.basicConfig as any)?.hid
 
 const props = defineProps<{
 		group: GroupInfo;
+		// 只读会话（班委）：隐藏全部写入口，仅保留查看
+		readonly?: boolean;
 	}>();
 
 	// 搜索关键词

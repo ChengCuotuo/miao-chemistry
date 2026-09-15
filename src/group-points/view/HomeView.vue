@@ -96,10 +96,16 @@ onMounted(() => {
 })
 
 const handleClick = async (grade: DatabaseInfoType['gradeList'][0]) => {
+	// 兜底：班委会话禁止切换班级（正常路径已被路由守卫拦住）
+	if (appStore.currentRole === 'monitor') {
+		ElMessage.warning('班委账号无法切换班级');
+		return;
+	}
 	const gradeInfo = await getGradeInfoById(grade.id);
 	if (gradeInfo) {
 		appStore.setActiveGrade(gradeInfo);
-		appStore.setCurrentRole('teacher');
+		// 以管理员身份进入：清空班委会话残留，避免记分记录的「操作人」被误标
+		appStore.enterTeacherSession();
 		appStore.setIsCollapse(true);
 		router.push({ name: 'grade' });
 	}

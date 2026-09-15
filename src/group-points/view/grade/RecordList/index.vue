@@ -48,17 +48,6 @@
         <el-option label="加分" value="add" />
         <el-option label="减分" value="subtract" />
       </el-select>
-      <el-select
-        v-if="monitorEnabled && hasApprovalRecord"
-        v-model="filterStatus"
-        placeholder="审批状态"
-        class="filter-select"
-        clearable
-      >
-        <el-option label="待审批" :value="RECORD_STATUS.PENDING" />
-        <el-option label="已通过" :value="RECORD_STATUS.APPROVED" />
-        <el-option label="已驳回" :value="RECORD_STATUS.REJECTED" />
-      </el-select>
     </div>
 
     <!-- 记录列表 -->
@@ -141,51 +130,7 @@
         show-overflow-tooltip
       >
         <template #default="scope">
-          <el-space :size="4">
-            <span>{{ scope.row.operator_name || '—' }}</span>
-            <el-tag
-              v-if="isEditedByAdmin(scope.row)"
-              size="small"
-              type="warning"
-              effect="plain"
-            >已修改</el-tag>
-          </el-space>
-        </template>
-      </el-table-column>
-      <el-table-column
-        v-if="monitorEnabled && hasApprovalRecord"
-        label="审批状态"
-        width="110"
-        align="center"
-      >
-        <template #default="scope">
-          <template v-if="isApprovalRecord(scope.row)">
-            <el-tooltip
-              v-if="scope.row.status === RECORD_STATUS.REJECTED && scope.row.reject_reason"
-              placement="top"
-              :content="`驳回理由：${scope.row.reject_reason}`"
-            >
-              <el-tag size="small" type="danger" effect="plain">已驳回</el-tag>
-            </el-tooltip>
-            <el-tooltip
-              v-else-if="scope.row.status === RECORD_STATUS.PENDING"
-              placement="top"
-              content="尚未计入学生积分，待管理员审批"
-            >
-              <el-tag size="small" :type="statusTagType(scope.row.status)" effect="plain">
-                {{ statusText(scope.row.status) }}
-              </el-tag>
-            </el-tooltip>
-            <el-tag
-              v-else
-              size="small"
-              :type="statusTagType(scope.row.status)"
-              effect="plain"
-            >
-              {{ statusText(scope.row.status) }}
-            </el-tag>
-          </template>
-          <span v-else class="text-muted">—</span>
+          <span>{{ scope.row.operator_name || '—' }}</span>
         </template>
       </el-table-column>
       <el-table-column label="时间" prop="time" width="180" />
@@ -217,11 +162,11 @@
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue';
 import { useAppStore } from '../../../store/models/app';
-import { RuleRecord, Rule, RuleGroup, RECORD_STATUS, getRecordStatus, OPERATOR_ROLE } from '../../../database/class';
+import { RuleRecord, Rule, RuleGroup } from '../../../database/class';
 import { BID_RECORD_PREFIX } from './constant';
 import type { Prize } from '../../../database/class';
 import { loadImageAsUint8Array } from '../../../database';
-import { BATCH_RECORD_NAMES, formatBatchRecordText, isApprovalRecord, isBatchRecord } from '../../../database';
+import { BATCH_RECORD_NAMES, formatBatchRecordText, isBatchRecord } from '../../../database';
 
 // 全量操作汇总记录的展示文案（加/减为人均，设置为目标值）
 const batchRecordText = (record: RuleRecord) => formatBatchRecordText(record.rule_id, record.points, record.count, record.batch_value);
@@ -279,30 +224,6 @@ const getCycleNameByRecord = (record: RuleRecord): string => {
 
 // 筛选类型：all-全部, add-加分, subtract-减分
 const filterType = ref<'add' | 'subtract'>();
-
-// 审批状态筛选（不选 = 全部状态）
-const filterStatus = ref<number | undefined>(undefined);
-
-// 当前记录里是否存在审批记录（决定「审批状态」列与筛选器是否出现，避免无意义列）
-const hasApprovalRecord = computed(() => studentRecords.value.some(isApprovalRecord));
-
-const statusText = (status?: number) =>
-  getRecordStatus({ status }) === RECORD_STATUS.PENDING
-    ? '待审批'
-    : getRecordStatus({ status }) === RECORD_STATUS.REJECTED
-      ? '已驳回'
-      : '已通过';
-
-const statusTagType = (status?: number) => {
-  const s = getRecordStatus({ status });
-  return s === RECORD_STATUS.PENDING ? 'warning' : s === RECORD_STATUS.REJECTED ? 'danger' : 'success';
-};
-
-// 管理员改过内容的记录（操作人=管理员，但最初是班委提交的）
-const isEditedByAdmin = (record: RuleRecord) =>
-  record.operator_role === OPERATOR_ROLE.TEACHER &&
-  !!record.submitter_name &&
-  record.operator_name === '管理员';
 
 // 搜索关键词
 const searchStudentId = ref('');
@@ -480,13 +401,6 @@ const filteredRecords = computed(() => {
     result = result.filter((record) => record.points > 0);
   } else if (filterType.value === 'subtract') {
     result = result.filter((record) => record.points < 0);
-  }
-
-  // 按审批状态筛选（待审批 / 已通过 / 已驳回）
-  if (filterStatus.value !== undefined && filterStatus.value !== null) {
-    result = result.filter(
-      (record) => getRecordStatus(record) === filterStatus.value,
-    );
   }
 
   // 按学生ID筛选

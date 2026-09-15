@@ -11,8 +11,6 @@ import {
 	MonitorAccount,
 	Team,
 	TeamRecord,
-	RECORD_STATUS,
-	getRecordStatus,
 } from './class';
 import { Basic } from './class/main/Basic';
 import ruleConfigJson from './defaultRule.json';
@@ -86,12 +84,6 @@ export const BATCH_RECORD_NAMES: Record<string, string> = {
 };
 // 是否为全量操作汇总记录
 export const isBatchRecord = (ruleId?: string) => !!ruleId && ruleId.startsWith(BATCH_RECORD_PREFIX);
-
-// 是否为「真正走过审批流程」的记录：仅班委提交的记录算（含待审批 / 已通过 / 已驳回）
-// 教师直接记分、全量操作汇总记录、旧数据（无提交人且状态为默认已通过）都不算，
-// 这些记录在积分记录列表里不展示审批状态，避免凭空多出一个「已通过」
-export const isApprovalRecord = (record?: { submitter_id?: string, status?: number } | null): boolean =>
-	!!record?.submitter_id || getRecordStatus(record) !== RECORD_STATUS.APPROVED;
 
 // 全量操作汇总记录的人均变动值（记录里 points 存的是全班总变动量，展示时换算成人均）
 export const batchPerPersonPoints = (points?: number, count?: number): number => {
@@ -263,10 +255,7 @@ export async function loadGroupPointsConfig() {
 		// 兼容旧版本配置：减分快捷键隐藏开关，默认隐藏
 		basicConfigData.hideQuickSubtract = basicConfigData.hideQuickSubtract ?? true;
 
-		// 班委记分审批开关：默认开启（开启后班委提交需管理员审批才计入积分）
-		basicConfigData.monitorApproval = basicConfigData.monitorApproval ?? true;
-
-		// 班委记分开关：默认开启（关闭后仅管理员可周期记分，不创建/不使用班委账号）
+		// 班委登录开关：默认开启（关闭后不创建/不使用班委账号，锁屏页直接管理员登录）
 		basicConfigData.monitorAccountEnabled = basicConfigData.monitorAccountEnabled ?? true;
 
 		// 正式版构建运行时，如果持久化的配置信息还是体验版，则覆盖为正式版

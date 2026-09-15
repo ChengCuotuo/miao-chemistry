@@ -5,8 +5,11 @@
 				<el-space>
 					<el-input v-model="searchQuery" placeholder="请输入小组名或成员名搜索" class="search-input" prefix-icon="Search" />
 					<el-button type="info" @click="handleReset">重置</el-button>
-					<el-button type="success" :icon="Sort" @click="handleSort">调整排序</el-button>
-					<el-button type="primary" :icon="Plus" @click="handleAdd">新增小组</el-button>
+					<!-- 只读会话（班委）下隐藏写入口 -->
+					<template v-if="!readOnly">
+						<el-button type="success" :icon="Sort" @click="handleSort">调整排序</el-button>
+						<el-button type="primary" :icon="Plus" @click="handleAdd">新增小组</el-button>
+					</template>
 				</el-space>
 			</div>
 			<el-space v-if="monitorEnabled">
@@ -20,21 +23,24 @@
 						</span>
 					</el-option>
 				</el-select>
-				<el-button type="primary" :icon="Plus" @click="handleAddCycle">新增周期</el-button>
-				<el-button v-if="currentCycle" :icon="Edit" circle @click="handleEditCycle" />
-				<el-button v-if="currentCycle && currentCycle.status === 0" type="warning" plain
-					@click="handleFinishCycle">结束周期</el-button>
-				<el-button v-if="currentCycle && currentCycle.status === 1" type="success" plain
-					@click="handleStartCycle">重新开始</el-button>
-				<el-button v-if="currentCycle && currentCycle.status === 0" type="danger" :icon="Delete" circle
-					@click="handleDeleteCycle" />
+				<!-- 只读会话（班委）下隐藏周期管理入口 -->
+				<template v-if="!readOnly">
+					<el-button type="primary" :icon="Plus" @click="handleAddCycle">新增周期</el-button>
+					<el-button v-if="currentCycle" :icon="Edit" circle @click="handleEditCycle" />
+					<el-button v-if="currentCycle && currentCycle.status === 0" type="warning" plain
+						@click="handleFinishCycle">结束周期</el-button>
+					<el-button v-if="currentCycle && currentCycle.status === 1" type="success" plain
+						@click="handleStartCycle">重新开始</el-button>
+					<el-button v-if="currentCycle && currentCycle.status === 0" type="danger" :icon="Delete" circle
+						@click="handleDeleteCycle" />
+				</template>
 			</el-space>
 			<!-- 当前周期说明 -->
 			<el-alert v-if="currentCycle && monitorEnabled" :closable="false" class="cycle-tip"
 				:type="currentCycle.status === 0 ? 'info' : 'warning'" :title="cycleTip" />
 		</div>
 		<div class="team-list-content">
-			<TeamCard v-for="team in teamInfoList || []" :key="team.id" :team="team" @edit="handleEdit" @delete="handleDelete"
+			<TeamCard v-for="team in teamInfoList || []" :key="team.id" :team="team" :readonly="readOnly" @edit="handleEdit" @delete="handleDelete"
 				@add-points="handleAddPoints" @subtract-points="handleSubtractPoints" @adjust-points="handleAdjustPoints"
 				@view-records="handleViewRecords" @member-add-points="handleMemberAddPoints"
 				@member-subtract-points="handleMemberSubtractPoints" @member-adjust-points="handleMemberAdjustPoints"
@@ -170,6 +176,7 @@ import { Plus, Edit, Delete, Sort } from '@element-plus/icons-vue';
 import { Team, TeamRecord, Student, RuleRecord, Rule } from '../../../database/class';
 import { dayjs, ElMessage, ElMessageBox, FormInstance } from 'element-plus';
 import { useGrade } from '../../../database/utils/useGrade';
+import { usePermission } from '../../../database/utils/usePermission';
 import { useRule, isNoPointsRule, getRulePoints } from '../../../database/utils/useRule';
 import { useMonitorCycle } from '../../../database/utils/useMonitorCycle';
 import TeamCard from './TeamCard.vue';
@@ -189,6 +196,9 @@ export interface TeamInfo {
 
 const formRef = ref<FormInstance>();
 const { updateGradeInfoById } = useGrade();
+// 只读会话（班委账号）：隐藏所有写入口
+const { isReadOnlySession } = usePermission();
+const readOnly = computed(() => isReadOnlySession());
 const { getRuleList, getRuleGroupList } = useRule();
 const {
 	getMonitorCycleList, createMonitorCycle, updateMonitorCycle,
@@ -284,6 +294,10 @@ const handleUpdateGradeInfo = async () => {
 
 // 记录小组积分变化（归入当前选中周期，未开启周期记分时 source=0 普通记录）
 const handleTeamRecord = (params: { team_id: string, points: number, rule_id?: string, count?: number }) => {
+		if (readOnly.value) {
+			ElMessage.warning('班委账号为只读权限，无法执行该操作');
+			return;
+		}
 	if (appStore.activeGrade) {
 		const { team_id, points, rule_id, count = 1 } = params;
 		const recordIndex = appStore.activeGrade.gradeInfo.indexMap.teamRecord;
@@ -306,6 +320,10 @@ const handleTeamRecord = (params: { team_id: string, points: number, rule_id?: s
 
 // 记录学生积分变化（成员个人积分，写 recordList，与关联分组一致）
 const handleStudentRecord = (params: { stu_id: string, points: number, rule_id?: string, count?: number }) => {
+		if (readOnly.value) {
+			ElMessage.warning('班委账号为只读权限，无法执行该操作');
+			return;
+		}
 	if (appStore.activeGrade) {
 		const { stu_id, points, rule_id, count = 1 } = params;
 		const recordIndex = appStore.activeGrade.gradeInfo.indexMap.record;
@@ -331,6 +349,10 @@ const handleReset = () => {
 };
 
 const handleAdd = () => {
+		if (readOnly.value) {
+			ElMessage.warning('班委账号为只读权限，无法执行该操作');
+			return;
+		}
 	isEdit.value = false;
 	curTeamStuIds.value = [];
 	formData.value = { id: `${teamIndex.value}`, name: '', points: 0, order: 0, memberIdList: [], memberList: [] };
@@ -343,6 +365,10 @@ const handleDialogClose = () => {
 };
 
 const handleSubmit = () => {
+		if (readOnly.value) {
+			ElMessage.warning('班委账号为只读权限，无法执行该操作');
+			return;
+		}
 	formRef.value?.validate(async (valid) => {
 		if (valid) {
 			const { id, name, memberIdList } = formData.value;
@@ -366,6 +392,10 @@ const handleSubmit = () => {
 };
 
 const handleEdit = (team: TeamInfo) => {
+		if (readOnly.value) {
+			ElMessage.warning('班委账号为只读权限，无法执行该操作');
+			return;
+		}
 	isEdit.value = true;
 	formData.value = { ...team, memberIdList: [...team.memberIdList] };
 	curTeamStuIds.value = [...team.memberIdList];
@@ -373,6 +403,10 @@ const handleEdit = (team: TeamInfo) => {
 };
 
 const handleDelete = (team: TeamInfo) => {
+		if (readOnly.value) {
+			ElMessage.warning('班委账号为只读权限，无法执行该操作');
+			return;
+		}
 	ElMessageBox.confirm(`确认删除小组「${team.name}」？删除后该小组及其积分记录将一并删除，不影响组内成员分数。`, '删除确认', {
 		type: 'warning',
 		confirmButtonText: '确认',
@@ -391,10 +425,18 @@ const handleDelete = (team: TeamInfo) => {
 
 // 调整排序
 const handleSort = () => {
+		if (readOnly.value) {
+			ElMessage.warning('班委账号为只读权限，无法执行该操作');
+			return;
+		}
 	sortModalVisible.value = true;
 };
 
 const handleSortConfirm = async (params: { orderByPoints: number, groupList: string[] }) => {
+		if (readOnly.value) {
+			ElMessage.warning('班委账号为只读权限，无法执行该操作');
+			return;
+		}
 	const { orderByPoints: orderByPointsValue, groupList } = params;
 	if (appStore.activeGrade) {
 		const gradeInfo = appStore.activeGrade.gradeInfo;
@@ -463,12 +505,20 @@ const cycleFormRef = ref<FormInstance>();
 const cycleForm = ref<{ id: string, name: string, range: [string, string] | string[] | null }>({ id: '', name: '', range: null });
 
 const handleAddCycle = () => {
+		if (readOnly.value) {
+			ElMessage.warning('班委账号为只读权限，无法执行该操作');
+			return;
+		}
 	isEditCycle.value = false;
 	cycleForm.value = { id: '', name: '', range: null };
 	cycleDialogVisible.value = true;
 };
 
 const handleEditCycle = () => {
+		if (readOnly.value) {
+			ElMessage.warning('班委账号为只读权限，无法执行该操作');
+			return;
+		}
 	if (!currentCycle.value) return;
 	isEditCycle.value = true;
 	cycleForm.value = { id: currentCycle.value.id, name: currentCycle.value.name, range: currentCycle.value.startTime && currentCycle.value.endTime ? [currentCycle.value.startTime, currentCycle.value.endTime] : null };
@@ -501,6 +551,10 @@ const checkRangeOverlap = (selfId: string, startTime: string, endTime: string): 
 };
 
 const handleCycleSubmit = () => {
+		if (readOnly.value) {
+			ElMessage.warning('班委账号为只读权限，无法执行该操作');
+			return;
+		}
 	cycleFormRef.value?.validate(async (valid) => {
 		if (!valid) return;
 		const { id, name, range } = cycleForm.value;
@@ -530,6 +584,10 @@ const handleCycleSubmit = () => {
 };
 
 const handleFinishCycle = () => {
+		if (readOnly.value) {
+			ElMessage.warning('班委账号为只读权限，无法执行该操作');
+			return;
+		}
 	if (!currentCycle.value) return;
 	ElMessageBox.confirm(`结束后周期「${currentCycle.value.name}」将无法再记录积分，确认结束？`, '结束周期', {
 		type: 'warning', confirmButtonText: '确认', cancelButtonText: '取消',
@@ -541,6 +599,10 @@ const handleFinishCycle = () => {
 };
 
 const handleStartCycle = () => {
+		if (readOnly.value) {
+			ElMessage.warning('班委账号为只读权限，无法执行该操作');
+			return;
+		}
 	if (!currentCycle.value) return;
 	ElMessageBox.confirm(`重新开始周期「${currentCycle.value.name}」后可继续记分（历史记录保留），确认？`, '重新开始', {
 		type: 'info', confirmButtonText: '确认', cancelButtonText: '取消',
@@ -552,6 +614,10 @@ const handleStartCycle = () => {
 };
 
 const handleDeleteCycle = () => {
+		if (readOnly.value) {
+			ElMessage.warning('班委账号为只读权限，无法执行该操作');
+			return;
+		}
 	if (!currentCycle.value) return;
 	if (currentCycle.value.status === 1) {
 		ElMessage.warning('已结束的周期不允许删除');
@@ -569,6 +635,10 @@ const handleDeleteCycle = () => {
 };
 
 const handleAddPoints = async (team: TeamInfo) => {
+		if (readOnly.value) {
+			ElMessage.warning('班委账号为只读权限，无法执行该操作');
+			return;
+		}
 	if (!canChangePoints.value) { ElMessage.warning('请先选择未结束的积分周期'); return; }
 	const target = findTeam(team.id);
 	if (!target) return;
@@ -580,6 +650,10 @@ const handleAddPoints = async (team: TeamInfo) => {
 };
 
 const handleSubtractPoints = async (team: TeamInfo) => {
+		if (readOnly.value) {
+			ElMessage.warning('班委账号为只读权限，无法执行该操作');
+			return;
+		}
 	if (!canChangePoints.value) { ElMessage.warning('请先选择未结束的积分周期'); return; }
 	const target = findTeam(team.id);
 	if (!target) return;
@@ -609,6 +683,10 @@ const rulePreviewPoints = computed(() => ruleSinglePoints.value * ruleForm.value
 const currentTeam = ref<TeamInfo | null>(null);
 
 const handleAdjustPoints = (team: TeamInfo) => {
+		if (readOnly.value) {
+			ElMessage.warning('班委账号为只读权限，无法执行该操作');
+			return;
+		}
 	if (!canChangePoints.value) { ElMessage.warning('请先选择未结束的积分周期'); return; }
 	ruleForm.value = { ruleId: '', count: 1, points: undefined };
 	currentTeam.value = team;
@@ -619,6 +697,10 @@ const handleAdjustPoints = (team: TeamInfo) => {
 watch(() => ruleForm.value.ruleId, () => { ruleForm.value.points = undefined; });
 
 const handleRuleConfirm = async () => {
+		if (readOnly.value) {
+			ElMessage.warning('班委账号为只读权限，无法执行该操作');
+			return;
+		}
 	if (!currentTeam.value) return;
 	const rule = rules.value.find(item => item.id === ruleForm.value.ruleId);
 	if (!rule) {
@@ -693,6 +775,10 @@ const memberRuleTargetName = ref('');
 const currentStudent = ref<Student | null>(null);
 
 const handleMemberAddPoints = async (student: Student) => {
+		if (readOnly.value) {
+			ElMessage.warning('班委账号为只读权限，无法执行该操作');
+			return;
+		}
 	if (!canChangePoints.value) { ElMessage.warning('请先选择未结束的积分周期'); return; }
 	student.points = Number(student.points) + Number(step.value);
 	handleStudentRecord({ stu_id: student.id, points: Number(step.value), rule_id: 'ACTIVE_ADD' });
@@ -701,6 +787,10 @@ const handleMemberAddPoints = async (student: Student) => {
 };
 
 const handleMemberSubtractPoints = async (student: Student) => {
+		if (readOnly.value) {
+			ElMessage.warning('班委账号为只读权限，无法执行该操作');
+			return;
+		}
 	if (!canChangePoints.value) { ElMessage.warning('请先选择未结束的积分周期'); return; }
 	student.points = Number(student.points) - Number(step.value);
 	handleStudentRecord({ stu_id: student.id, points: -Number(step.value), rule_id: 'ACTIVE_SUB' });
@@ -709,6 +799,10 @@ const handleMemberSubtractPoints = async (student: Student) => {
 };
 
 const handleMemberAdjustPoints = (student: Student) => {
+		if (readOnly.value) {
+			ElMessage.warning('班委账号为只读权限，无法执行该操作');
+			return;
+		}
 	if (!canChangePoints.value) { ElMessage.warning('请先选择未结束的积分周期'); return; }
 	memberRuleTargetName.value = student.name;
 	currentStudent.value = student;
@@ -716,6 +810,10 @@ const handleMemberAdjustPoints = (student: Student) => {
 };
 
 const handleMemberRuleConfirm = async (rule: Rule, count = 1, singlePoints?: number) => {
+		if (readOnly.value) {
+			ElMessage.warning('班委账号为只读权限，无法执行该操作');
+			return;
+		}
 	if (!currentStudent.value) return;
 	const perPoints = singlePoints !== undefined ? singlePoints : Number(rule.points || 0);
 	const points = perPoints * count;
