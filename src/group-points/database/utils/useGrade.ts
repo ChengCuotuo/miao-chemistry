@@ -3,10 +3,12 @@ import { useAppStore } from "../../store/models/app";
 import { Grade } from "../class"
 import { v4 as uuidv4 } from 'uuid';
 import { usePermission } from "./usePermission";
+import { useBasic } from "./useBasic";
 
 export const useGrade = () => {
 	const appStore = useAppStore();
 	const { isReadOnlySession } = usePermission();
+	const { updateBasicConfig } = useBasic();
 
 	// 创建班级
 	const createGrade = async (name: string) => {
@@ -55,22 +57,31 @@ export const useGrade = () => {
 		return true
 	}
 
-	// 删除班级
+	// 删除班级（defaultGradeClosed 表示同时关闭了「默认班级功能」）
 	const deleteGrade = async (id: string) => {
-		if (isReadOnlySession()) return false;
+		if (isReadOnlySession()) return { success: false, defaultGradeClosed: false };
 		try {
 			const grade = appStore.database.gradeList.find(item => item.id === id);
 			if (!grade) {
 				console.error('班级不存在:', id);
-				return false
+				return { success: false, defaultGradeClosed: false }
 			}
 			grade.delete = 1;
 			const newGradeList = appStore.database.gradeList.map(item => ({ id: item.id, name: item.name, delete: item.delete }))
 			await appendGradeConfig(JSON.stringify(newGradeList));
-			return true
+			// 删除的正是默认班级：直接关闭默认班级功能，避免启动/锁屏进入已删除的班级
+			let defaultGradeClosed = false;
+			const basic = appStore.database.basicConfig;
+			if (basic && basic.defaultGradeId === id) {
+				basic.defaultGradeEnabled = false;
+				basic.defaultGradeId = '';
+				await updateBasicConfig({ ...basic });
+				defaultGradeClosed = true;
+			}
+			return { success: true, defaultGradeClosed }
 		} catch (error) {
 			console.error('删除班级出错:', error);
-			return false
+			return { success: false, defaultGradeClosed: false }
 		}
 	}
 

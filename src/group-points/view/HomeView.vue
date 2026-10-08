@@ -143,8 +143,12 @@ const handleDeleteGrade = async (id: string, event: MouseEvent) => {
 		});
 
 		const res = await deleteGrade(id);
-		if (res) {
+		if (res.success) {
 			ElMessage.success('删除班级成功');
+			// 删除了默认班级：默认班级功能已同步关闭
+			if (res.defaultGradeClosed) {
+				ElMessage.info('该班级是默认班级，已自动关闭「开启默认班级功能」');
+			}
 		} else {
 			ElMessage.error('删除班级失败');
 		}

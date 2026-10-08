@@ -401,18 +401,24 @@ const handleDefaultGradeChange = async () => {
   ElMessage.success(`默认班级已设置为「${defaultGradeName.value}」`);
 };
 
-// 默认班级被删除时，自动关闭默认班级功能（避免启动进入空页面）
-watch(selectableGrades, (list) => {
+// 默认班级已失效（被删除 / 班级列表变化）时，自动关闭默认班级功能
+const validateDefaultGrade = () => {
   if (!basicConfig.defaultGradeEnabled) return;
-  if (list.some((item) => item.id === basicConfig.defaultGradeId)) return;
+  if (selectableGrades.value.some((item) => item.id === basicConfig.defaultGradeId)) return;
   basicConfig.defaultGradeEnabled = false;
   basicConfig.defaultGradeId = '';
   defaultAccountHint.value = '';
   updateBasicConfig({ ...basicConfig });
-  ElMessage.warning('默认班级已不存在，已自动关闭默认班级功能');
-});
+  ElMessage.warning('默认班级已不存在，已自动关闭「开启默认班级功能」');
+};
 
-onMounted(refreshDefaultAccountHint);
+// 班级列表变化（含删除班级）时重新校验
+watch(selectableGrades, validateDefaultGrade);
+
+onMounted(() => {
+  validateDefaultGrade();
+  refreshDefaultAccountHint();
+});
 
 // 密码修改相关
 const passwordDialogVisible = ref(false);
