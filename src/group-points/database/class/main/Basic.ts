@@ -41,8 +41,12 @@ export class Basic {
 	hideQuickSubtract: boolean;
 	// 是否启用班委账号（锁屏页可选择「班委登录」），默认开启；关闭后仅管理员登录
 	monitorAccountEnabled: boolean;
+	// 是否启用默认班级功能：开启后软件启动 / 锁屏点击进入都直接进入该班级的班委页面，默认关闭
+	defaultGradeEnabled: boolean;
+	// 默认班级 id（默认班级功能开启时生效）
+	defaultGradeId: string;
 
-	constructor(params: { step: number, buildType: string, password: string, firstRun: number, startTime: number, duration: number, moduleVisibility?: Partial<Basic['moduleVisibility']>, moduleOrder?: string[], analysisChartVisibility?: Partial<Basic['analysisChartVisibility']>, analysisChartOrder?: string[], hideQuickSubtract?: boolean, monitorAccountEnabled?: boolean }) {
+	constructor(params: { step: number, buildType: string, password: string, firstRun: number, startTime: number, duration: number, moduleVisibility?: Partial<Basic['moduleVisibility']>, moduleOrder?: string[], analysisChartVisibility?: Partial<Basic['analysisChartVisibility']>, analysisChartOrder?: string[], hideQuickSubtract?: boolean, monitorAccountEnabled?: boolean, defaultGradeEnabled?: boolean, defaultGradeId?: string }) {
 		this.step = params.step;
 		this.buildType = params.buildType;
 		this.password = params.password;
@@ -70,6 +74,8 @@ export class Basic {
 		this.analysisChartOrder = params.analysisChartOrder || [];
 		this.hideQuickSubtract = params.hideQuickSubtract ?? true;
 		this.monitorAccountEnabled = params.monitorAccountEnabled ?? true;
+		this.defaultGradeEnabled = params.defaultGradeEnabled ?? false;
+		this.defaultGradeId = params.defaultGradeId || '';
 	}
 
 	toJSON() {

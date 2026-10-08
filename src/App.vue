@@ -14,7 +14,7 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, ref, watch } from 'vue';
+import { onMounted, ref, watch, nextTick } from 'vue';
 import MainBack from './components/MainBack.vue';
 // import SystemConfig from './components/system-config.vue';
 import BoxGame from './games/box/index.vue';
@@ -25,11 +25,14 @@ import { useAppStore } from './group-points/store/models/app';
 import { loadGroupPointsConfig } from './group-points/database';
 import { ElMessage, ElMessageBox, dayjs } from 'element-plus';
 import { useBasic } from './group-points/database/utils/useBasic';
+import { useDefaultGrade } from './group-points/database/utils/useDefaultGrade';
 import { useRouter } from 'vue-router'
 
 const activeKey = ref('lock');
 const appStore = useAppStore();
 const { updateBasicConfig } = useBasic()
+// 默认班级功能：开启后启动直接进默认班级的班委页面
+const { enterDefaultGradeSession } = useDefaultGrade()
 const router = useRouter()
 
 // 菜单项数据
@@ -82,6 +85,15 @@ onMounted(async () => {
           await updateBasicConfig({ ...appStore.database.basicConfig })
         },
       })
+    }
+
+    // 默认班级功能开启：启动即进入默认班级的班委页面（跳过锁屏）
+    if (await enterDefaultGradeSession()) {
+      handleMenuClick('menu');
+      if (activeKey.value !== 'lock') {
+        await nextTick();
+        router.push({ name: 'grade' });
+      }
     }
   }
 });

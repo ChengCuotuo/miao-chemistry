@@ -28,25 +28,8 @@
       </div>
     </el-dialog>
 
-    <!-- 管理员密码验证弹窗 -->
-    <el-dialog
-      v-model="passwordDialogVisible"
-      title="管理员登录"
-      width="400px"
-      :close-on-click-modal="false"
-    >
-      <el-input
-        v-model="inputPassword"
-        type="password"
-        placeholder="请输入管理员密码"
-        show-password
-        @keyup.enter="verifyPassword"
-      />
-      <template #footer>
-        <el-button @click="passwordDialogVisible = false">取消</el-button>
-        <el-button type="primary" @click="verifyPassword">登录</el-button>
-      </template>
-    </el-dialog>
+    <!-- 管理员密码验证弹窗（与班级页「切换为管理员」共用同一组件，登录界面完全一致） -->
+    <AdminLoginDialog v-model="passwordDialogVisible" @success="handleAdminLoginSuccess" />
 
     <!-- 班委登录弹窗 -->
     <el-dialog
@@ -116,12 +99,13 @@ import { Menu, Message, Platform, Avatar, User } from '@element-plus/icons-vue'
 import { ref, onMounted, onUnmounted, computed, nextTick } from 'vue'
 import { ElMessage, dayjs } from 'element-plus'
 import { useAppStore } from '../group-points/store/models/app'
-import md5 from 'blueimp-md5'
 import { BUILD_TYPE } from '../group-points/database'
 import { useGrade } from '../group-points/database/utils/useGrade'
 import { useMonitorAccount } from '../group-points/database/utils/useMonitorAccount'
+import { useDefaultGrade } from '../group-points/database/utils/useDefaultGrade'
 import { useRouter } from 'vue-router'
 import CurVersion from './CurVersion.vue'
+import AdminLoginDialog from './AdminLoginDialog.vue'
 
 const props = defineProps({
   onMenu: {
@@ -134,6 +118,8 @@ const appStore = useAppStore()
 const router = useRouter()
 const { getGradeInfoById } = useGrade()
 const { verifyMonitorAccount } = useMonitorAccount()
+// 默认班级功能：开启后点击进入直接进默认班级的班委页面
+const { enterDefaultGradeSession } = useDefaultGrade()
 const currentPassword = computed(() => appStore.database.basicConfig?.password || '')
 // 是否启用班委账号（关闭后锁屏页直接管理员密码登录）
 const monitorAccountEnabled = computed(() => appStore.database.basicConfig?.monitorAccountEnabled ?? true)
@@ -161,7 +147,14 @@ const updateTime = () => {
   })
 }
 
-const handleMenuClick = () => {
+const handleMenuClick = async () => {
+  // 默认班级功能开启：直接进入该班的班委页面（无需选择角色 / 输入密码）
+  if (await enterDefaultGradeSession()) {
+    props.onMenu('menu')
+    await nextTick()
+    router.push({ name: 'grade' })
+    return
+  }
   if (!currentPassword.value) {
     // 判断是否是试用版本，如果是是否在 30 天有效期内
     const buildType = appStore.database.basicConfig.buildType
@@ -212,20 +205,14 @@ const handleMonitorLoginClick = () => {
 
 // ---------- 管理员登录 ----------
 const passwordDialogVisible = ref(false)
-const inputPassword = ref('')
 const expiredDialogVisible = ref(false)
 
-const verifyPassword = async() => {
-  if (md5(inputPassword.value) === currentPassword.value) {
-    appStore.enterTeacherSession()
-    props.onMenu('menu')
-    passwordDialogVisible.value = false
-    inputPassword.value = ''
-    await nextTick();
-    router.push({ name: 'home' });
-  } else {
-    ElMessage.error('密码错误')
-  }
+// 密码校验由 AdminLoginDialog 完成，这里只处理登录成功后的会话切换与跳转
+const handleAdminLoginSuccess = async() => {
+  appStore.enterTeacherSession()
+  props.onMenu('menu')
+  await nextTick();
+  router.push({ name: 'home' });
 }
 
 // ---------- 班委登录 ----------

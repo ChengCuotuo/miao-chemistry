@@ -258,6 +258,17 @@ export async function loadGroupPointsConfig() {
 		// 班委登录开关：默认开启（关闭后不创建/不使用班委账号，锁屏页直接管理员登录）
 		basicConfigData.monitorAccountEnabled = basicConfigData.monitorAccountEnabled ?? true;
 
+		// 默认班级功能：默认关闭（开启后启动/锁屏点击进入直接进入该班级的班委页面）
+		basicConfigData.defaultGradeEnabled = basicConfigData.defaultGradeEnabled ?? false;
+		basicConfigData.defaultGradeId = basicConfigData.defaultGradeId || '';
+		// 默认班级不存在 / 已被删除 / 班委账号已关闭时，自动失效，避免启动进入空页面
+		if (basicConfigData.defaultGradeEnabled) {
+			const defaultGradeExists = (gradeList || []).some((item: any) => item.id === basicConfigData.defaultGradeId && item.delete === 0);
+			if (!defaultGradeExists || basicConfigData.monitorAccountEnabled === false) {
+				basicConfigData.defaultGradeEnabled = false;
+			}
+		}
+
 		// 正式版构建运行时，如果持久化的配置信息还是体验版，则覆盖为正式版
 		if (buildType === BUILD_TYPE.official && basicConfigData.buildType !== BUILD_TYPE.official) {
 			basicConfigData.buildType = BUILD_TYPE.official;

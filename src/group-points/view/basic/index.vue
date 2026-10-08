@@ -45,6 +45,32 @@
     <div class="setting-tip">
       「启用班委账号」控制班委这条线是否可用：关闭后不再创建/使用班委账号，锁屏页直接进入管理员密码登录。
     </div>
+    <!-- 默认班级功能：仅在启用班委账号后展示 -->
+    <template v-if="basicConfig.monitorAccountEnabled">
+      <el-divider border-style="dashed" style="margin: 14px 0" />
+      <el-space>
+        <span>开启默认班级功能：</span>
+        <el-tooltip content="开启后：软件启动直接进入所选班级的班委页面（只读身份），锁屏页点击进入也直接进入该班级的班委页面" placement="top">
+          <el-icon class="module-tip-icon"><InfoFilled /></el-icon>
+        </el-tooltip>
+        <el-switch v-model="basicConfig.defaultGradeEnabled" @change="handleDefaultGradeEnabledChange" />
+      </el-space>
+      <div v-if="basicConfig.defaultGradeEnabled" class="default-grade-row">
+        <span>默认班级：</span>
+        <el-select
+          v-model="basicConfig.defaultGradeId"
+          placeholder="请选择默认班级"
+          style="width: 220px"
+          @change="handleDefaultGradeChange"
+        >
+          <el-option v-for="g in selectableGrades" :key="g.id" :label="g.name" :value="g.id" />
+        </el-select>
+        <span v-if="defaultAccountHint" class="default-grade-hint">{{ defaultAccountHint }}</span>
+      </div>
+      <div class="setting-tip">
+        「默认班级」用于把当前设备固定给某个班级使用：启动即进入该班级的班委页面，无需登录；进入后仍可通过右上角「切换为管理员」换成管理员身份。
+      </div>
+    </template>
     <el-divider border-style="dashed" style="margin: 14px 0" />
     <div class="module-setting">
       <div class="module-setting-title">
@@ -119,12 +145,15 @@ import { useAppStore } from '../../store/models/app';
 import { useBasic } from '../../database/utils/useBasic';
 import { Edit, Rank, InfoFilled } from '@element-plus/icons-vue';
 import { ElMessage, ElMessageBox } from 'element-plus';
-import { ref } from 'vue';
+import { ref, computed, onMounted, watch } from 'vue';
 import draggable from 'vuedraggable';
 import PasswordChangeDialog from './PasswordChangeDialog.vue';
 import md5 from 'blueimp-md5';
+import { useDefaultGrade } from '../../database/utils/useDefaultGrade';
 
 const { updateBasicConfig } = useBasic();
+// 默认班级功能：可用班级列表 / 自动进入 / 账号提示
+const { selectableGrades, resolveDefaultAccount } = useDefaultGrade();
 
 const appStore = useAppStore();
 const basicConfig = appStore.database.basicConfig;
@@ -312,13 +341,78 @@ const handleMonitorAccountEnabledChange = async (val: boolean) => {
     }
   }
   basicConfig.monitorAccountEnabled = val;
+  // 关闭班委账号时，默认班级功能一并失效
+  const defaultGradeClosed = val ? false : !!basicConfig.defaultGradeEnabled;
+  if (!val) {
+    basicConfig.defaultGradeEnabled = false;
+    defaultAccountHint.value = '';
+  }
   await updateBasicConfig({ ...basicConfig });
   // 关闭后当前班委会话立即失效：退出到锁屏（与管理员改密码不回踢不同，这里是权限本身被撤销）
   const kicked = val ? false : appStore.exitMonitorSessionIfCurrent();
   ElMessage.success(val
     ? '已启用班委账号（可创建账号并让班委登录）'
     : (kicked ? '已关闭班委账号，当前班委登录已退出' : '已关闭班委账号，仅管理员登录'));
+  if (defaultGradeClosed) ElMessage.info('默认班级功能已同步关闭');
 };
+
+// ---------- 默认班级功能 ----------
+const defaultAccountHint = ref('');
+
+// 当前默认班级名称（用于提示文案）
+const defaultGradeName = computed(() =>
+  selectableGrades.value.find((item) => item.id === basicConfig.defaultGradeId)?.name || '',
+);
+
+// 刷新「自动进入时使用的班委账号」提示
+const refreshDefaultAccountHint = async () => {
+  defaultAccountHint.value = '';
+  if (!basicConfig.defaultGradeEnabled || !basicConfig.defaultGradeId) return;
+  const account = await resolveDefaultAccount(basicConfig.defaultGradeId);
+  defaultAccountHint.value = account
+    ? `将以班委账号「${account.name}」自动进入`
+    : '该班级暂无班委账号，将按默认可见模块（仅学生管理）进入';
+};
+
+// 开启默认班级功能的开关
+const handleDefaultGradeEnabledChange = async (val: boolean) => {
+  if (val) {
+    if (!selectableGrades.value.length) {
+      basicConfig.defaultGradeEnabled = false;
+      ElMessage.warning('暂无可用班级，请先创建班级');
+      return;
+    }
+    // 未选或所选班级已失效：默认选中第一个可用班级
+    if (!selectableGrades.value.some((item) => item.id === basicConfig.defaultGradeId)) {
+      basicConfig.defaultGradeId = selectableGrades.value[0].id;
+    }
+  }
+  await updateBasicConfig({ ...basicConfig });
+  await refreshDefaultAccountHint();
+  ElMessage.success(val
+    ? `已开启默认班级功能：启动将直接进入「${defaultGradeName.value}」的班委页面`
+    : '已关闭默认班级功能');
+};
+
+// 切换默认班级
+const handleDefaultGradeChange = async () => {
+  await updateBasicConfig({ ...basicConfig });
+  await refreshDefaultAccountHint();
+  ElMessage.success(`默认班级已设置为「${defaultGradeName.value}」`);
+};
+
+// 默认班级被删除时，自动关闭默认班级功能（避免启动进入空页面）
+watch(selectableGrades, (list) => {
+  if (!basicConfig.defaultGradeEnabled) return;
+  if (list.some((item) => item.id === basicConfig.defaultGradeId)) return;
+  basicConfig.defaultGradeEnabled = false;
+  basicConfig.defaultGradeId = '';
+  defaultAccountHint.value = '';
+  updateBasicConfig({ ...basicConfig });
+  ElMessage.warning('默认班级已不存在，已自动关闭默认班级功能');
+});
+
+onMounted(refreshDefaultAccountHint);
 
 // 密码修改相关
 const passwordDialogVisible = ref(false);
@@ -468,9 +562,21 @@ const handleModuleChange = () => {
   max-width: 760px;
 }
 
+.default-grade-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 10px;
+}
+
 .module-tip-icon {
   color: #909399;
   cursor: help;
   font-size: 14px;
+}
+
+.default-grade-hint {
+  font-size: 12px;
+  color: #909399;
 }
 </style>

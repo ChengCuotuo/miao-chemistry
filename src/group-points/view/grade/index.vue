@@ -6,7 +6,9 @@
 				<el-button v-else type="warning" plain :icon="SwitchButton" @click="handleMonitorLogout">退出登录</el-button>
 			</div>
 			<div style="font-size: 16px; font-weight: bold;">{{ activeGrade?.name }}<span v-if="isMonitor" class="role-badge">班委</span></div>
-			<div></div>
+			<div>
+				<el-button v-if="isMonitor" type="primary" plain :icon="Avatar" @click="handleSwitchToAdmin">切换为管理员</el-button>
+			</div>
 		</div>
 		<el-divider border-style="dashed" style="margin: 10px 0;" />
 		<el-alert v-if="readOnly" class="readonly-tip" type="info" show-icon :closable="false"
@@ -41,6 +43,9 @@
 				<AnalysisList></AnalysisList>
 			</div>
 		</div>
+
+		<!-- 切换为管理员：与锁屏管理员登录共用同一弹窗，登录成功后进入同样的管理员页面 -->
+		<AdminLoginDialog v-model="adminLoginVisible" @success="handleAdminLoginSuccess" />
 	</div>
 </template>
 
@@ -48,9 +53,10 @@
 import { computed, ref, watch } from 'vue';
 import { useAppStore } from '../../store/models/app';
 import { usePermission } from '../../database/utils/usePermission';
-import { Back, SwitchButton } from '@element-plus/icons-vue';
+import { Back, SwitchButton, Avatar } from '@element-plus/icons-vue';
 import { useRouter } from 'vue-router';
 import { ElMessageBox } from 'element-plus';
+import AdminLoginDialog from '../../../components/AdminLoginDialog.vue';
 import StudentList from './StudentList/index.vue';
 import GroupList from './GroupList/index.vue';
 import TeamList from './TeamList/index.vue';
@@ -136,6 +142,25 @@ watch(orderedTabs, () => {
 		activeName.value = getFirstVisibleName();
 	}
 });
+
+// 切换为管理员：与锁屏管理员登录同一套流程
+const adminLoginVisible = ref(false);
+
+// 登录成功（密码校验已由弹窗完成）：进入管理员会话，并回到与锁屏登录一致的班级列表页
+const handleAdminLoginSuccess = () => {
+	appStore.enterTeacherSession();
+	appStore.setIsCollapse(false);
+	router.push({ name: 'home' });
+};
+
+const handleSwitchToAdmin = () => {
+	// 与锁屏一致：未设置管理员密码时直接以管理员身份进入
+	if (!appStore.database.basicConfig?.password) {
+		handleAdminLoginSuccess();
+		return;
+	}
+	adminLoginVisible.value = true;
+};
 
 const handleBack = () => {
 	appStore.setIsCollapse(false);
