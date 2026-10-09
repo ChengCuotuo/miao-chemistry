@@ -174,8 +174,6 @@ const { getRuleList, getRuleGroupList } = useRule();
 
 const rules = computed(() => getRuleList(appStore.activeGrade?.id) || []);
 const ruleGroups = computed(() => getRuleGroupList() || []);
-// 已登录的班委账号（用于在记分记录里留痕；管理员登录时为空）
-const currentMonitor = computed(() => appStore.currentMonitor);
 const cycleList = computed(() => getMonitorCycleList());
 const selectedCycleId = ref('');
 const currentCycle = computed(() => cycleList.value.find(item => item.id === selectedCycleId.value));
@@ -464,8 +462,6 @@ const handleRecordConfirm = async (payload: { ruleId: string, count: number, poi
 		groupId: target.groupId || '',
 		count: payload.count,
 		pointsPerCount: payload.points,
-		// 记录操作者：已登录的班委账号会留痕，管理员本人操作时为空（展示为「管理员」）
-		operator: currentMonitor.value,
 	});
 	if (res.success) {
 		ElMessage.success(res.message);

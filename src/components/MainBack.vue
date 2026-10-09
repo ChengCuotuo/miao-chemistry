@@ -243,7 +243,7 @@ const handleMonitorLoginSubmit = async () => {
     const res = verifyMonitorAccount(monitorName.value, monitorPassword.value);
     if (res.success) {
       appStore.setCurrentRole('monitor');
-      // 记录当前登录的班委账号（登录后权限与管理员一致，账号仅用于身份标识与记录留痕）
+      // 记录当前登录的班委账号（账号用于身份标识与权限判定）
       appStore.setCurrentMonitor(res.account ? { id: res.account.id, name: res.account.name } : undefined);
       appStore.setIsCollapse(true);
       monitorLoginVisible.value = false;

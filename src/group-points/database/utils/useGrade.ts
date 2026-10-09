@@ -26,6 +26,19 @@ const backfillRecordCycleIds = (gradeInfo: DatabaseInfoType['gradeList'][0]['gra
 	return changed;
 };
 
+// 旧数据清理：移除记录里已废弃的操作人字段（operator_id / operator_name）
+const stripOperatorFields = (gradeInfo: DatabaseInfoType['gradeList'][0]['gradeInfo']) => {
+	let changed = false;
+	(gradeInfo.recordList || []).forEach((rec: any) => {
+		if (rec && ('operator_id' in rec || 'operator_name' in rec)) {
+			delete rec.operator_id;
+			delete rec.operator_name;
+			changed = true;
+		}
+	});
+	return changed;
+};
+
 export const useGrade = () => {
 	const appStore = useAppStore();
 	const { isReadOnlySession } = usePermission();
@@ -156,8 +169,10 @@ export const useGrade = () => {
 		};
 		target.delete = data.delete;
 		target.name = data.name;
-		// 一次性迁移：给历史记录补上周期归属（只读会话不落盘，仅内存生效）
-		if (backfillRecordCycleIds(target.gradeInfo) && !isReadOnlySession()) {
+		// 一次性迁移：补周期归属 + 清理已废弃的操作人字段（只读会话不落盘，仅内存生效）
+		const cycleChanged = backfillRecordCycleIds(target.gradeInfo);
+		const operatorCleaned = stripOperatorFields(target.gradeInfo);
+		if ((cycleChanged || operatorCleaned) && !isReadOnlySession()) {
 			await saveGradeInfo(gradeId, JSON.stringify(target));
 		}
 		return target as DatabaseInfoType['gradeList'][0]

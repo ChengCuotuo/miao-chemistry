@@ -6,8 +6,6 @@ import { usePermission } from "./usePermission";
 
 // 记录条数上限：recordList 仅保留最近 MAX_RECORDS 条
 export const MAX_RECORDS = 3500;
-// 管理员（教师）在记录里的展示名
-const TEACHER_NAME = '管理员';
 
 // 裁剪记录列表：只保留最近 MAX_RECORDS 条
 const trimRecordList = (list: RuleRecord[]): RuleRecord[] => {
@@ -175,16 +173,14 @@ export const useMonitorCycle = () => {
 	// 通过规则调整学生积分（周期内）—— 周期记分唯一入口
 	// group_id: 按组发放时记录组 id；单个发放传 ''
 	// pointsPerCount: 单次分值覆盖值，自定义分值规则由调用方传入（不传则取规则固定分值）
-	// operator: 操作者（已登录的班委账号）；不传表示管理员本人操作
 	const adjustPointsByRule = async (params: {
 		cycleId: string, ruleId: string, students: Student[], groupId?: string, count?: number, pointsPerCount?: number,
-		operator?: { id?: string, name?: string },
 	}) => {
 		// 只读会话（班委账号）禁止记分
 		if (isReadOnlySession()) return { success: false, message: '班委账号为只读权限，无法执行该操作' };
 		try {
 			if (!appStore.activeGrade) return { success: false, message: '暂无班级信息' };
-			const { cycleId, ruleId, students, groupId = '', count = 1, pointsPerCount, operator } = params;
+			const { cycleId, ruleId, students, groupId = '', count = 1, pointsPerCount } = params;
 			const gradeInfo = appStore.activeGrade.gradeInfo;
 			const cycle = gradeInfo.monitorCycleList.find(item => item.id === cycleId);
 			if (!cycle) return { success: false, message: '周期不存在' };
@@ -207,10 +203,6 @@ export const useMonitorCycle = () => {
 			const perPoints = isNoPoints ? Number(pointsPerCount) : Number(rule.points);
 			const time = dayjs().format('YYYY-MM-DD HH:mm:ss');
 
-			// 操作者：有登录的班委账号时记账号名，否则记管理员
-			const operatorId = operator?.id || '';
-			const operatorName = operator?.name || TEACHER_NAME;
-
 			students.forEach(stu => {
 				const target = gradeInfo.studentList.find(item => item.id === stu.id);
 				if (!target) return;
@@ -227,8 +219,6 @@ export const useMonitorCycle = () => {
 					cycle_id: cycleId,
 					group_id: groupId,
 					count,
-					operator_id: operatorId,
-					operator_name: operatorName,
 				});
 				gradeInfo.indexMap.record++;
 				gradeInfo.recordList.push(record);

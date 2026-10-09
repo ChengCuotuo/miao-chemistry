@@ -6,7 +6,7 @@
 					<el-tag type="primary" size="large" class="group-points">{{ group.points }} 分</el-tag>
 					<span class="group-name">{{ group.name }}</span>
 				</div>
-				<div class="card-actions" v-if="!readonly">
+				<div v-if="!readonly">
 					<el-button type="primary" :icon="Edit" circle size="small" @click="handleEdit" />
 					<el-button type="danger" :icon="Delete" circle size="small" @click="handleDelete" />
 				</div>
@@ -26,14 +26,19 @@
 							<span class="student-name">{{ student.name }}</span>
 							<el-tag :type="student.points >= 0 ? 'success' : 'danger'" size="small" class="clickable-tag" @click="handleViewRecords(student)">{{ student.points }} 分</el-tag>
 						</div>
-				<div class="student-actions" v-if="!readonly">
-					<el-button type="success" style="margin: 0px;" :icon="Plus" circle size="small"
-						@click="handleAddPoints(student)" />
-					<el-button v-if="showSubtract" type="danger" style="margin: 0px;" :icon="Minus" circle size="small"
-						@click="handleSubtractPoints(student)" />
-					<!-- 根据规则调整分数 -->
-					<el-button type="warning" style="margin: 0px;" :icon="Ticket" circle size="small"
-						@click="handleAdjustPoints(student)" />
+				<div class="student-actions">
+					<template v-if="!readonly">
+						<el-button type="success" style="margin: 0px;" :icon="Plus" circle size="small"
+							@click="handleAddPoints(student)" />
+						<el-button v-if="showSubtract" type="danger" style="margin: 0px;" :icon="Minus" circle size="small"
+							@click="handleSubtractPoints(student)" />
+						<!-- 根据规则调整分数 -->
+						<el-button type="warning" style="margin: 0px;" :icon="Ticket" circle size="small"
+							@click="handleAdjustPoints(student)" />
+					</template>
+					<!-- 记录：查看该生积分记录（可撤销） -->
+					<el-button style="margin: 0px;" type="primary" :icon="Memo" circle size="small"
+						@click="handleViewRecords(student)" />
 				</div>
 			</div>
 			<el-empty v-if="filteredStudents.length === 0" description="暂无匹配成员" :image-size="60" />
@@ -57,7 +62,7 @@
 
 <script setup lang="ts">
 import { computed, ref } from 'vue';
-import { Edit, Delete, Plus, Minus, Ticket, Search } from '@element-plus/icons-vue';
+import { Edit, Delete, Plus, Minus, Ticket, Memo } from '@element-plus/icons-vue';
 import { Student } from '../../../database/class';
 import { GroupInfo } from './index.vue';
 import { useAppStore } from '../../../store/models/app';
@@ -166,11 +171,6 @@ const handleMulAdjustPoints = () => {
 
 .group-points {
 	font-weight: 600;
-}
-
-.card-actions {
-	display: flex;
-	gap: 8px;
 }
 
 .student-list {

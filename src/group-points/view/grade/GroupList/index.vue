@@ -84,9 +84,9 @@
 		<SortModal v-model:visible="sortModalVisible" :defaultGroupList="groupInfoList"
 			:defaultOrderByPoints="orderByPoints" @confirm="handleSortConfirm" />
 
-		<!-- 学生记录弹窗 -->
+		<!-- 学生记录弹窗：按当前积分周期过滤 -->
 		<el-dialog title="学生积分记录" v-model="recordDialogVisible" width="900px">
-			<RecordList :student-id="selectedStudentId" />
+			<RecordList :student-id="selectedStudentId" :cycle-id="monitorEnabled && currentCycle ? currentCycle.id : undefined" />
 		</el-dialog>
 
 		<!-- 周期新增/编辑弹窗 -->

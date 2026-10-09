@@ -63,8 +63,8 @@
           <span v-else class="text-muted">—</span>
         </template>
       </el-table-column>
-      <el-table-column label="学生姓名" prop="student_name" width="120" />
-      <el-table-column label="规则名称" prop="rule_name" min-width="140">
+      <el-table-column label="学生姓名" prop="student_name" width="100" />
+      <el-table-column label="规则名称" prop="rule_name" min-width="160">
         <template #default="scope">
           <el-space>
             <span>{{ scope.row.rule_name }} </span>
@@ -121,16 +121,6 @@
             getCycleNameByRecord(scope.row)
           }}</span>
           <span v-else class="text-muted">—</span>
-        </template>
-      </el-table-column>
-      <el-table-column
-        v-if="monitorEnabled"
-        label="操作人"
-        width="130"
-        show-overflow-tooltip
-      >
-        <template #default="scope">
-          <span>{{ scope.row.operator_name || '—' }}</span>
         </template>
       </el-table-column>
       <el-table-column label="时间" prop="time" width="180" />

@@ -148,7 +148,6 @@ export const useStudent = () => {
 				count: list.length,
 				// 存本次输入的原始值：设置模式为设置值，加/减模式为增减量（展示与追溯都需要）
 				batch_value: Number(value) || 0,
-				operator_name: '管理员',
 			}));
 			activeGrade.gradeInfo.indexMap.record = recordIndex + 1;
 

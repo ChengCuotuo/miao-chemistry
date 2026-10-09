@@ -7,7 +7,7 @@ interface AppState {
 	activeGrade?: DatabaseInfoType['gradeList'][0],
 	// 当前进入班级的角色：teacher 管理员 / monitor 班委（登录后权限与管理员一致，仅用于身份标识）
 	currentRole: 'teacher' | 'monitor',
-	// 当前登录的班委账号（角色为 monitor 时有值，用于身份标识与记录留痕）
+	// 当前登录的班委账号（角色为 monitor 时有值，用于身份标识与权限判定）
 	currentMonitor?: { id: string, name: string },
 	// 班委退出登录信号：置 true 后 App.vue 切回锁屏并复位
 	needLock: boolean,
@@ -47,7 +47,7 @@ export const useAppStore = defineStore('app', {
 		setCurrentRole(role: 'teacher' | 'monitor') {
 			this.currentRole = role;
 		},
-		// 以管理员身份进入班级（清空班委会话残留，避免记录人误标）
+		// 以管理员身份进入班级（清空班委会话残留）
 		enterTeacherSession() {
 			this.currentRole = 'teacher';
 			this.currentMonitor = undefined;

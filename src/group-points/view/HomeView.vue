@@ -102,7 +102,7 @@ const handleClick = async (grade: DatabaseInfoType['gradeList'][0]) => {
 	const gradeInfo = await getGradeInfoById(grade.id);
 	if (gradeInfo) {
 		appStore.setActiveGrade(gradeInfo);
-		// 以管理员身份进入：清空班委会话残留，避免记分记录的「操作人」被误标
+		// 以管理员身份进入：清空班委会话残留
 		appStore.enterTeacherSession();
 		appStore.setIsCollapse(true);
 		router.push({ name: 'grade' });

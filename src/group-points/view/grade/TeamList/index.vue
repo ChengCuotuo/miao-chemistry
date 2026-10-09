@@ -150,9 +150,9 @@
 		<RuleSelectorModal v-model:visible="memberRuleVisible" :rules="rules" :groups="ruleGroups" :target-name="memberRuleTargetName"
 			type="single" @confirm="handleMemberRuleConfirm" />
 
-		<!-- 成员个人积分记录弹窗 -->
+		<!-- 成员个人积分记录弹窗：按当前积分周期过滤 -->
 		<el-dialog title="学生积分记录" v-model="studentRecordDialogVisible" width="900px">
-			<RecordList :student-id="selectedStudentId" />
+			<RecordList :student-id="selectedStudentId" :cycle-id="monitorEnabled && currentCycle ? currentCycle.id : undefined" />
 		</el-dialog>
 
 		<!-- 调整排序弹窗 -->

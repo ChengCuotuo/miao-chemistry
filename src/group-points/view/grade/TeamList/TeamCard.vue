@@ -26,13 +26,18 @@
 					<el-tag :type="student.points >= 0 ? 'success' : 'danger'" size="small" class="clickable-tag"
 						@click="handleViewRecords(student)">{{ student.points }} 分</el-tag>
 				</div>
-				<div class="member-actions" v-if="!readonly">
-					<el-button type="success" style="margin: 0px;" :icon="Plus" circle size="small"
-						@click="handleAddPoints(student)" />
-					<el-button v-if="showSubtract" type="danger" style="margin: 0px;" :icon="Minus" circle size="small"
-						@click="handleSubtractPoints(student)" />
-					<el-button type="warning" style="margin: 0px;" :icon="Ticket" circle size="small"
-						@click="handleAdjustPoints(student)" />
+				<div class="member-actions">
+					<template v-if="!readonly">
+						<el-button type="success" style="margin: 0px;" :icon="Plus" circle size="small"
+							@click="handleAddPoints(student)" />
+						<el-button v-if="showSubtract" type="danger" style="margin: 0px;" :icon="Minus" circle size="small"
+							@click="handleSubtractPoints(student)" />
+						<el-button type="warning" style="margin: 0px;" :icon="Ticket" circle size="small"
+							@click="handleAdjustPoints(student)" />
+					</template>
+					<!-- 记录：查看该成员积分记录（可撤销） -->
+					<el-button style="margin: 0px;" type="primary" :icon="Memo" circle size="small"
+						@click="handleViewRecords(student)" />
 				</div>
 			</div>
 			<el-empty v-if="filteredMembers.length === 0" description="暂无成员" :image-size="60" />
@@ -63,7 +68,7 @@
 
 <script setup lang="ts">
 import { computed, ref } from 'vue';
-import { Edit, Delete, Plus, Minus, Ticket, Search, List } from '@element-plus/icons-vue';
+import { Edit, Delete, Plus, Minus, Ticket, List, Memo } from '@element-plus/icons-vue';
 import { Student } from '../../../database/class';
 import type { TeamInfo } from './index.vue';
 import { useAppStore } from '../../../store/models/app';
