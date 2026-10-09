@@ -80,10 +80,11 @@
 								<span :class="scope.row.points >= 0 ? 'text-success' : 'text-danger'">{{ scope.row.points }}</span>
 							</template>
 						</el-table-column>
-						<el-table-column label="操作" min-width="100" align="center">
+						<el-table-column label="操作" min-width="140" align="center">
 							<template #default="scope">
 								<el-button size="small" type="warning" :icon="Ticket" circle :disabled="!canRecord" @click="handleSingleRecord(scope.row)" />
 								<el-button size="small" type="info" :icon="View" circle @click="handleViewDetail(scope.row)" />
+								<el-button size="small" type="primary" :icon="Document" circle @click="handleViewStudentRecords(scope.row)" />
 							</template>
 						</el-table-column>
 					</el-table>
@@ -143,6 +144,11 @@
 				</el-table-column>
 			</el-table>
 			<el-empty v-if="detailStats.length === 0" description="当前周期暂无规则记录" :image-size="60" />
+		</el-dialog>
+
+		<!-- 学生周期记分明细：复用记录列表，逐条可撤销（单条操作） -->
+		<el-dialog :title="`${detailStudent?.name || ''} - 记分明细`" v-model="detailRecordDialogVisible" width="900px" destroy-on-close>
+			<RecordList v-if="detailRecordDialogVisible" :student-id="detailStudent?.id" :cycle-id="currentCycle?.id" />
 		</el-dialog>
 
 	</div>
@@ -481,13 +487,20 @@ const handleViewDetail = (student: Student) => {
 	detailDialogVisible.value = true;
 };
 
+// 学生周期记分明细弹窗（复用 RecordList，逐条撤销；从操作列直接打开）
+const detailRecordDialogVisible = ref(false);
+const handleViewStudentRecords = (student: Student) => {
+	detailStudent.value = student;
+	detailRecordDialogVisible.value = true;
+};
+
 // 当前周期内该学生每种规则的记分次数与积分
 const detailStats = computed(() => {
 	if (!currentCycle.value || !detailStudent.value) return [];
 	const cycleId = currentCycle.value.id;
 	const stuId = detailStudent.value.id;
 	const records = (appStore.activeGrade?.gradeInfo?.recordList || []).filter(
-		item => item.source === 1 && item.cycle_id === cycleId && item.stu_id === stuId
+		item => item.cycle_id === cycleId && item.stu_id === stuId
 	);
 	return rules.value.map(rule => {
 		const ruleRecords = records.filter(item => item.rule_id === rule.id);

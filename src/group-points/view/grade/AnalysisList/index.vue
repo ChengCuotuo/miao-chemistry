@@ -226,12 +226,9 @@ const formatPoints = (points: number | null | undefined) => {
 	return `${points > 0 ? '+' : ''}${points}`;
 };
 
-// 判断记录是否属于指定周期（班委记录按 cycle_id；普通记录按时间范围）
-const recordInCycle = (record: { source?: number, cycle_id?: string, time?: string }, cycle: { id: string, startTime?: string, endTime?: string }) => {
-	if (record.source === 1) return record.cycle_id === cycle.id;
-	if (!cycle.startTime || !cycle.endTime) return false;
-	const date = (record.time || '').slice(0, 10);
-	return date >= cycle.startTime && date <= cycle.endTime;
+// 判断记录是否属于指定周期：按记录写入时落定的 cycle_id（不再按时间范围动态匹配）
+const recordInCycle = (record: { cycle_id?: string }, cycle: { id: string }) => {
+	return record.cycle_id === cycle.id;
 };
 
 // 记录的实际积分 = points（已经是规则分值 × 次数后的总量）

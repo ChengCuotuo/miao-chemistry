@@ -119,6 +119,20 @@ export const formatBatchRecordText = (
 	return `全班 ${signed(delta)} 分/人`;
 };
 
+// 归属周期解析：优先显式周期 id（当前选中的周期），否则按记录时间落在哪个周期范围内匹配
+// 在记录写入时调用一次，把归属落定；此后记录归属不再随周期时间范围变化
+export const resolveCycleId = (
+	time: string,
+	cycles: { id: string, startTime?: string, endTime?: string }[],
+	explicitId?: string,
+): string => {
+	if (explicitId) return explicitId;
+	if (!time) return '';
+	const date = time.slice(0, 10);
+	const cycle = (cycles || []).find(c => c.startTime && c.endTime && date >= c.startTime && date <= c.endTime);
+	return cycle?.id || '';
+};
+
 export const BUILD_TYPE = {
 	trial: 'trial',
 	official: 'official',

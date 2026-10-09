@@ -4,8 +4,8 @@
 //   - 规则id - rule_id
 //   - 积分变化 - points：小组整体的加减分
 //   - 记录时间 - time
-//   - 来源 - source：0-普通 1-周期记录
-//   - 周期id - cycle_id：source=1 时有效，记录属于哪个周期
+//   - 来源 - source：0-普通 1-周期记录（历史字段；周期归属一律以 cycle_id 为准）
+//   - 周期id - cycle_id：记录归属的周期（写入时落定，展示/筛选/统计以此为准）
 //   - 单次次数 - count：本次记录消耗的次数（同规则多次时 > 1）
 
 export class TeamRecord {

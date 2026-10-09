@@ -77,7 +77,7 @@ import { Prize, RuleRecord } from '../../../database/class';
 import type { Student } from '../../../database/class';
 import { useStudent } from '../../../database/utils/useStudent';
 import { usePrize } from '../../../database/utils/usePrize';
-import { loadImageAsBase64 } from '../../../database';
+import { loadImageAsBase64, resolveCycleId } from '../../../database';
 import { useAppStore } from '../../../store/models/app';
 import { useGrade } from '../../../database/utils/useGrade';
 import { ElMessage, dayjs } from 'element-plus';
@@ -159,12 +159,17 @@ const submitBid = async () => {
 		const activeGrade = appStore.activeGrade;
 		if (activeGrade) {
 			const recordIndex = activeGrade.gradeInfo.indexMap.record || 0;
+			const time = dayjs().format('YYYY-MM-DD HH:mm:ss');
+			// 归属周期：按记录时间匹配；写入时落定
+			const cycleId = resolveCycleId(time, activeGrade.gradeInfo.monitorCycleList || []);
 			const newRecord = new RuleRecord({
 				id: recordIndex,
 				stu_id: selectedStudent.value.id,
 				rule_id: `${BID_RECORD_PREFIX}${props.prize.id}`,
 				points: -props.prize.points,
-				time: dayjs().format('YYYY-MM-DD HH:mm:ss')
+				time,
+				source: cycleId ? 1 : 0,
+				cycle_id: cycleId,
 			});
 			activeGrade.gradeInfo.recordList.push(newRecord);
 			activeGrade.gradeInfo.indexMap.record++;

@@ -1,9 +1,30 @@
-import { appendGradeConfig, DatabaseInfoType, loadGradeInfoById, saveGradeInfo } from "..";
+import { appendGradeConfig, DatabaseInfoType, loadGradeInfoById, saveGradeInfo, resolveCycleId, isBatchRecord } from "..";
 import { useAppStore } from "../../store/models/app";
 import { Grade } from "../class"
 import { v4 as uuidv4 } from 'uuid';
 import { usePermission } from "./usePermission";
 import { useBasic } from "./useBasic";
+
+// 旧数据一次性迁移：给写入时未落定 cycle_id 的记分记录按时间补上归属，之后归属固定
+// 全量操作汇总记录（班级级聚合）不参与周期归属，跳过
+const backfillRecordCycleIds = (gradeInfo: DatabaseInfoType['gradeList'][0]['gradeInfo']) => {
+	const cycles = gradeInfo.monitorCycleList || [];
+	if (!cycles.length) return false;
+	let changed = false;
+	const bind = (rec: any, excludeBatch: boolean) => {
+		if (!rec || rec.cycle_id) return;
+		if (excludeBatch && (!rec.stu_id || isBatchRecord(rec.rule_id))) return;
+		const cycleId = resolveCycleId(rec.time, cycles);
+		if (cycleId) {
+			rec.cycle_id = cycleId;
+			rec.source = 1;
+			changed = true;
+		}
+	};
+	(gradeInfo.recordList || []).forEach(rec => bind(rec, true));
+	(gradeInfo.teamRecordList || []).forEach(rec => bind(rec, false));
+	return changed;
+};
 
 export const useGrade = () => {
 	const appStore = useAppStore();
@@ -135,6 +156,10 @@ export const useGrade = () => {
 		};
 		target.delete = data.delete;
 		target.name = data.name;
+		// 一次性迁移：给历史记录补上周期归属（只读会话不落盘，仅内存生效）
+		if (backfillRecordCycleIds(target.gradeInfo) && !isReadOnlySession()) {
+			await saveGradeInfo(gradeId, JSON.stringify(target));
+		}
 		return target as DatabaseInfoType['gradeList'][0]
 	}
 

@@ -114,8 +114,8 @@ export const useMonitorCycle = () => {
 
 	// 自动结束已过期的进行中周期（方案 D：进入页面时调用）
 	// 返回自动结束的周期数量
-	const autoFinishExpiredCycles = async () => {
-		if (isReadOnlySession()) return false;
+	const autoFinishExpiredCycles = async (): Promise<number> => {
+		if (isReadOnlySession()) return 0;
 		try {
 			if (!appStore.activeGrade) return 0;
 			const cycles = appStore.activeGrade.gradeInfo.monitorCycleList || [];
@@ -143,8 +143,9 @@ export const useMonitorCycle = () => {
 				console.error('已结束的周期不允许删除:', id);
 				return false;
 			}
-			const cycleRecords = gradeInfo.recordList.filter(item => item.source === 1 && item.cycle_id === id);
-			const teamCycleRecords = (gradeInfo.teamRecordList || []).filter(item => item.source === 1 && item.cycle_id === id);
+			// 归属以 cycle_id 为准（写入时落定）；全量汇总记录不参与周期归属，故不会被回退
+			const cycleRecords = gradeInfo.recordList.filter(item => item.cycle_id === id);
+			const teamCycleRecords = (gradeInfo.teamRecordList || []).filter(item => item.cycle_id === id);
 			// 1. 按记录回退每个学生的积分
 			cycleRecords.forEach(record => {
 				const student = gradeInfo.studentList.find(s => s.id === record.stu_id);
@@ -161,8 +162,8 @@ export const useMonitorCycle = () => {
 			});
 			// 2. 删除周期与记录
 			gradeInfo.monitorCycleList = gradeInfo.monitorCycleList.filter(item => item.id !== id);
-			gradeInfo.recordList = gradeInfo.recordList.filter(item => !(item.source === 1 && item.cycle_id === id));
-			gradeInfo.teamRecordList = (gradeInfo.teamRecordList || []).filter(item => !(item.source === 1 && item.cycle_id === id));
+			gradeInfo.recordList = gradeInfo.recordList.filter(item => item.cycle_id !== id);
+			gradeInfo.teamRecordList = (gradeInfo.teamRecordList || []).filter(item => item.cycle_id !== id);
 			await saveGradeInfo(appStore.activeGrade.id, JSON.stringify(appStore.activeGrade));
 			return true;
 		} catch (error) {

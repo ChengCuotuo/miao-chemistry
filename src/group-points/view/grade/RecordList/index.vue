@@ -134,6 +134,27 @@
         </template>
       </el-table-column>
       <el-table-column label="时间" prop="time" width="180" />
+      <!-- 撤销：回退该条记录的积分并删除该条记录（管理员可见；全量/兑奖/已结束周期记录禁用） -->
+      <el-table-column v-if="!readOnly" label="操作" width="90" align="center">
+        <template #default="scope">
+          <el-tooltip
+            :disabled="canUndoRecord(scope.row).ok"
+            :content="canUndoRecord(scope.row).reason"
+            placement="top"
+          >
+            <span>
+              <el-button
+                size="small"
+                text
+                type="danger"
+                :disabled="!canUndoRecord(scope.row).ok"
+                @click="handleUndo(scope.row)"
+                >撤销</el-button
+              >
+            </span>
+          </el-tooltip>
+        </template>
+      </el-table-column>
     </el-table>
 
     <!-- 分页 -->
@@ -167,6 +188,9 @@ import { BID_RECORD_PREFIX } from './constant';
 import type { Prize } from '../../../database/class';
 import { loadImageAsUint8Array } from '../../../database';
 import { BATCH_RECORD_NAMES, formatBatchRecordText, isBatchRecord } from '../../../database';
+import { ElMessage, ElMessageBox } from 'element-plus';
+import { usePermission } from '../../../database/utils/usePermission';
+import { useUndo } from '../../../database/utils/useUndo';
 
 // 全量操作汇总记录的展示文案（加/减为人均，设置为目标值）
 const batchRecordText = (record: RuleRecord) => formatBatchRecordText(record.rule_id, record.points, record.count, record.batch_value);
@@ -189,6 +213,38 @@ const props = defineProps<Props>();
 
 const appStore = useAppStore();
 
+// 只读会话（班委）不显示撤销入口
+const { isReadOnlySession } = usePermission();
+const readOnly = computed(() => isReadOnlySession());
+
+// 单条记录撤销：回退积分 + 删除该条记录
+const { canUndoRecord, undoRecord } = useUndo();
+
+const handleUndo = (row: ExtendedRecord) => {
+  const check = canUndoRecord(row);
+  if (!check.ok) {
+    ElMessage.warning(check.reason || '该记录不可撤销');
+    return;
+  }
+  ElMessageBox.confirm(
+    `撤销后将回退该条记录对积分的改动（${row.points > 0 ? '+' : ''}${row.points} 分），并删除这条记录。确认撤销？`,
+    '撤销记录',
+    { type: 'warning', confirmButtonText: '确认撤销', cancelButtonText: '取消' },
+  )
+    .then(async () => {
+      const res = await undoRecord(row);
+      if (res.success) {
+        ElMessage.success(res.message || '已撤销');
+        // 撤销后当前页可能已越界，回退到最后一页
+        const maxPage = Math.max(1, Math.ceil(filteredRecords.value.length / pageSize.value));
+        if (currentPage.value > maxPage) currentPage.value = maxPage;
+      } else {
+        ElMessage.error(res.message || '撤销失败');
+      }
+    })
+    .catch(() => {});
+};
+
 // 是否开启周期记分：未开启时隐藏周期筛选与周期列
 const monitorEnabled = computed(
   () => appStore.database.basicConfig?.moduleVisibility?.monitorManage ?? true,
@@ -207,19 +263,11 @@ const getCycleName = (cycleId: string): string => {
   return cycleList.value.find((item) => item.id === cycleId)?.name || '';
 };
 
-// 根据记录反查所属周期名：优先 source=1 的 cycle_id，否则按记录时间匹配周期时间范围
+// 根据记录反查所属周期名：按记录写入时落定的 cycle_id 归属（不再按时间范围动态匹配）
 const getCycleNameByRecord = (record: RuleRecord): string => {
   // 全量操作汇总记录不属于任何周期
   if (isBatchRecord(record.rule_id)) return '';
-  if (record.source === 1 && record.cycle_id) {
-    return getCycleName(record.cycle_id);
-  }
-  if (!record.time) return '';
-  const date = record.time.slice(0, 10);
-  const cycle = cycleList.value.find(
-    (c) => c.startTime && c.endTime && date >= c.startTime && date <= c.endTime,
-  );
-  return cycle?.name || '';
+  return record.cycle_id ? getCycleName(record.cycle_id) : '';
 };
 
 // 筛选类型：all-全部, add-加分, subtract-减分
@@ -362,24 +410,12 @@ const studentRecords = computed<ExtendedRecord[]>(() => {
   let filtered = !props.studentId
     ? curRecordList
     : curRecordList.filter((record) => record.stu_id === props.studentId);
-  // 固定周期（弹窗）或筛选器周期
-  // 1) 班委记录（source=1）：按 cycle_id 精确归属，始终显示——即使记录时间在周期范围外（如预建的末来周期、后补时间范围的周期）
-  // 2) 普通记录：周期有时间范围时，记录时间落在范围内才算；无时间范围时不匹配
+  // 固定周期（弹窗）或筛选器周期：归属一律按记录写入时落定的 cycle_id
   const targetCycle = props.cycleId || filterCycleId.value;
   if (targetCycle) {
     const cycle = cycleList.value.find((item) => item.id === targetCycle);
     if (cycle) {
-      const hasRange = !!cycle.startTime && !!cycle.endTime;
-      filtered = filtered.filter((record) => {
-        if (record.source === 1) {
-          // 班委记录：按 cycle_id 归属
-          return record.cycle_id === targetCycle;
-        }
-        // 普通记录：按时间范围匹配
-        if (!hasRange) return false;
-        const date = (record.time || '').slice(0, 10);
-        return date >= cycle.startTime && date <= cycle.endTime;
-      });
+      filtered = filtered.filter((record) => record.cycle_id === targetCycle);
     }
   }
   // 添加学生姓名和规则名称

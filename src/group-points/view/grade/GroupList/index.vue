@@ -117,6 +117,7 @@ import { Plus, Sort, Edit, Delete } from '@element-plus/icons-vue';
 import { RuleRecord, Student } from '../../../database/class';
 import { dayjs, ElMessage, ElMessageBox, FormInstance } from 'element-plus';
 import { Group, StudentGroup, Rule } from '../../../database/class';
+import { resolveCycleId } from '../../../database';
 import { useGrade } from '../../../database/utils/useGrade';
 import { usePermission } from '../../../database/utils/usePermission';
 import { useRule } from '../../../database/utils/useRule';
@@ -542,16 +543,17 @@ const handleRuleRecord = (params: { stu_id: string, points: number, rule_id?: st
 	if (appStore.activeGrade) {
 		const { stu_id, points, rule_id, count = 1 } = params;
 		const recordIndex = appStore.activeGrade.gradeInfo.indexMap.record;
-		// 归入当前选中周期（未开启周期记分时 source=0 普通记录）
-		const cycle = monitorEnabled.value ? currentCycle.value : null;
+		const time = dayjs().format('YYYY-MM-DD HH:mm:ss');
+		// 归属周期：优先当前选中周期，否则按记录时间匹配；写入时落定，之后不随周期时间范围变化
+		const cycleId = resolveCycleId(time, cycleList.value, monitorEnabled.value ? currentCycle.value?.id : '');
 		const ruleRecord = new RuleRecord({
 			id: recordIndex,
 			stu_id,
 			rule_id,
 			points,
-			time: dayjs().format('YYYY-MM-DD HH:mm:ss'),
-			source: cycle ? 1 : 0,
-			cycle_id: cycle ? cycle.id : '',
+			time,
+			source: cycleId ? 1 : 0,
+			cycle_id: cycleId,
 			count,
 		});
 		appStore.activeGrade.gradeInfo.indexMap.record++;

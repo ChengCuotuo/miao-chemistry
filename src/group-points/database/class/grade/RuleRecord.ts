@@ -2,8 +2,8 @@
 //   - 学生id - student_id
 //   - 规则id - rule_id
 //   - 记录时间 - time
-//   - 来源 - source：0-普通 1-周期记录
-//   - 周期id - cycle_id：source=1 时有效，记录属于哪个周期
+//   - 来源 - source：0-普通 1-周期记录（历史字段；周期归属一律以 cycle_id 为准）
+//   - 周期id - cycle_id：记录归属的周期（写入时落定，展示/筛选/统计以此为准）
 //   - 组id - group_id：source=1 且按组发放时有效，记录是通过哪个组触达该学生的
 //   - 单次次数 - count：source=1 时本次记录消耗的次数（同规则多次时 > 1）
 //   - 记录人 - operator_id / operator_name：写入该条记录的操作者（管理员，或已登录的班委账号）

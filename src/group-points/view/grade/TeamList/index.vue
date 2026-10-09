@@ -132,6 +132,17 @@
 					</template>
 				</el-table-column>
 				<el-table-column label="时间" prop="time" width="180" />
+				<!-- 撤销：回退该条小组记录的积分并删除该条记录（管理员可见；已结束周期记录禁用） -->
+				<el-table-column v-if="!readOnly" label="操作" width="90" align="center">
+					<template #default="scope">
+						<el-tooltip :disabled="canUndoTeamRecord(scope.row).ok" :content="canUndoTeamRecord(scope.row).reason" placement="top">
+							<span>
+								<el-button size="small" text type="danger" :disabled="!canUndoTeamRecord(scope.row).ok"
+									@click="handleUndoTeamRecord(scope.row)">撤销</el-button>
+							</span>
+						</el-tooltip>
+					</template>
+				</el-table-column>
 			</el-table>
 		</el-dialog>
 
@@ -174,9 +185,11 @@ import { computed, ref, watch, onMounted } from 'vue';
 import { useAppStore } from '../../../store/models/app';
 import { Plus, Edit, Delete, Sort } from '@element-plus/icons-vue';
 import { Team, TeamRecord, Student, RuleRecord, Rule } from '../../../database/class';
+import { resolveCycleId } from '../../../database';
 import { dayjs, ElMessage, ElMessageBox, FormInstance } from 'element-plus';
 import { useGrade } from '../../../database/utils/useGrade';
 import { usePermission } from '../../../database/utils/usePermission';
+import { useUndo } from '../../../database/utils/useUndo';
 import { useRule, isNoPointsRule, getRulePoints } from '../../../database/utils/useRule';
 import { useMonitorCycle } from '../../../database/utils/useMonitorCycle';
 import TeamCard from './TeamCard.vue';
@@ -199,6 +212,31 @@ const { updateGradeInfoById } = useGrade();
 // 只读会话（班委账号）：隐藏所有写入口
 const { isReadOnlySession } = usePermission();
 const readOnly = computed(() => isReadOnlySession());
+
+// 单条小组记录撤销：回退小组积分 + 删除该条记录
+const { canUndoTeamRecord, undoTeamRecord } = useUndo();
+
+const handleUndoTeamRecord = (row: TeamRecord) => {
+	const check = canUndoTeamRecord(row);
+	if (!check.ok) {
+		ElMessage.warning(check.reason || '该记录不可撤销');
+		return;
+	}
+	ElMessageBox.confirm(
+		`撤销后将回退该小组记录对积分的改动（${row.points > 0 ? '+' : ''}${row.points} 分），并删除这条记录。确认撤销？`,
+		'撤销记录',
+		{ type: 'warning', confirmButtonText: '确认撤销', cancelButtonText: '取消' },
+	)
+		.then(async () => {
+			const res = await undoTeamRecord(row);
+			if (res.success) {
+				ElMessage.success(res.message || '已撤销');
+			} else {
+				ElMessage.error(res.message || '撤销失败');
+			}
+		})
+		.catch(() => { });
+};
 const { getRuleList, getRuleGroupList } = useRule();
 const {
 	getMonitorCycleList, createMonitorCycle, updateMonitorCycle,
@@ -301,15 +339,17 @@ const handleTeamRecord = (params: { team_id: string, points: number, rule_id?: s
 	if (appStore.activeGrade) {
 		const { team_id, points, rule_id, count = 1 } = params;
 		const recordIndex = appStore.activeGrade.gradeInfo.indexMap.teamRecord;
-		const cycle = monitorEnabled.value ? currentCycle.value : null;
+		const time = dayjs().format('YYYY-MM-DD HH:mm:ss');
+		// 归属周期：优先当前选中周期，否则按记录时间匹配；写入时落定
+		const cycleId = resolveCycleId(time, cycleList.value, monitorEnabled.value ? currentCycle.value?.id : '');
 		const record = new TeamRecord({
 			id: recordIndex,
 			team_id,
 			rule_id,
 			points,
-			time: dayjs().format('YYYY-MM-DD HH:mm:ss'),
-			source: cycle ? 1 : 0,
-			cycle_id: cycle ? cycle.id : '',
+			time,
+			source: cycleId ? 1 : 0,
+			cycle_id: cycleId,
 			count,
 		});
 		appStore.activeGrade.gradeInfo.indexMap.teamRecord++;
@@ -327,15 +367,17 @@ const handleStudentRecord = (params: { stu_id: string, points: number, rule_id?:
 	if (appStore.activeGrade) {
 		const { stu_id, points, rule_id, count = 1 } = params;
 		const recordIndex = appStore.activeGrade.gradeInfo.indexMap.record;
-		const cycle = monitorEnabled.value ? currentCycle.value : null;
+		const time = dayjs().format('YYYY-MM-DD HH:mm:ss');
+		// 归属周期：优先当前选中周期，否则按记录时间匹配；写入时落定
+		const cycleId = resolveCycleId(time, cycleList.value, monitorEnabled.value ? currentCycle.value?.id : '');
 		const ruleRecord = new RuleRecord({
 			id: recordIndex,
 			stu_id,
 			rule_id,
 			points,
-			time: dayjs().format('YYYY-MM-DD HH:mm:ss'),
-			source: cycle ? 1 : 0,
-			cycle_id: cycle ? cycle.id : '',
+			time,
+			source: cycleId ? 1 : 0,
+			cycle_id: cycleId,
 			count,
 		});
 		appStore.activeGrade.gradeInfo.indexMap.record++;
@@ -737,17 +779,9 @@ const getRuleName = (ruleId: string) => {
 	return rule?.name || '主动执行';
 };
 
-// 根据记录反查所属周期名：优先 source=1 的 cycle_id，否则按记录时间匹配周期时间范围
+// 根据记录反查所属周期名：按记录写入时落定的 cycle_id 归属（不再按时间范围动态匹配）
 const getCycleNameByRecord = (record: TeamRecord): string => {
-	if (record.source === 1 && record.cycle_id) {
-		return cycleList.value.find(item => item.id === record.cycle_id)?.name || '';
-	}
-	if (!record.time) return '';
-	const date = record.time.slice(0, 10);
-	const cycle = cycleList.value.find(c =>
-		c.startTime && c.endTime && date >= c.startTime && date <= c.endTime
-	);
-	return cycle?.name || '';
+	return record.cycle_id ? (cycleList.value.find(item => item.id === record.cycle_id)?.name || '') : '';
 };
 
 const teamRecords = computed(() => {
