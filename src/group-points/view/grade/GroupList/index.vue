@@ -121,7 +121,7 @@ import { resolveCycleId } from '../../../database';
 import { useGrade } from '../../../database/utils/useGrade';
 import { usePermission } from '../../../database/utils/usePermission';
 import { useRule } from '../../../database/utils/useRule';
-import { useMonitorCycle } from '../../../database/utils/useMonitorCycle';
+import { useMonitorCycle, MAX_RECORDS } from '../../../database/utils/useMonitorCycle';
 import GroupCard from './GroupCard.vue';
 import BatchPointsModal from './BatchPointsModal.vue';
 import RuleSelectorModal from './RuleSelectorModal.vue';
@@ -558,9 +558,9 @@ const handleRuleRecord = (params: { stu_id: string, points: number, rule_id?: st
 		});
 		appStore.activeGrade.gradeInfo.indexMap.record++;
 		appStore.activeGrade.gradeInfo.recordList.push(ruleRecord);
-		// 仅保留最近100条记录
+		// 仅保留最近 MAX_RECORDS 条记录
 		// TODO 后续确定要不要做数据归档
-		appStore.activeGrade.gradeInfo.recordList = appStore.activeGrade.gradeInfo.recordList.slice(-1000);
+		appStore.activeGrade.gradeInfo.recordList = appStore.activeGrade.gradeInfo.recordList.slice(-MAX_RECORDS);
 	}
 }
 

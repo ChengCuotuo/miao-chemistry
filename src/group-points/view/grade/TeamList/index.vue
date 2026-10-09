@@ -191,7 +191,7 @@ import { useGrade } from '../../../database/utils/useGrade';
 import { usePermission } from '../../../database/utils/usePermission';
 import { useUndo } from '../../../database/utils/useUndo';
 import { useRule, isNoPointsRule, getRulePoints } from '../../../database/utils/useRule';
-import { useMonitorCycle } from '../../../database/utils/useMonitorCycle';
+import { useMonitorCycle, MAX_RECORDS } from '../../../database/utils/useMonitorCycle';
 import TeamCard from './TeamCard.vue';
 import SortModal from '../GroupList/SortModal.vue';
 import RuleSelectorModal from '../GroupList/RuleSelectorModal.vue';
@@ -382,7 +382,7 @@ const handleStudentRecord = (params: { stu_id: string, points: number, rule_id?:
 		});
 		appStore.activeGrade.gradeInfo.indexMap.record++;
 		appStore.activeGrade.gradeInfo.recordList.push(ruleRecord);
-		appStore.activeGrade.gradeInfo.recordList = appStore.activeGrade.gradeInfo.recordList.slice(-1000);
+		appStore.activeGrade.gradeInfo.recordList = appStore.activeGrade.gradeInfo.recordList.slice(-MAX_RECORDS);
 	}
 };
 

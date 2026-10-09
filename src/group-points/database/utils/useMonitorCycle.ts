@@ -4,8 +4,8 @@ import { MonitorCycle, RuleRecord, Student } from "../class";
 import { dayjs } from "element-plus";
 import { usePermission } from "./usePermission";
 
-// 记录条数上限（与原有逻辑一致）
-const MAX_RECORDS = 1000;
+// 记录条数上限：recordList 仅保留最近 MAX_RECORDS 条
+export const MAX_RECORDS = 3500;
 // 管理员（教师）在记录里的展示名
 const TEACHER_NAME = '管理员';
 
@@ -233,7 +233,7 @@ export const useMonitorCycle = () => {
 				gradeInfo.indexMap.record++;
 				gradeInfo.recordList.push(record);
 			});
-			// 仅保留最近 1000 条记录
+			// 仅保留最近 MAX_RECORDS 条记录
 			gradeInfo.recordList = trimRecordList(gradeInfo.recordList);
 
 			await saveGradeInfo(appStore.activeGrade.id, JSON.stringify(appStore.activeGrade));
